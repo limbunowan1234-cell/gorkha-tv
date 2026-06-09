@@ -1,20 +1,34 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><title>GorkhaTV</title></head>
-<body>
-<script type="module">
-import { Account, Client } from 'https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm';
-const client = new Client()
-  .setEndpoint('https://nyc.cloud.appwrite.io/v1')
-  .setProject('6a280cbd0022eeb574a5');
-const account = new Account(client);
-const params = new URLSearchParams(window.location.search);
-const userId = params.get('userId');
-const secret = params.get('secret');
-if (userId && secret) {
-  await account.createSession(userId, secret);
-}
-window.location.replace('/');
-</script>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Signing in...</title>
+</head>
+<body style="background:#080808;color:#777;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+  <p id="status">Signing you in...</p>
+  <script type="module">
+    import { Client, Account } from 'https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm';
+
+    const client = new Client()
+      .setEndpoint('https://nyc.cloud.appwrite.io/v1')
+      .setProject('6a280cbd0022eeb574a5');
+    const account = new Account(client);
+
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    const secret = params.get('secret');
+
+    try {
+      if (userId && secret) {
+        await account.createSession(userId, secret);
+      }
+    } catch (e) {
+      console.error(e);
+      document.getElementById('status').textContent = 'Sign in failed: ' + e.message;
+      await new Promise(r => setTimeout(r, 2500));
+    }
+    window.location.replace('https://gorkhatv.site');
+  </script>
 </body>
 </html>
