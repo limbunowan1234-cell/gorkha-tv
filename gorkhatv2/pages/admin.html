@@ -71,11 +71,10 @@
 <div id="page-wrap"></div>
 
 <script type="module">
-import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
+import { databases, account, DB_ID, COLLECTION_ID, ADMIN_EMAIL, ID, Query } from '../js/appwrite.js';
 
 let user = null;
 
-// ── AUTH CHECK ──
 try {
   user = await account.get();
 } catch {
@@ -83,7 +82,6 @@ try {
   throw new Error('Not logged in');
 }
 
-// ── ADMIN CHECK ──
 if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
   document.getElementById('page-wrap').innerHTML = `
     <div class="access-denied">
@@ -96,7 +94,6 @@ if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
   throw new Error('Not admin');
 }
 
-// ── RENDER ADMIN UI ──
 document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;color:var(--muted);">${user.name}</span>`;
 
 document.getElementById('page-wrap').innerHTML = `
@@ -123,7 +120,6 @@ document.getElementById('page-wrap').innerHTML = `
           <option value="webseries">Web Series</option>
           <option value="music">Music Video</option>
           <option value="documentary">Documentary</option>
-          <option value="news">News</option>
         </select>
       </div>
       <div class="form-group">
@@ -139,6 +135,16 @@ document.getElementById('page-wrap').innerHTML = `
       <label>YouTube ID * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(11 chars from YouTube URL)</span></label>
       <input type="text" id="f-youtube" placeholder="e.g. dQw4w9WgXcQ" maxlength="11">
       <div class="thumb-preview" id="thumb-preview"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Series Name</label>
+      <input type="text" id="f-series-name" placeholder="e.g. Gorkha Stories Season 1">
+    </div>
+
+    <div class="form-group">
+      <label>Series ID</label>
+      <input type="text" id="f-series-id" placeholder="e.g. gorkha-stories-s1">
     </div>
 
     <div class="form-group">
@@ -208,17 +214,14 @@ document.getElementById('page-wrap').innerHTML = `
 </div>
 `;
 
-// Set default date
 document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
 
-// YouTube preview
 document.getElementById('f-youtube').addEventListener('input', e => {
   const id = e.target.value.trim();
   document.getElementById('thumb-preview').innerHTML =
     id.length === 11 ? `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="Preview">` : '';
 });
 
-// Submit
 window.submitContent = async () => {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = 'Adding...';
@@ -228,34 +231,56 @@ window.submitContent = async () => {
   const youtube_id = document.getElementById('f-youtube').value.trim();
   const category = document.getElementById('f-category').value;
 
-  if (!title || !youtube_id) { showError('Title and YouTube ID are required.'); btn.disabled=false; btn.textContent='Add Content'; return; }
-  if (youtube_id.length !== 11) { showError('YouTube ID must be exactly 11 characters.'); btn.disabled=false; btn.textContent='Add Content'; return; }
+  if (!title || !youtube_id) {
+    showError('Title and YouTube ID are required.');
+    btn.disabled = false; btn.textContent = 'Add Content';
+    return;
+  }
+
+  if (youtube_id.length !== 11) {
+    showError('YouTube ID must be exactly 11 characters.');
+    btn.disabled = false; btn.textContent = 'Add Content';
+    return;
+  }
 
   try {
     const data = {
-      title, youtube_id, category,
+      title,
+      youtube_id,
+      category,
       status: document.getElementById('f-status').value,
       featured: document.getElementById('f-featured').value === 'true',
       publishedAt: new Date(document.getElementById('f-date').value).toISOString(),
     };
-    const optionals = { description:'f-desc', director:'f-director', cast:'f-cast', language:'f-language', location:'f-location' };
+
+    const optionals = {
+      description: 'f-desc',
+      director: 'f-director',
+      cast: 'f-cast',
+      language: 'f-language',
+      location: 'f-location',
+      seriesName: 'f-series-name',
+      seriesId: 'f-series-id'
+    };
+
     Object.entries(optionals).forEach(([key, id]) => {
       const val = document.getElementById(id).value.trim();
       if (val) data[key] = val;
     });
 
-    await databases.createDocument(DB_ID, COLLECTION_ID, 'unique()', data);
+    await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
     showSuccess();
     clearForm();
     loadList();
   } catch (err) {
     showError(err.message || 'Failed to add content.');
   }
+
   btn.disabled = false; btn.textContent = 'Add Content';
 };
 
 function clearForm() {
-  ['f-title','f-youtube','f-desc','f-director','f-cast'].forEach(id => document.getElementById(id).value = '');
+  ['f-title','f-youtube','f-desc','f-director','f-cast','f-series-name','f-series-id'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('thumb-preview').innerHTML = '';
   document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
 }
@@ -265,10 +290,12 @@ function showSuccess() {
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 3500);
 }
+
 function showError(msg) {
   document.getElementById('error-msg').textContent = msg;
   document.getElementById('alert-error').style.display = 'block';
 }
+
 function hideAlerts() {
   document.getElementById('alert-success').style.display = 'none';
   document.getElementById('alert-error').style.display = 'none';
@@ -278,25 +305,39 @@ async function loadList() {
   const wrap = document.getElementById('content-list');
   try {
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.orderDesc('publishedAt'), Query.limit(40)]);
-    if (!res.documents.length) { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content yet.</p>`; return; }
+    if (!res.documents.length) {
+      wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content yet.</p>`;
+      return;
+    }
     wrap.innerHTML = res.documents.map(doc => `
       <div class="content-item">
         <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="" onerror="this.style.visibility='hidden'">
         <div class="content-item-info">
           <div class="content-item-title">${doc.title}</div>
-          <div class="content-item-meta">${doc.category} · ${doc.language||''} ${doc.location?'· '+doc.location:''}</div>
+          <div class="content-item-meta">
+            ${doc.category}
+            ${doc.seriesName ? ' · Series: ' + doc.seriesName : ''}
+            ${doc.language ? ' · ' + doc.language : ''}
+            ${doc.location ? ' · ' + doc.location : ''}
+          </div>
         </div>
         <span class="status-badge status-${doc.status}">${doc.status}</span>
         <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
       </div>
     `).join('');
-  } catch { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load.</p>`; }
+  } catch {
+    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load.</p>`;
+  }
 }
 
 window.deleteDoc = async (id, btn) => {
   if (!confirm('Delete this content?')) return;
-  try { await databases.deleteDocument(DB_ID, COLLECTION_ID, id); btn.closest('.content-item').remove(); }
-  catch (err) { alert('Error: ' + err.message); }
+  try {
+    await databases.deleteDocument(DB_ID, COLLECTION_ID, id);
+    btn.closest('.content-item').remove();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
 };
 
 function renderLoginPrompt() {
