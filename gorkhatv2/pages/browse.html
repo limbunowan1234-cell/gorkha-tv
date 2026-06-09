@@ -3,17 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GorkhaTV — Browse</title>
+  <title>GorkhaTV — Watch</title>
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .browse-header { padding: 36px 48px 0; }
-    .browse-title { font-family: 'Teko', sans-serif; font-size: 42px; font-weight: 600; }
-    .browse-sub { color: var(--muted); font-size: 13px; margin-top: 4px; margin-bottom: 24px; }
-    .browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; padding: 0 48px 60px; }
-    @media(max-width:600px){ .browse-header,.browse-grid{padding-left:16px;padding-right:16px;} }
-    .card { cursor: pointer; }
-    .card-thumb { position: relative; }
-    .card-play-overlay { pointer-events: none; }
+    .watch-wrap { padding: 24px 48px 60px; max-width: 1200px; margin: 0 auto; }
+    .watch-back { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--text); text-decoration:none; }
+    .watch-grid { display:grid; grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); gap:24px; }
+    .player-box { background:#111; border-radius:18px; overflow:hidden; aspect-ratio:16/9; }
+    .player-box iframe { width:100%; height:100%; border:0; display:block; }
+    .video-title { font-family:'Teko', sans-serif; font-size:46px; line-height:1; margin:18px 0 8px; }
+    .video-meta { color:var(--muted); font-size:14px; margin-bottom:16px; }
+    .video-desc { color:#ddd; line-height:1.65; white-space:pre-wrap; }
+    .series-box, .side-card { background:#111; border-radius:16px; padding:18px; }
+    .series-box { margin-top:18px; }
+    .series-box h3, .side-card h3 { margin:0 0 14px; font-family:'Teko', sans-serif; font-size:28px; }
+    .episode-list { display:grid; gap:10px; }
+    .episode-item { display:flex; gap:12px; padding:10px 0; text-decoration:none; color:inherit; border-top:1px solid rgba(255,255,255,.06); }
+    .episode-item:first-child { border-top:0; }
+    .episode-item img { width:132px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto; }
+    .episode-item .e-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .episode-item .e-sub { color:var(--muted); font-size:12px; }
+    .related-item { display:flex; gap:12px; padding:10px 0; text-decoration:none; color:inherit; border-top:1px solid rgba(255,255,255,.06); }
+    .related-item:first-child { border-top:0; }
+    .related-item img { width:132px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto; }
+    .related-item .r-title { font-size:14px; font-weight:600; margin-bottom:4px; }
+    .related-item .r-sub { color:var(--muted); font-size:12px; }
+    @media(max-width:900px){ .watch-wrap{padding-left:16px;padding-right:16px;} .watch-grid{grid-template-columns:1fr;} }
   </style>
 </head>
 <body>
@@ -34,64 +49,98 @@
   </ul>
   <div class="nav-right" id="nav-right"></div>
 </nav>
-<div class="cats-bar" id="cats-bar"></div>
-<div class="browse-header">
-  <h1 class="browse-title" id="browse-title">Browse</h1>
-  <p class="browse-sub" id="browse-sub"></p>
+<div class="watch-wrap">
+  <a href="javascript:history.back()" class="watch-back">← Back</a>
+  <div id="watch-loading" class="loading"><div class="spinner"></div></div>
+  <div id="watch-content" style="display:none;">
+    <div class="watch-grid">
+      <div>
+        <div class="player-box" id="player-box"></div>
+        <h1 class="video-title" id="video-title"></h1>
+        <div class="video-meta" id="video-meta"></div>
+        <div class="video-desc" id="video-desc"></div>
+        <div class="series-box" id="series-box" style="display:none;">
+          <h3 id="series-title"></h3>
+          <div class="episode-list" id="episode-list"></div>
+        </div>
+      </div>
+      <aside class="side-card">
+        <h3>Related Videos</h3>
+        <div id="related-list"></div>
+      </aside>
+    </div>
+  </div>
 </div>
-<div class="browse-grid" id="browse-grid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div></div>
 <script type="module">
 import { databases, account, DB_ID, COLLECTION_ID, Query } from '../js/appwrite.js';
 const params = new URLSearchParams(window.location.search);
-const cat = params.get('cat');
-const featured = params.get('featured');
-const labels = { movie:'Movies', webseries:'Web Series', music:'Music Videos', documentary:'Documentaries' };
+const id = params.get('id');
 let currentUser = null;
-let likes = JSON.parse(localStorage.getItem('gtv_likes') || '{}');
 try { currentUser = await account.get(); } catch {}
 if (currentUser) document.getElementById('nav-right').innerHTML = `<div class="user-avatar" style="cursor:pointer;" onclick="window.location.href='/pages/my-favourites.html'">${currentUser.name[0].toUpperCase()}</div>`;
 else document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
-document.getElementById('browse-title').textContent = cat ? labels[cat] || cat : featured ? 'Featured' : 'All Content';
-document.getElementById('browse-sub').textContent = cat ? `All ${labels[cat] || cat} on GorkhaTV` : 'Explore everything on GorkhaTV';
-const cats = ['all','movie','webseries','music','documentary'];
-const catLabels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs' };
-document.getElementById('cats-bar').innerHTML = cats.map(c => `<a href="browse.html${c==='all'?'':'?cat='+c}" class="cat-pill ${(!cat&&c==='all')||(cat===c)?'active':''}">${catLabels[c]}</a>`).join('');
-function getVideoUrl(item){ return `video.html?id=${encodeURIComponent(item.$id)}`; }
-async function load(){
-  const queries = [Query.equal('status','published'), Query.orderDesc('publishedAt'), Query.limit(60)];
-  if (cat) queries.push(Query.equal('category', cat));
-  if (featured) queries.push(Query.equal('featured', true));
-  try {
-    const res = await databases.listDocuments(DB_ID, COLLECTION_ID, queries);
-    const grid = document.getElementById('browse-grid');
-    if (!res.documents.length) { grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🎬</div><h3>Nothing here yet</h3><p style="color:var(--muted);font-size:14px;">Check back soon!</p></div>`; return; }
-    grid.innerHTML = res.documents.map(item => {
-      const isLiked = !!likes[item.$id];
-      const likeCount = likes[item.$id] || 0;
-      const thumb = item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : '';
-      return `
-        <div class="card" onclick="window.location.href='${getVideoUrl(item)}'">
-          <div class="card-thumb">
-            <img src="${thumb}" alt="${item.title || 'Video'}" loading="lazy">
-            <div class="card-play-overlay"><div class="play-circle"><svg viewBox="0 0 24 24" fill="black" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></div></div>
-            <span class="card-cat-badge">${item.category || ''}</span>
-            <button class="card-like-btn ${isLiked?'liked':''}" onclick="event.stopPropagation();quickLike('${item.$id}',this)">${isLiked?'❤️':'🤍'} ${likeCount>0?likeCount:''}</button>
-          </div>
-          <div class="card-body">
-            <div class="card-title">${item.title || ''}</div>
-            <div class="card-sub">${item.language || ''} ${item.location ? '· '+item.location : ''}</div>
-          </div>
-        </div>`;
-    }).join('');
-  } catch { document.getElementById('browse-grid').innerHTML = `<p style="color:var(--muted);grid-column:1/-1">Could not load content.</p>`; }
+function ytUrlFromItem(item){
+  if (item.youtube_id) return `https://www.youtube.com/embed/${item.youtube_id}?rel=0&modestbranding=1`;
+  if (item.youtube_url) {
+    const m = item.youtube_url.match(/(?:v=|youtu\.be\/|shorts\/)([A-Za-z0-9_-]{11})/);
+    if (m) return `https://www.youtube.com/embed/${m[1]}?rel=0&modestbranding=1`;
+  }
+  return '';
 }
-window.quickLike = (id, btn) => {
-  if (!currentUser) { alert('Sign in to like content'); return; }
-  const isLiked = !!likes[id];
-  if (isLiked) { delete likes[id]; btn.innerHTML='🤍'; btn.classList.remove('liked'); }
-  else { likes[id]=1; btn.innerHTML='❤️ 1'; btn.classList.add('liked'); }
-  localStorage.setItem('gtv_likes', JSON.stringify(likes));
-};
+async function load(){
+  if (!id) { document.getElementById('watch-loading').innerHTML = '<p>Missing video ID.</p>'; return; }
+  try {
+    const item = await databases.getDocument(DB_ID, COLLECTION_ID, id);
+    const embed = ytUrlFromItem(item);
+    document.title = `${item.title || 'Watch'} — GorkhaTV`;
+    document.getElementById('player-box').innerHTML = embed ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>` : `<div style="padding:24px;color:#fff;">Video link missing.</div>`;
+    document.getElementById('video-title').textContent = item.title || '';
+    const meta = [];
+    if (item.category) meta.push(item.category);
+    if (item.language) meta.push(item.language);
+    if (item.location) meta.push(item.location);
+    if (item.publishedAt) meta.push(new Date(item.publishedAt).toLocaleDateString());
+    document.getElementById('video-meta').textContent = meta.join(' • ');
+    document.getElementById('video-desc').textContent = item.description || '';
+
+    if (item.seriesId) {
+      const seriesRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+        Query.equal('seriesId', item.seriesId),
+        Query.equal('status', 'published'),
+        Query.orderAsc('publishedAt'),
+        Query.limit(50)
+      ]);
+      const eps = seriesRes.documents;
+      if (eps.length > 1) {
+        document.getElementById('series-box').style.display = 'block';
+        document.getElementById('series-title').textContent = item.seriesName ? `Series: ${item.seriesName}` : `Series: ${item.seriesId}`;
+        document.getElementById('episode-list').innerHTML = eps.map(v => `
+          <a class="episode-item" href="video.html?id=${v.$id}">
+            <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${v.title || ''}">
+            <div>
+              <div class="e-title">${v.title || ''}</div>
+              <div class="e-sub">${v.category || ''}${v.language ? ' • '+v.language : ''}${v.$id === item.$id ? ' • Playing now' : ''}</div>
+            </div>
+          </a>
+        `).join('');
+      }
+    }
+
+    const rel = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(8)]);
+    const related = rel.documents.filter(x => x.$id !== item.$id).slice(0, 6);
+    document.getElementById('related-list').innerHTML = related.map(v => `
+      <a class="related-item" href="video.html?id=${v.$id}">
+        <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${v.title || ''}">
+        <div><div class="r-title">${v.title || ''}</div><div class="r-sub">${v.category || ''}${v.language ? ' • '+v.language : ''}</div></div>
+      </a>
+    `).join('');
+
+    document.getElementById('watch-loading').style.display = 'none';
+    document.getElementById('watch-content').style.display = 'block';
+  } catch {
+    document.getElementById('watch-loading').innerHTML = `<p>Could not load video.</p>`;
+  }
+}
 window.loginGoogle = async () => {
   const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
   const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
