@@ -1,4 +1,3 @@
-cat > /home/claude/gorkhatv2/pages/auth-callback.html << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,23 +16,12 @@ cat > /home/claude/gorkhatv2/pages/auth-callback.html << 'EOF'
   </a>
   <div class="spinner"></div>
   <p style="color:var(--muted);font-size:14px;">Signing you in...</p>
-
   <script type="module">
     import { account } from '../js/appwrite.js';
-
     try {
-      // Verify session is active
-      const user = await account.get();
-      console.log('Logged in as:', user.email);
-      // Redirect to home
-      window.location.replace('/');
-    } catch (err) {
-      console.error('Session error:', err);
-      // Still redirect to home, let it handle auth state
-      window.location.replace('/');
-    }
+      await account.get();
+    } catch {}
+    window.location.replace('/');
   </script>
 </body>
 </html>
-EOF
-echo "done"
