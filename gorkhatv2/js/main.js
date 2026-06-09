@@ -1,4 +1,3 @@
-
 import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
 
 let currentUser = null;
@@ -8,30 +7,24 @@ let heroIndex = 0;
 let heroTimer = null;
 let likes = JSON.parse(localStorage.getItem('gtv_likes') || '{}');
 let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
-let modalItem = null;
 
-const ROOT = '/';
 const VIDEO_PAGE = 'pages/video.html';
 const BROWSE_PAGE = 'pages/browse.html';
 const FAV_PAGE = 'pages/my-favourites.html';
 const CREDITS_PAGE = 'pages/my-credits.html';
 const EDIT_PROFILE_PAGE = 'pages/edit-profile.html';
 const ADMIN_PAGE = 'pages/admin.html';
-const AUTH_CALLBACK = 'pages/auth-callback.html';
 
 const GOOGLE_REDIRECT = 'https://gorkhatv.site/pages/auth-callback.html';
 const GOOGLE_SUCCESS = 'https://gorkhatv.site';
 
-// ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
   await loadContent();
   initCategoryPills();
-  initModal();
   initSearch();
 });
 
-// ── AUTH ──
 async function checkAuth() {
   try {
     currentUser = await account.get();
@@ -74,11 +67,16 @@ function renderLoginBtn() {
   nr.innerHTML = `<button class="btn-signin" onclick="loginWithGoogle()">Sign In</button>`;
 }
 
-window.toggleDropdown = () => document.getElementById('user-dropdown')?.classList.toggle('open');
+window.toggleDropdown = () => {
+  const el = document.getElementById('user-dropdown');
+  if (el) el.classList.toggle('open');
+};
 
 document.addEventListener('click', (e) => {
   const wrap = document.querySelector('.user-menu-wrap');
-  if (wrap && !wrap.contains(e.target)) document.getElementById('user-dropdown')?.classList.remove('open');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('user-dropdown')?.classList.remove('open');
+  }
 });
 
 window.loginWithGoogle = async () => {
@@ -90,11 +88,12 @@ window.loginWithGoogle = async () => {
 };
 
 window.logout = async () => {
-  try { await account.deleteSession('current'); } catch {}
+  try {
+    await account.deleteSession('current');
+  } catch {}
   window.location.reload();
 };
 
-// ── LOAD CONTENT ──
 async function loadContent() {
   try {
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
@@ -105,6 +104,7 @@ async function loadContent() {
 
     allContent = res.documents;
     heroItems = [...allContent.filter(d => d.featured), ...allContent].slice(0, 6);
+
     const seen = new Set();
     heroItems = heroItems.filter(d => {
       if (seen.has(d.$id)) return false;
@@ -120,7 +120,6 @@ async function loadContent() {
   }
 }
 
-// ── HELPERS ──
 function videoUrl(item) {
   return `${VIDEO_PAGE}?id=${encodeURIComponent(item.$id)}`;
 }
@@ -135,51 +134,67 @@ function getThumb(item, size = 'hq') {
   return '';
 }
 
-function safeJSON(item) {
-  return JSON.stringify(item).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-}
-
-// ── HERO ──
 function renderHero() {
   if (!heroItems.length) return;
+
   const item = heroItems[heroIndex];
   const thumb = getThumb(item, 'max');
   const bg = document.getElementById('hero-bg');
   if (bg) bg.style.backgroundImage = `url(${thumb})`;
-  document.getElementById('hero-tag').textContent = item.category || 'Featured';
-  document.getElementById('hero-title').textContent = item.title || '';
-  document.getElementById('hero-desc').textContent = item.description || '';
+
+  const tag = document.getElementById('hero-tag');
+  const title = document.getElementById('hero-title');
+  const desc = document.getElementById('hero-desc');
+  const metaEl = document.getElementById('hero-meta');
+
+  if (tag) tag.textContent = item.category || 'Featured';
+  if (title) title.textContent = item.title || '';
+  if (desc) desc.textContent = item.description || '';
 
   const meta = [];
   if (item.publishedAt) meta.push(`<span>${new Date(item.publishedAt).getFullYear()}</span>`);
-  if (item.language) meta.push(`<div class="dot"></div><span class="lang-badge">${item.language.slice(0,3).toUpperCase()}</span>`);
+  if (item.language) meta.push(`<div class="dot"></div><span class="lang-badge">${item.language.slice(0, 3).toUpperCase()}</span>`);
   if (item.location) meta.push(`<div class="dot"></div><span>${item.location}</span>`);
-  document.getElementById('hero-meta').innerHTML = meta.join('');
+  if (metaEl) metaEl.innerHTML = meta.join('');
 
-  document.getElementById('hero-play-btn').onclick = () => window.location.href = videoUrl(item);
-  document.getElementById('hero-more-btn').onclick = () => window.location.href = videoUrl(item);
+  const playBtn = document.getElementById('hero-play-btn');
+  const moreBtn = document.getElementById('hero-more-btn');
+  if (playBtn) playBtn.onclick = () => window.location.href = videoUrl(item);
+  if (moreBtn) moreBtn.onclick = () => window.location.href = videoUrl(item);
 
   const dotsEl = document.getElementById('hero-dots');
   if (dotsEl) {
     dotsEl.innerHTML = heroItems.map((_, i) =>
-      `<div onclick="goHero(${i})" style="width:${i===heroIndex?'24':'8'}px;height:8px;border-radius:4px;background:${i===heroIndex?'var(--red)':'rgba(255,255,255,0.25)'};cursor:pointer;transition:all 0.3s;"></div>`
+      `<div onclick="goHero(${i})" style="width:${i === heroIndex ? '24' : '8'}px;height:8px;border-radius:4px;background:${i === heroIndex ? 'var(--red)' : 'rgba(255,255,255,0.25)'};cursor:pointer;transition:all 0.3s;"></div>`
     ).join('');
   }
 }
 
-window.goHero = (i) => { heroIndex = i; renderHero(); resetHeroTimer(); };
+window.goHero = (i) => {
+  heroIndex = i;
+  renderHero();
+  resetHeroTimer();
+};
+
 function startHeroTimer() {
   if (heroItems.length <= 1) return;
-  heroTimer = setInterval(() => { heroIndex = (heroIndex + 1) % heroItems.length; renderHero(); }, 7000);
+  heroTimer = setInterval(() => {
+    heroIndex = (heroIndex + 1) % heroItems.length;
+    renderHero();
+  }, 7000);
 }
-function resetHeroTimer() { clearInterval(heroTimer); startHeroTimer(); }
 
-// ── ROWS ──
+function resetHeroTimer() {
+  clearInterval(heroTimer);
+  startHeroTimer();
+}
+
 function renderRows(category = 'all') {
   const filtered = category === 'all' ? allContent : allContent.filter(d => d.category === category);
   const featured = allContent.filter(d => d.featured).slice(0, 8);
   const latest = filtered.slice(0, 12);
   const topLiked = [...allContent].sort((a, b) => (likes[b.$id] || 0) - (likes[a.$id] || 0)).slice(0, 5);
+
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
   renderRowCards('latest-row', latest);
@@ -188,7 +203,10 @@ function renderRows(category = 'all') {
 function renderRowCards(id, items) {
   const el = document.getElementById(id);
   if (!el) return;
-  if (!items.length) { el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No content yet.</div>`; return; }
+  if (!items.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No content yet.</div>`;
+    return;
+  }
   el.innerHTML = items.map(item => cardHTML(item)).join('');
 }
 
@@ -209,6 +227,7 @@ function cardHTML(item) {
   const thumb = getThumb(item);
   const isLiked = !!likes[item.$id];
   const likeCount = likes[item.$id] || 0;
+
   return `
     <div class="card" onclick="window.location.href='${videoUrl(item)}'">
       <div class="card-thumb">
@@ -230,26 +249,51 @@ function cardHTML(item) {
 }
 
 window.toggleLike = (id, btn) => {
-  if (!currentUser) { showToast('Sign in to like content'); return; }
+  if (!currentUser) {
+    showToast('Sign in to like content');
+    return;
+  }
   const isLiked = !!likes[id];
-  if (isLiked) { delete likes[id]; btn.innerHTML = `🤍`; btn.classList.remove('liked'); showToast('Like removed'); }
-  else { likes[id] = 1; btn.innerHTML = `❤️ 1`; btn.classList.add('liked'); showToast('Liked!'); }
+  if (isLiked) {
+    delete likes[id];
+    btn.innerHTML = `🤍`;
+    btn.classList.remove('liked');
+    showToast('Like removed');
+  } else {
+    likes[id] = 1;
+    btn.innerHTML = `❤️ 1`;
+    btn.classList.add('liked');
+    showToast('Liked!');
+  }
   localStorage.setItem('gtv_likes', JSON.stringify(likes));
 };
 
 function toggleFavourite(item) {
-  if (!currentUser) { showToast('Sign in to save favourites'); return false; }
+  if (!currentUser) {
+    showToast('Sign in to save favourites');
+    return false;
+  }
   const idx = favourites.findIndex(f => f.$id === item.$id);
-  if (idx === -1) { favourites.push(item); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Added to favourites 🔖'); return true; }
-  else { favourites.splice(idx, 1); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Removed from favourites'); return false; }
+  if (idx === -1) {
+    favourites.push(item);
+    localStorage.setItem('gtv_favs', JSON.stringify(favourites));
+    showToast('Added to favourites 🔖');
+    return true;
+  } else {
+    favourites.splice(idx, 1);
+    localStorage.setItem('gtv_favs', JSON.stringify(favourites));
+    showToast('Removed from favourites');
+    return false;
+  }
 }
 
 function initCategoryPills() {
-  const cats = ['all','movie','webseries','music','documentary'];
-  const labels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs' };
+  const cats = ['all', 'movie', 'webseries', 'music', 'documentary'];
+  const labels = { all: 'All', movie: 'Movies', webseries: 'Web Series', music: 'Music', documentary: 'Docs' };
   const bar = document.getElementById('cats-bar');
   if (!bar) return;
-  bar.innerHTML = cats.map(c => `<div class="cat-pill ${c==='all'?'active':''}" data-cat="${c}">${labels[c]}</div>`).join('');
+
+  bar.innerHTML = cats.map(c => `<div class="cat-pill ${c === 'all' ? 'active' : ''}" data-cat="${c}">${labels[c]}</div>`).join('');
   bar.addEventListener('click', e => {
     const pill = e.target.closest('.cat-pill');
     if (!pill) return;
@@ -261,4 +305,40 @@ function initCategoryPills() {
 }
 
 function initSearch() {
-  const input = document.getElementB
+  const input = document.getElementById('search-input');
+  if (!input) return;
+
+  input.addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    if (!q) {
+      renderRows();
+      return;
+    }
+
+    const results = allContent.filter(d =>
+      (d.title || '').toLowerCase().includes(q) ||
+      (d.cast || '').toLowerCase().includes(q) ||
+      (d.director || '').toLowerCase().includes(q)
+    );
+
+    const latest = document.getElementById('latest-row');
+    if (!latest) return;
+    latest.innerHTML = results.length
+      ? results.map(item => cardHTML(item)).join('')
+      : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No results for "${q}"</div>`;
+  });
+}
+
+window.showToast = (msg) => {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+};
