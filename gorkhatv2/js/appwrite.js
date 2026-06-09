@@ -16,3 +16,4 @@ export const BUCKET_ID = "6a280d4100046ab86533";
 export const ADMIN_EMAIL = "Nowanad@gmail.com";
 
 export { Query, ID };
+ 
