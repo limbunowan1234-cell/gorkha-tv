@@ -21,12 +21,19 @@
 
     try {
       if (userId && secret) {
-        await account.createSession(userId, secret);
+        // Try object form first (SDK v14), fall back to positional
+        try {
+          await account.createSession({ userId, secret });
+        } catch (inner) {
+          await account.createSession(userId, secret);
+        }
+      } else {
+        throw new Error('Missing userId or secret in callback URL');
       }
     } catch (e) {
       console.error(e);
-      document.getElementById('status').textContent = 'Sign in failed: ' + e.message;
-      await new Promise(r => setTimeout(r, 2500));
+      document.getElementById('status').textContent = 'Sign in failed: ' + (e.message || e);
+      await new Promise(r => setTimeout(r, 3000));
     }
     window.location.replace('https://gorkhatv.site');
   </script>
