@@ -55,7 +55,9 @@ function renderUserNav() {
 }
 
 function renderLoginBtn() {
-  document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginWithGoogle()">Sign In</button>`;
+  document.getElementById('nav-right').innerHTML = `
+    <button class="btn-signin" onclick="loginWithGoogle()">Sign In</button>
+  `;
 }
 
 window.toggleDropdown = () => {
@@ -64,16 +66,22 @@ window.toggleDropdown = () => {
 
 document.addEventListener('click', (e) => {
   const wrap = document.querySelector('.user-menu-wrap');
-  if (wrap && !wrap.contains(e.target)) document.getElementById('user-dropdown')?.classList.remove('open');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('user-dropdown')?.classList.remove('open');
+  }
 });
 
 window.loginWithGoogle = async () => {
   try {
-    await account.createOAuth2Session('google',
+    // Use full hardcoded URLs - required for Safari iOS
+    account.createOAuth2Session(
+      'google',
       'https://gorkhatv.site/pages/auth-callback.html',
       'https://gorkhatv.site'
     );
-  } catch (err) { console.error(err); }
+  } catch (err) {
+    console.error('Login error:', err);
+  }
 };
 
 window.logout = async () => {
@@ -92,12 +100,16 @@ async function loadContent() {
     allContent = res.documents;
     heroItems = [...allContent.filter(d => d.featured), ...allContent].slice(0, 6);
     const seen = new Set();
-    heroItems = heroItems.filter(d => { if (seen.has(d.$id)) return false; seen.add(d.$id); return true; }).slice(0, 5);
+    heroItems = heroItems.filter(d => {
+      if (seen.has(d.$id)) return false;
+      seen.add(d.$id);
+      return true;
+    }).slice(0, 5);
     renderHero();
     startHeroTimer();
     renderRows();
   } catch (err) {
-    console.error(err);
+    console.error('Load error:', err);
   }
 }
 
@@ -124,7 +136,6 @@ function renderHero() {
 }
 
 window.goHero = (i) => { heroIndex = i; renderHero(); resetHeroTimer(); };
-
 function startHeroTimer() {
   if (heroItems.length <= 1) return;
   heroTimer = setInterval(() => { heroIndex = (heroIndex + 1) % heroItems.length; renderHero(); }, 7000);
@@ -163,7 +174,7 @@ function renderTopN(id, items) {
 function cardHTML(item) {
   const thumb = getThumb(item);
   const isLiked = likes[item.$id] > 0;
-  const likeCount = likes[item.$id] || item.likes || 0;
+  const likeCount = likes[item.$id] || 0;
   return `
     <div class="card" onclick='openModal(${safeJSON(item)})'>
       <div class="card-thumb">
@@ -191,7 +202,7 @@ function getThumb(item, size = 'hq') {
 }
 
 window.toggleLike = (id, btn) => {
-  if (!currentUser) { showToast('Sign in to like content'); loginWithGoogle(); return; }
+  if (!currentUser) { showToast('Sign in to like content'); return; }
   const isLiked = !!likes[id];
   if (isLiked) { delete likes[id]; btn.innerHTML = `🤍`; btn.classList.remove('liked'); showToast('Like removed'); }
   else { likes[id] = 1; btn.innerHTML = `❤️ 1`; btn.classList.add('liked'); showToast('Liked!'); }
@@ -199,7 +210,7 @@ window.toggleLike = (id, btn) => {
 };
 
 function toggleFavourite(item) {
-  if (!currentUser) { showToast('Sign in to save favourites'); loginWithGoogle(); return; }
+  if (!currentUser) { showToast('Sign in to save favourites'); return false; }
   const idx = favourites.findIndex(f => f.$id === item.$id);
   if (idx === -1) { favourites.push(item); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Added to favourites 🔖'); return true; }
   else { favourites.splice(idx, 1); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Removed from favourites'); return false; }
@@ -259,12 +270,11 @@ window.openModal = (item) => {
   if (item.location) meta.push(`<span><strong>Location:</strong> ${item.location}</span>`);
   document.getElementById('modal-meta').innerHTML = meta.join('');
   const isLiked = !!likes[item.$id];
-  const likeCount = likes[item.$id] || 0;
   document.getElementById('modal-like-btn').className = `modal-like-btn ${isLiked ? 'liked' : ''}`;
-  document.getElementById('modal-like-btn').innerHTML = `${isLiked ? '❤️' : '🤍'} ${isLiked ? 'Liked' : 'Like'} ${likeCount > 0 ? `(${likeCount})` : ''}`;
+  document.getElementById('modal-like-btn').innerHTML = `${isLiked ? '❤️' : '🤍'} ${isLiked ? 'Liked' : 'Like'}`;
   const isFav = favourites.some(f => f.$id === item.$id);
   document.getElementById('modal-fav-btn').className = `modal-fav-btn ${isFav ? 'saved' : ''}`;
-  document.getElementById('modal-fav-btn').innerHTML = `${isFav ? '🔖 Saved' : '+ My List'}`;
+  document.getElementById('modal-fav-btn').innerHTML = isFav ? '🔖 Saved' : '+ My List';
   const claimEl = document.getElementById('modal-claim');
   if (item.cast || item.director) {
     claimEl.innerHTML = currentUser
@@ -283,8 +293,7 @@ window.closeModal = () => {
 };
 
 window.modalLike = () => {
-  if (!modalItem) return;
-  if (!currentUser) { showToast('Sign in to like content'); return; }
+  if (!modalItem || !currentUser) { showToast('Sign in to like'); return; }
   const isLiked = !!likes[modalItem.$id];
   if (isLiked) { delete likes[modalItem.$id]; showToast('Like removed'); }
   else { likes[modalItem.$id] = 1; showToast('Liked! ❤️'); }
