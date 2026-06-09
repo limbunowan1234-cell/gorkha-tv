@@ -1,6 +1,6 @@
+
 import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
 
-// ── STATE ──
 let currentUser = null;
 let allContent = [];
 let heroItems = [];
@@ -8,6 +8,19 @@ let heroIndex = 0;
 let heroTimer = null;
 let likes = JSON.parse(localStorage.getItem('gtv_likes') || '{}');
 let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
+let modalItem = null;
+
+const ROOT = '/';
+const VIDEO_PAGE = 'pages/video.html';
+const BROWSE_PAGE = 'pages/browse.html';
+const FAV_PAGE = 'pages/my-favourites.html';
+const CREDITS_PAGE = 'pages/my-credits.html';
+const EDIT_PROFILE_PAGE = 'pages/edit-profile.html';
+const ADMIN_PAGE = 'pages/admin.html';
+const AUTH_CALLBACK = 'pages/auth-callback.html';
+
+const GOOGLE_REDIRECT = 'https://gorkhatv.site/pages/auth-callback.html';
+const GOOGLE_SUCCESS = 'https://gorkhatv.site';
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
@@ -31,6 +44,7 @@ async function checkAuth() {
 
 function renderUserNav() {
   const nr = document.getElementById('nav-right');
+  if (!nr) return;
   const initial = currentUser.name ? currentUser.name[0].toUpperCase() : '?';
   const isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
   nr.innerHTML = `
@@ -43,10 +57,10 @@ function renderUserNav() {
           <div class="name">${currentUser.name}</div>
           <div class="email">${currentUser.email}</div>
         </div>
-        <a href="pages/my-favourites.html" class="dropdown-item">🔖 My Favourites</a>
-        <a href="pages/my-credits.html" class="dropdown-item">⭐ My Credits</a>
-        <a href="pages/edit-profile.html" class="dropdown-item">🎭 My Artist Profile</a>
-        ${isAdmin ? `<a href="pages/admin.html" class="dropdown-item">🛠 Admin Panel</a>` : ''}
+        <a href="${FAV_PAGE}" class="dropdown-item">🔖 My Favourites</a>
+        <a href="${CREDITS_PAGE}" class="dropdown-item">⭐ My Credits</a>
+        <a href="${EDIT_PROFILE_PAGE}" class="dropdown-item">🎭 My Artist Profile</a>
+        ${isAdmin ? `<a href="${ADMIN_PAGE}" class="dropdown-item">🛠 Admin Panel</a>` : ''}
         <hr class="dropdown-divider">
         <button onclick="logout()" class="dropdown-item danger">Sign out</button>
       </div>
@@ -55,30 +69,21 @@ function renderUserNav() {
 }
 
 function renderLoginBtn() {
-  document.getElementById('nav-right').innerHTML = `
-    <button class="btn-signin" onclick="loginWithGoogle()">Sign In</button>
-  `;
+  const nr = document.getElementById('nav-right');
+  if (!nr) return;
+  nr.innerHTML = `<button class="btn-signin" onclick="loginWithGoogle()">Sign In</button>`;
 }
 
-window.toggleDropdown = () => {
-  document.getElementById('user-dropdown')?.classList.toggle('open');
-};
+window.toggleDropdown = () => document.getElementById('user-dropdown')?.classList.toggle('open');
 
 document.addEventListener('click', (e) => {
   const wrap = document.querySelector('.user-menu-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    document.getElementById('user-dropdown')?.classList.remove('open');
-  }
+  if (wrap && !wrap.contains(e.target)) document.getElementById('user-dropdown')?.classList.remove('open');
 });
 
 window.loginWithGoogle = async () => {
   try {
-    // Use full hardcoded URLs - required for Safari iOS
-    account.createOAuth2Token(
-      'google',
-      'https://gorkhatv.site/pages/auth-callback.html',
-      'https://gorkhatv.site'
-    );
+    await account.createOAuth2Token('google', GOOGLE_REDIRECT, GOOGLE_SUCCESS);
   } catch (err) {
     console.error('Login error:', err);
   }
@@ -97,6 +102,7 @@ async function loadContent() {
       Query.orderDesc('publishedAt'),
       Query.limit(60)
     ]);
+
     allContent = res.documents;
     heroItems = [...allContent.filter(d => d.featured), ...allContent].slice(0, 6);
     const seen = new Set();
@@ -105,6 +111,7 @@ async function loadContent() {
       seen.add(d.$id);
       return true;
     }).slice(0, 5);
+
     renderHero();
     startHeroTimer();
     renderRows();
@@ -113,26 +120,51 @@ async function loadContent() {
   }
 }
 
+// ── HELPERS ──
+function videoUrl(item) {
+  return `${VIDEO_PAGE}?id=${encodeURIComponent(item.$id)}`;
+}
+
+function browseUrl(cat) {
+  return cat && cat !== 'all' ? `${BROWSE_PAGE}?cat=${encodeURIComponent(cat)}` : BROWSE_PAGE;
+}
+
+function getThumb(item, size = 'hq') {
+  if (item.thumbnailFileId) return storage.getFileView(BUCKET_ID, item.thumbnailFileId);
+  if (item.youtube_id) return `https://img.youtube.com/vi/${item.youtube_id}/${size === 'max' ? 'maxresdefault' : 'hqdefault'}.jpg`;
+  return '';
+}
+
+function safeJSON(item) {
+  return JSON.stringify(item).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
 // ── HERO ──
 function renderHero() {
   if (!heroItems.length) return;
   const item = heroItems[heroIndex];
   const thumb = getThumb(item, 'max');
-  document.getElementById('hero-bg').style.backgroundImage = `url(${thumb})`;
-  document.getElementById('hero-tag').textContent = item.category;
-  document.getElementById('hero-title').textContent = item.title;
+  const bg = document.getElementById('hero-bg');
+  if (bg) bg.style.backgroundImage = `url(${thumb})`;
+  document.getElementById('hero-tag').textContent = item.category || 'Featured';
+  document.getElementById('hero-title').textContent = item.title || '';
   document.getElementById('hero-desc').textContent = item.description || '';
+
   const meta = [];
   if (item.publishedAt) meta.push(`<span>${new Date(item.publishedAt).getFullYear()}</span>`);
   if (item.language) meta.push(`<div class="dot"></div><span class="lang-badge">${item.language.slice(0,3).toUpperCase()}</span>`);
   if (item.location) meta.push(`<div class="dot"></div><span>${item.location}</span>`);
   document.getElementById('hero-meta').innerHTML = meta.join('');
-  document.getElementById('hero-play-btn').onclick = () => openModal(item);
-  document.getElementById('hero-more-btn').onclick = () => openModal(item);
+
+  document.getElementById('hero-play-btn').onclick = () => window.location.href = videoUrl(item);
+  document.getElementById('hero-more-btn').onclick = () => window.location.href = videoUrl(item);
+
   const dotsEl = document.getElementById('hero-dots');
-  dotsEl.innerHTML = heroItems.map((_, i) =>
-    `<div onclick="goHero(${i})" style="width:${i===heroIndex?'24':'8'}px;height:8px;border-radius:4px;background:${i===heroIndex?'var(--red)':'rgba(255,255,255,0.25)'};cursor:pointer;transition:all 0.3s;"></div>`
-  ).join('');
+  if (dotsEl) {
+    dotsEl.innerHTML = heroItems.map((_, i) =>
+      `<div onclick="goHero(${i})" style="width:${i===heroIndex?'24':'8'}px;height:8px;border-radius:4px;background:${i===heroIndex?'var(--red)':'rgba(255,255,255,0.25)'};cursor:pointer;transition:all 0.3s;"></div>`
+    ).join('');
+  }
 }
 
 window.goHero = (i) => { heroIndex = i; renderHero(); resetHeroTimer(); };
@@ -155,17 +187,19 @@ function renderRows(category = 'all') {
 
 function renderRowCards(id, items) {
   const el = document.getElementById(id);
+  if (!el) return;
   if (!items.length) { el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No content yet.</div>`; return; }
   el.innerHTML = items.map(item => cardHTML(item)).join('');
 }
 
 function renderTopN(id, items) {
   const el = document.getElementById(id);
+  if (!el) return;
   el.innerHTML = items.map((item, i) => `
-    <div class="num-card" onclick='openModal(${safeJSON(item)})'>
+    <div class="num-card" onclick="window.location.href='${videoUrl(item)}'">
       <div class="num-big">${i + 1}</div>
       <div class="num-card-img">
-        <img src="${getThumb(item)}" alt="${item.title}" loading="lazy" onerror="this.parentElement.style.background='var(--surface2)'">
+        <img src="${getThumb(item)}" alt="${item.title || ''}" loading="lazy" onerror="this.parentElement.style.background='var(--surface2)'">
       </div>
     </div>
   `).join('');
@@ -173,32 +207,26 @@ function renderTopN(id, items) {
 
 function cardHTML(item) {
   const thumb = getThumb(item);
-  const isLiked = likes[item.$id] > 0;
+  const isLiked = !!likes[item.$id];
   const likeCount = likes[item.$id] || 0;
   return `
-    <div class="card" onclick='openModal(${safeJSON(item)})'>
+    <div class="card" onclick="window.location.href='${videoUrl(item)}'">
       <div class="card-thumb">
-        <img src="${thumb}" alt="${item.title}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/default/hqdefault.jpg'">
+        <img src="${thumb}" alt="${item.title || ''}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/default/hqdefault.jpg'">
         <div class="card-play-overlay">
           <div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
-        <span class="card-cat-badge">${item.category}</span>
+        <span class="card-cat-badge">${item.category || ''}</span>
         <button class="card-like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${item.$id}', this)">
           ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
         </button>
       </div>
       <div class="card-body">
-        <div class="card-title">${item.title}</div>
+        <div class="card-title">${item.title || ''}</div>
         <div class="card-sub">${item.language || ''} ${item.location ? '· ' + item.location : ''}</div>
       </div>
     </div>
   `;
-}
-
-function getThumb(item, size = 'hq') {
-  if (item.thumbnailFileId) return storage.getFileView(BUCKET_ID, item.thumbnailFileId);
-  if (item.youtube_id) return `https://img.youtube.com/vi/${item.youtube_id}/${size === 'max' ? 'maxresdefault' : 'hqdefault'}.jpg`;
-  return '';
 }
 
 window.toggleLike = (id, btn) => {
@@ -217,115 +245,20 @@ function toggleFavourite(item) {
 }
 
 function initCategoryPills() {
-  const cats = ['all','movie','webseries','music','documentary','news'];
-  const labels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs', news:'News' };
+  const cats = ['all','movie','webseries','music','documentary'];
+  const labels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs' };
   const bar = document.getElementById('cats-bar');
+  if (!bar) return;
   bar.innerHTML = cats.map(c => `<div class="cat-pill ${c==='all'?'active':''}" data-cat="${c}">${labels[c]}</div>`).join('');
   bar.addEventListener('click', e => {
     const pill = e.target.closest('.cat-pill');
     if (!pill) return;
+    const cat = pill.dataset.cat;
     document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
     pill.classList.add('active');
-    renderRows(pill.dataset.cat);
+    window.location.href = browseUrl(cat);
   });
 }
 
 function initSearch() {
-  const input = document.getElementById('search-input');
-  if (!input) return;
-  input.addEventListener('input', e => {
-    const q = e.target.value.trim().toLowerCase();
-    if (!q) { renderRows(); return; }
-    const results = allContent.filter(d =>
-      d.title.toLowerCase().includes(q) ||
-      (d.cast || '').toLowerCase().includes(q) ||
-      (d.director || '').toLowerCase().includes(q)
-    );
-    document.getElementById('latest-row').innerHTML = results.length
-      ? results.map(item => cardHTML(item)).join('')
-      : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No results for "${q}"</div>`;
-  });
-}
-
-let modalItem = null;
-
-function initModal() {
-  document.getElementById('modal-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-overlay')) closeModal();
-  });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-}
-
-window.openModal = (item) => {
-  if (typeof item === 'string') item = JSON.parse(item);
-  modalItem = item;
-  document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
-  document.getElementById('modal-title').textContent = item.title;
-  document.getElementById('modal-desc').textContent = item.description || '';
-  const meta = [];
-  if (item.category) meta.push(`<span><strong>Category:</strong> ${item.category}</span>`);
-  if (item.director) meta.push(`<span><strong>Director:</strong> ${item.director}</span>`);
-  if (item.cast) meta.push(`<span><strong>Cast:</strong> ${item.cast}</span>`);
-  if (item.language) meta.push(`<span><strong>Language:</strong> ${item.language}</span>`);
-  if (item.location) meta.push(`<span><strong>Location:</strong> ${item.location}</span>`);
-  document.getElementById('modal-meta').innerHTML = meta.join('');
-  const isLiked = !!likes[item.$id];
-  document.getElementById('modal-like-btn').className = `modal-like-btn ${isLiked ? 'liked' : ''}`;
-  document.getElementById('modal-like-btn').innerHTML = `${isLiked ? '❤️' : '🤍'} ${isLiked ? 'Liked' : 'Like'}`;
-  const isFav = favourites.some(f => f.$id === item.$id);
-  document.getElementById('modal-fav-btn').className = `modal-fav-btn ${isFav ? 'saved' : ''}`;
-  document.getElementById('modal-fav-btn').innerHTML = isFav ? '🔖 Saved' : '+ My List';
-  const claimEl = document.getElementById('modal-claim');
-  if (item.cast || item.director) {
-    claimEl.innerHTML = currentUser
-      ? `<button class="claim-btn" onclick="claimCredit()">⭐ I worked on this — Verify my credit</button>`
-      : `<button class="claim-btn" onclick="loginWithGoogle()">Sign in to verify your credit</button>`;
-  } else { claimEl.innerHTML = ''; }
-  document.getElementById('modal-overlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-};
-
-window.closeModal = () => {
-  document.getElementById('modal-overlay').classList.remove('open');
-  document.getElementById('modal-video').innerHTML = '';
-  document.body.style.overflow = '';
-  modalItem = null;
-};
-
-window.modalLike = () => {
-  if (!modalItem || !currentUser) { showToast('Sign in to like'); return; }
-  const isLiked = !!likes[modalItem.$id];
-  if (isLiked) { delete likes[modalItem.$id]; showToast('Like removed'); }
-  else { likes[modalItem.$id] = 1; showToast('Liked! ❤️'); }
-  localStorage.setItem('gtv_likes', JSON.stringify(likes));
-  const btn = document.getElementById('modal-like-btn');
-  const nowLiked = !!likes[modalItem.$id];
-  btn.className = `modal-like-btn ${nowLiked ? 'liked' : ''}`;
-  btn.innerHTML = `${nowLiked ? '❤️' : '🤍'} ${nowLiked ? 'Liked' : 'Like'}`;
-};
-
-window.modalFav = () => {
-  if (!modalItem) return;
-  const saved = toggleFavourite(modalItem);
-  const btn = document.getElementById('modal-fav-btn');
-  btn.className = `modal-fav-btn ${saved ? 'saved' : ''}`;
-  btn.innerHTML = saved ? '🔖 Saved' : '+ My List';
-};
-
-window.claimCredit = () => {
-  if (!currentUser || !modalItem) return;
-  showToast('Credit claim submitted! Admin will verify soon. ⭐');
-};
-
-window.showToast = (msg) => {
-  let t = document.getElementById('toast');
-  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
-};
-
-function safeJSON(item) {
-  return JSON.stringify(item).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-}
+  const input = document.getElementB
