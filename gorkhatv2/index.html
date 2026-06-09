@@ -9,7 +9,6 @@
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
   <a href="/" class="logo-svg">
     <div class="logo-mark">
@@ -30,7 +29,6 @@
     <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
     <li><a href="pages/browse.html?cat=music">Music</a></li>
     <li><a href="pages/browse.html?cat=documentary">Docs</a></li>
-    <li><a href="pages/browse.html?cat=news">News</a></li>
     <li><a href="pages/artists.html">Artists</a></li>
   </ul>
 
@@ -44,7 +42,6 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
   <div class="hero-bg" id="hero-bg"></div>
   <div class="hero-gradient"></div>
@@ -69,10 +66,8 @@
   <div class="hero-dots" id="hero-dots"></div>
 </section>
 
-<!-- CATEGORY PILLS -->
 <div class="cats-bar" id="cats-bar"></div>
 
-<!-- FEATURED ROW -->
 <div class="row">
   <div class="row-header">
     <h2 class="row-title">Featured</h2>
@@ -83,7 +78,6 @@
   </div>
 </div>
 
-<!-- TOP 5 ROW -->
 <div class="row">
   <div class="row-header">
     <h2 class="row-title">Most Liked This Week</h2>
@@ -93,7 +87,6 @@
   </div>
 </div>
 
-<!-- LATEST ROW -->
 <div class="row">
   <div class="row-header">
     <h2 class="row-title">Latest</h2>
@@ -104,7 +97,6 @@
   </div>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-video" id="modal-video"></div>
@@ -114,7 +106,7 @@
         <button class="modal-close" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-actions">
-        <button class="modal-play-btn" onclick="document.getElementById('modal-video').querySelector('iframe')?.contentWindow.postMessage('{\"event\":\"command\",\"func\":\"playVideo\",\"args\":\"\"}','*')">
+        <button class="modal-play-btn" onclick="window.location.href='pages/video.html?id=' + (modalItem ? modalItem.$id : '')">
           <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg> Play
         </button>
         <button class="modal-like-btn" id="modal-like-btn" onclick="modalLike()">🤍 Like</button>
@@ -127,7 +119,6 @@
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer>
   <div class="footer-inner">
     <div class="footer-about">
@@ -149,7 +140,6 @@
         <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
         <li><a href="pages/browse.html?cat=music">Music Videos</a></li>
         <li><a href="pages/browse.html?cat=documentary">Documentaries</a></li>
-        <li><a href="pages/browse.html?cat=news">News</a></li>
       </ul>
     </div>
     <div class="footer-col">
@@ -169,4 +159,4 @@
 
 <script type="module" src="js/main.js"></script>
 </body>
-</html> 
+</html>
