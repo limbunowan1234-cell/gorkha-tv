@@ -74,7 +74,7 @@ document.addEventListener('click', (e) => {
 window.loginWithGoogle = async () => {
   try {
     // Use full hardcoded URLs - required for Safari iOS
-    account.createOAuth2Session(
+    account.createOAuth2Token(
       'google',
       'https://gorkhatv.site/pages/auth-callback.html',
       'https://gorkhatv.site'
