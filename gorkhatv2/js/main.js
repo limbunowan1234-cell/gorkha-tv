@@ -70,8 +70,8 @@ document.addEventListener('click', (e) => {
 window.loginWithGoogle = async () => {
   try {
     await account.createOAuth2Session('google',
-      window.location.origin + '/pages/auth-callback.html',
-      window.location.href
+      'https://gorkhatv.site/pages/auth-callback.html',
+      'https://gorkhatv.site'
     );
   } catch (err) { console.error(err); }
 };
@@ -91,10 +91,8 @@ async function loadContent() {
     ]);
     allContent = res.documents;
     heroItems = [...allContent.filter(d => d.featured), ...allContent].slice(0, 6);
-    // deduplicate hero
     const seen = new Set();
     heroItems = heroItems.filter(d => { if (seen.has(d.$id)) return false; seen.add(d.$id); return true; }).slice(0, 5);
-
     renderHero();
     startHeroTimer();
     renderRows();
@@ -108,22 +106,17 @@ function renderHero() {
   if (!heroItems.length) return;
   const item = heroItems[heroIndex];
   const thumb = getThumb(item, 'max');
-
   document.getElementById('hero-bg').style.backgroundImage = `url(${thumb})`;
   document.getElementById('hero-tag').textContent = item.category;
   document.getElementById('hero-title').textContent = item.title;
   document.getElementById('hero-desc').textContent = item.description || '';
-
   const meta = [];
   if (item.publishedAt) meta.push(`<span>${new Date(item.publishedAt).getFullYear()}</span>`);
   if (item.language) meta.push(`<div class="dot"></div><span class="lang-badge">${item.language.slice(0,3).toUpperCase()}</span>`);
   if (item.location) meta.push(`<div class="dot"></div><span>${item.location}</span>`);
   document.getElementById('hero-meta').innerHTML = meta.join('');
-
   document.getElementById('hero-play-btn').onclick = () => openModal(item);
   document.getElementById('hero-more-btn').onclick = () => openModal(item);
-
-  // dots
   const dotsEl = document.getElementById('hero-dots');
   dotsEl.innerHTML = heroItems.map((_, i) =>
     `<div onclick="goHero(${i})" style="width:${i===heroIndex?'24':'8'}px;height:8px;border-radius:4px;background:${i===heroIndex?'var(--red)':'rgba(255,255,255,0.25)'};cursor:pointer;transition:all 0.3s;"></div>`
@@ -144,7 +137,6 @@ function renderRows(category = 'all') {
   const featured = allContent.filter(d => d.featured).slice(0, 8);
   const latest = filtered.slice(0, 12);
   const topLiked = [...allContent].sort((a, b) => (likes[b.$id] || 0) - (likes[a.$id] || 0)).slice(0, 5);
-
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
   renderRowCards('latest-row', latest);
@@ -168,7 +160,6 @@ function renderTopN(id, items) {
   `).join('');
 }
 
-// ── CARD HTML ──
 function cardHTML(item) {
   const thumb = getThumb(item);
   const isLiked = likes[item.$id] > 0;
@@ -193,56 +184,32 @@ function cardHTML(item) {
   `;
 }
 
-// ── THUMB ──
 function getThumb(item, size = 'hq') {
   if (item.thumbnailFileId) return storage.getFileView(BUCKET_ID, item.thumbnailFileId);
   if (item.youtube_id) return `https://img.youtube.com/vi/${item.youtube_id}/${size === 'max' ? 'maxresdefault' : 'hqdefault'}.jpg`;
   return '';
 }
 
-// ── LIKES ──
 window.toggleLike = (id, btn) => {
   if (!currentUser) { showToast('Sign in to like content'); loginWithGoogle(); return; }
   const isLiked = !!likes[id];
-  if (isLiked) {
-    delete likes[id];
-    btn.innerHTML = `🤍`;
-    btn.classList.remove('liked');
-    showToast('Like removed');
-  } else {
-    likes[id] = 1;
-    btn.innerHTML = `❤️ 1`;
-    btn.classList.add('liked');
-    showToast('Liked!');
-  }
+  if (isLiked) { delete likes[id]; btn.innerHTML = `🤍`; btn.classList.remove('liked'); showToast('Like removed'); }
+  else { likes[id] = 1; btn.innerHTML = `❤️ 1`; btn.classList.add('liked'); showToast('Liked!'); }
   localStorage.setItem('gtv_likes', JSON.stringify(likes));
 };
 
-// ── FAVOURITES ──
 function toggleFavourite(item) {
   if (!currentUser) { showToast('Sign in to save favourites'); loginWithGoogle(); return; }
   const idx = favourites.findIndex(f => f.$id === item.$id);
-  if (idx === -1) {
-    favourites.push(item);
-    localStorage.setItem('gtv_favs', JSON.stringify(favourites));
-    showToast('Added to favourites 🔖');
-    return true;
-  } else {
-    favourites.splice(idx, 1);
-    localStorage.setItem('gtv_favs', JSON.stringify(favourites));
-    showToast('Removed from favourites');
-    return false;
-  }
+  if (idx === -1) { favourites.push(item); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Added to favourites 🔖'); return true; }
+  else { favourites.splice(idx, 1); localStorage.setItem('gtv_favs', JSON.stringify(favourites)); showToast('Removed from favourites'); return false; }
 }
 
-// ── CATEGORY PILLS ──
 function initCategoryPills() {
   const cats = ['all','movie','webseries','music','documentary','news'];
   const labels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs', news:'News' };
   const bar = document.getElementById('cats-bar');
-  bar.innerHTML = cats.map(c =>
-    `<div class="cat-pill ${c==='all'?'active':''}" data-cat="${c}">${labels[c]}</div>`
-  ).join('');
+  bar.innerHTML = cats.map(c => `<div class="cat-pill ${c==='all'?'active':''}" data-cat="${c}">${labels[c]}</div>`).join('');
   bar.addEventListener('click', e => {
     const pill = e.target.closest('.cat-pill');
     if (!pill) return;
@@ -252,7 +219,6 @@ function initCategoryPills() {
   });
 }
 
-// ── SEARCH ──
 function initSearch() {
   const input = document.getElementById('search-input');
   if (!input) return;
@@ -270,7 +236,6 @@ function initSearch() {
   });
 }
 
-// ── MODAL ──
 let modalItem = null;
 
 function initModal() {
@@ -283,12 +248,9 @@ function initModal() {
 window.openModal = (item) => {
   if (typeof item === 'string') item = JSON.parse(item);
   modalItem = item;
-
-  document.getElementById('modal-video').innerHTML =
-    `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
+  document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
   document.getElementById('modal-title').textContent = item.title;
   document.getElementById('modal-desc').textContent = item.description || '';
-
   const meta = [];
   if (item.category) meta.push(`<span><strong>Category:</strong> ${item.category}</span>`);
   if (item.director) meta.push(`<span><strong>Director:</strong> ${item.director}</span>`);
@@ -296,28 +258,19 @@ window.openModal = (item) => {
   if (item.language) meta.push(`<span><strong>Language:</strong> ${item.language}</span>`);
   if (item.location) meta.push(`<span><strong>Location:</strong> ${item.location}</span>`);
   document.getElementById('modal-meta').innerHTML = meta.join('');
-
-  // Like btn
   const isLiked = !!likes[item.$id];
   const likeCount = likes[item.$id] || 0;
   document.getElementById('modal-like-btn').className = `modal-like-btn ${isLiked ? 'liked' : ''}`;
   document.getElementById('modal-like-btn').innerHTML = `${isLiked ? '❤️' : '🤍'} ${isLiked ? 'Liked' : 'Like'} ${likeCount > 0 ? `(${likeCount})` : ''}`;
-
-  // Fav btn
   const isFav = favourites.some(f => f.$id === item.$id);
   document.getElementById('modal-fav-btn').className = `modal-fav-btn ${isFav ? 'saved' : ''}`;
   document.getElementById('modal-fav-btn').innerHTML = `${isFav ? '🔖 Saved' : '+ My List'}`;
-
-  // Claim
   const claimEl = document.getElementById('modal-claim');
   if (item.cast || item.director) {
     claimEl.innerHTML = currentUser
       ? `<button class="claim-btn" onclick="claimCredit()">⭐ I worked on this — Verify my credit</button>`
       : `<button class="claim-btn" onclick="loginWithGoogle()">Sign in to verify your credit</button>`;
-  } else {
-    claimEl.innerHTML = '';
-  }
-
+  } else { claimEl.innerHTML = ''; }
   document.getElementById('modal-overlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 };
@@ -355,7 +308,6 @@ window.claimCredit = () => {
   showToast('Credit claim submitted! Admin will verify soon. ⭐');
 };
 
-// ── TOAST ──
 window.showToast = (msg) => {
   let t = document.getElementById('toast');
   if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
@@ -365,7 +317,6 @@ window.showToast = (msg) => {
   t._timer = setTimeout(() => t.classList.remove('show'), 2800);
 };
 
-// ── UTILS ──
 function safeJSON(item) {
   return JSON.stringify(item).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-} 
+}
