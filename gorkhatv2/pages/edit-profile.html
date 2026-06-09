@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Edit Profile</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .page-wrap { max-width: 680px; margin: 40px auto; padding: 0 24px 60px; }
+    .page-title { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 6px; }
+    .page-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 20px; }
+    .form-section-title { font-family: 'Teko', sans-serif; font-size: 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; color: rgba(240,240,240,0.8); }
+    .form-section-title::before { content: ''; display: block; width: 3px; height: 18px; background: var(--red); border-radius: 2px; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+    input, textarea, select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 14px; border-radius: 4px;
+      font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--red); }
+    textarea { resize: vertical; min-height: 90px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .btn-save {
+      background: var(--red); color: #fff; border: none; padding: 12px 32px;
+      border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: opacity 0.2s; width: 100%;
+    }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-save:disabled { opacity: 0.45; cursor: not-allowed; }
+    .alert { padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 20px; display: none; }
+    .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .photo-upload-wrap { display: flex; gap: 16px; align-items: center; }
+    .photo-preview {
+      width: 72px; height: 72px; border-radius: 50%; background: var(--surface2);
+      border: 2px solid var(--border); overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Teko', sans-serif; font-size: 28px; color: var(--red);
+    }
+    .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--muted); padding: 10px 16px; border-radius: 4px;
+      font-size: 13px; margin-bottom: 20px; word-break: break-all;
+    }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    @media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="page-wrap" id="page-wrap">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+import { databases, storage, account, DB_ID, ARTISTS_COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
+
+let currentUser = null;
+let existingArtist = null;
+
+try { currentUser = await account.get(); } catch {}
+
+if (!currentUser) {
+  document.getElementById('page-wrap').innerHTML = `
+    <div style="text-align:center;padding:80px 0;">
+      <div style="font-size:48px;margin-bottom:16px;">🔒</div>
+      <h2 style="font-family:'Teko',sans-serif;font-size:30px;margin-bottom:8px;">Sign in to create your profile</h2>
+      <button class="btn-signin" onclick="loginGoogle()" style="margin-top:8px;">Sign in with Google</button>
+    </div>`;
+  document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
+} else {
+  document.getElementById('nav-right').innerHTML = `<div class="user-avatar">${currentUser.name[0].toUpperCase()}</div>`;
+
+  // Check if artist profile exists
+  try {
+    const res = await databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [
+      Query.equal('userId', currentUser.$id), Query.limit(1)
+    ]);
+    if (res.documents.length) existingArtist = res.documents[0];
+  } catch {}
+
+  renderForm();
+}
+
+function renderForm() {
+  const a = existingArtist;
+  const slug = a?.slug || slugify(currentUser.name);
+  const profileUrl = `${window.location.origin}/pages/artist.html?id=${slug}`;
+
+  document.getElementById('page-wrap').innerHTML = `
+    <h1 class="page-title">${a ? '✏️ Edit Profile' : '🎭 Create Artist Profile'}</h1>
+    <p class="page-sub">${a ? 'Update your public GorkhaTV profile' : 'Set up your public profile on GorkhaTV'}</p>
+
+    ${a ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">Your Public Profile Link</div>
+      <div class="profile-link">
+        🔗 ${profileUrl}
+        <button onclick="navigator.clipboard.writeText('${profileUrl}');showToast('Link copied!')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;font-weight:700;">Copy</button>
+      </div>
+    </div>` : ''}
+
+    <div class="alert success" id="alert-success">✅ Profile saved! <a href="artist.html?id=${slug}" style="color:#4ade80;text-decoration:underline;">View your profile →</a></div>
+    <div class="alert error" id="alert-error">❌ <span id="error-msg"></span></div>
+
+    <div class="form-card">
+      <div class="form-section-title">Basic Info</div>
+
+      <div class="form-group">
+        <label>Photo</label>
+        <div class="photo-upload-wrap">
+          <div class="photo-preview" id="photo-preview">
+            ${a?.photoFiled ? `<img src="${storage.getFileView(BUCKET_ID, a.photoFiled)}" id="photo-img">` : `<span id="photo-initial">${currentUser.name[0].toUpperCase()}</span>`}
+          </div>
+          <div style="flex:1;">
+            <input type="file" id="photo-file" accept="image/*" onchange="previewPhoto(this)">
+            <p class="hint">JPG or PNG, max 2MB. Square photo recommended.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" id="f-name" value="${a?.name || currentUser.name}" placeholder="Your full name">
+        <p class="hint">This will be your public display name on GorkhaTV</p>
+      </div>
+
+      <div class="form-group">
+        <label>Profile URL Slug *</label>
+        <input type="text" id="f-slug" value="${a?.slug || slugify(currentUser.name)}" placeholder="e.g. rohan-rai" oninput="updateSlugPreview(this.value)">
+        <p class="hint" id="slug-preview">Profile: ${profileUrl}</p>
+      </div>
+
+      <div class="form-group">
+        <label>Profession *</label>
+        <select id="f-profession">
+          ${['Actor','Director','Singer','Musician','Cinematographer','Editor','Producer','Crew','Writer','Other'].map(p =>
+            `<option value="${p}" ${a?.profession===p?'selected':''}>${p}</option>`
+          ).join('')}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Bio</label>
+        <textarea id="f-bio" placeholder="A short bio about yourself...">${a?.bio || ''}</textarea>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">Details</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Location</label>
+          <select id="f-location">
+            <option value="">Select...</option>
+            ${['Darjeeling','Kalimpong','Kurseong','Mirik','Siliguri','Sikkim','Assam','Other'].map(l =>
+              `<option value="${l}" ${a?.location===l?'selected':''}>${l}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Languages</label>
+          <input type="text" id="f-languages" value="${a?.languages || ''}" placeholder="e.g. Nepali, Hindi">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-section-title">Social Links</div>
+      <div class="form-group">
+        <label>Instagram Username</label>
+        <input type="text" id="f-instagram" value="${a?.instagram || ''}" placeholder="@yourhandle">
+      </div>
+      <div class="form-group">
+        <label>YouTube Channel URL</label>
+        <input type="text" id="f-youtube" value="${a?.youtube || ''}" placeholder="https://youtube.com/@channel">
+      </div>
+    </div>
+
+    <button class="btn-save" id="save-btn" onclick="saveProfile()">
+      ${a ? 'Save Changes' : 'Create Profile'}
+    </button>
+  `;
+}
+
+window.previewPhoto = (input) => {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photo-preview').innerHTML = `<img src="${e.target.result}">`;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.updateSlugPreview = (val) => {
+  const slug = slugify(val);
+  document.getElementById('f-slug').value = slug;
+  document.getElementById('slug-preview').textContent = `Profile: ${window.location.origin}/pages/artist.html?id=${slug}`;
+};
+
+window.saveProfile = async () => {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  hideAlerts();
+
+  const name = document.getElementById('f-name').value.trim();
+  const slug = document.getElementById('f-slug').value.trim();
+  const profession = document.getElementById('f-profession').value;
+
+  if (!name || !slug || !profession) {
+    showError('Name, slug and profession are required.');
+    btn.disabled = false; btn.textContent = existingArtist ? 'Save Changes' : 'Create Profile';
+    return;
+  }
+
+  try {
+    // Upload photo if selected
+    let photoFiled = existingArtist?.photoFiled || null;
+    const fileInput = document.getElementById('photo-file');
+    if (fileInput.files.length) {
+      const file = fileInput.files[0];
+      const uploaded = await storage.createFile(BUCKET_ID, 'unique()', file);
+      photoFiled = uploaded.$id;
+    }
+
+    const data = {
+      name, slug, profession, userId: currentUser.$id,
+      bio: document.getElementById('f-bio').value.trim() || null,
+      location: document.getElementById('f-location').value || null,
+      languages: document.getElementById('f-languages').value.trim() || null,
+      instagram: document.getElementById('f-instagram').value.trim() || null,
+      youtube: document.getElementById('f-youtube').value.trim() || null,
+      photoFiled: photoFiled,
+    };
+    // Remove nulls
+    Object.keys(data).forEach(k => { if (data[k] === null) delete data[k]; });
+
+    if (existingArtist) {
+      await databases.updateDocument(DB_ID, ARTISTS_COLLECTION_ID, existingArtist.$id, data);
+    } else {
+      await databases.createDocument(DB_ID, ARTISTS_COLLECTION_ID, 'unique()', data);
+    }
+
+    document.getElementById('alert-success').style.display = 'block';
+  } catch (err) {
+    showError(err.message || 'Failed to save profile.');
+    console.error(err);
+  }
+
+  btn.disabled = false; btn.textContent = existingArtist ? 'Save Changes' : 'Create Profile';
+};
+
+function showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('alert-error').style.display = 'block';
+}
+function hideAlerts() {
+  document.getElementById('alert-success').style.display = 'none';
+  document.getElementById('alert-error').style.display = 'none';
+}
+
+function slugify(text) {
+  return text.toString().toLowerCase().trim()
+    .replace(/[\s]+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-');
+}
+
+window.loginGoogle = async () => {
+  const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
+  const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
+  const acc = new Account(client);
+  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+};
+
+window.showToast = (msg) => {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+};
+</script>
+</body>
+</html>

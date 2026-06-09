@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Browse</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .browse-header { padding: 36px 48px 0; }
+    .browse-title { font-family: 'Teko', sans-serif; font-size: 42px; font-weight: 600; }
+    .browse-sub { color: var(--muted); font-size: 13px; margin-top: 4px; margin-bottom: 24px; }
+    .browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; padding: 0 48px 60px; }
+    @media(max-width:600px){ .browse-header,.browse-grid{padding-left:16px;padding-right:16px;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html?cat=movie">Movies</a></li>
+    <li><a href="browse.html?cat=webseries">Web Series</a></li>
+    <li><a href="browse.html?cat=music">Music</a></li>
+    <li><a href="browse.html?cat=documentary">Docs</a></li>
+    <li><a href="browse.html?cat=news">News</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="cats-bar" id="cats-bar"></div>
+
+<div class="browse-header">
+  <h1 class="browse-title" id="browse-title">Browse</h1>
+  <p class="browse-sub" id="browse-sub"></p>
+</div>
+
+<div class="browse-grid" id="browse-grid">
+  <div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-video" id="modal-video"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-like-btn" id="modal-like-btn" onclick="modalLike()">🤍 Like</button>
+        <button class="modal-fav-btn" id="modal-fav-btn" onclick="modalFav()">+ My List</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+      <div id="modal-claim"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { databases, account, DB_ID, COLLECTION_ID, Query } from '../js/appwrite.js';
+
+const params = new URLSearchParams(window.location.search);
+const cat = params.get('cat');
+const featured = params.get('featured');
+const labels = { movie:'Movies', webseries:'Web Series', music:'Music Videos', documentary:'Documentaries', news:'News' };
+
+let currentUser = null;
+let likes = JSON.parse(localStorage.getItem('gtv_likes') || '{}');
+let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
+let modalItem = null;
+
+try { currentUser = await account.get(); } catch {}
+
+// Nav
+if (currentUser) {
+  document.getElementById('nav-right').innerHTML = `<div class="user-avatar" style="cursor:pointer;" onclick="window.location.href='/pages/my-favourites.html'">${currentUser.name[0].toUpperCase()}</div>`;
+} else {
+  document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
+}
+
+// Title
+document.getElementById('browse-title').textContent = cat ? labels[cat] || cat : featured ? 'Featured' : 'All Content';
+document.getElementById('browse-sub').textContent = cat ? `All ${labels[cat]||cat} on GorkhaTV` : 'Explore everything on GorkhaTV';
+
+// Active nav
+document.querySelectorAll('.nav-links a').forEach(a => { if (cat && a.href.includes(`cat=${cat}`)) a.classList.add('active'); });
+
+// Category pills
+const cats = ['all','movie','webseries','music','documentary','news'];
+const catLabels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs', news:'News' };
+document.getElementById('cats-bar').innerHTML = cats.map(c =>
+  `<a href="browse.html${c==='all'?'':'?cat='+c}" class="cat-pill ${(!cat&&c==='all')||(cat===c)?'active':''}">${catLabels[c]}</a>`
+).join('');
+
+// Load
+async function load() {
+  const queries = [Query.equal('status','published'), Query.orderDesc('publishedAt'), Query.limit(60)];
+  if (cat) queries.push(Query.equal('category', cat));
+  if (featured) queries.push(Query.equal('featured', true));
+
+  try {
+    const res = await databases.listDocuments(DB_ID, COLLECTION_ID, queries);
+    const grid = document.getElementById('browse-grid');
+    if (!res.documents.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🎬</div><h3>Nothing here yet</h3><p style="color:var(--muted);font-size:14px;">Check back soon!</p></div>`;
+      return;
+    }
+    grid.innerHTML = res.documents.map(item => {
+      const isLiked = !!likes[item.$id];
+      const likeCount = likes[item.$id] || 0;
+      return `
+        <div class="card" onclick='openModal(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+          <div class="card-thumb">
+            <img src="https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg" alt="${item.title}" loading="lazy">
+            <div class="card-play-overlay"><div class="play-circle"><svg viewBox="0 0 24 24" fill="black" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></div></div>
+            <span class="card-cat-badge">${item.category}</span>
+            <button class="card-like-btn ${isLiked?'liked':''}" onclick="event.stopPropagation();quickLike('${item.$id}',this)">
+              ${isLiked?'❤️':'🤍'} ${likeCount>0?likeCount:''}
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${item.title}</div>
+            <div class="card-sub">${item.language||''} ${item.location?'· '+item.location:''}</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch { document.getElementById('browse-grid').innerHTML = `<p style="color:var(--muted);grid-column:1/-1">Could not load content.</p>`; }
+}
+
+window.quickLike = (id, btn) => {
+  if (!currentUser) { alert('Sign in to like content'); return; }
+  const isLiked = !!likes[id];
+  if (isLiked) { delete likes[id]; btn.innerHTML='🤍'; btn.classList.remove('liked'); }
+  else { likes[id]=1; btn.innerHTML='❤️ 1'; btn.classList.add('liked'); }
+  localStorage.setItem('gtv_likes', JSON.stringify(likes));
+};
+
+window.openModal = (item) => {
+  if (typeof item === 'string') item = JSON.parse(item);
+  modalItem = item;
+  document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-desc').textContent = item.description || '';
+  const meta = [];
+  if (item.director) meta.push(`<span><strong>Director:</strong> ${item.director}</span>`);
+  if (item.cast) meta.push(`<span><strong>Cast:</strong> ${item.cast}</span>`);
+  if (item.language) meta.push(`<span><strong>Language:</strong> ${item.language}</span>`);
+  if (item.location) meta.push(`<span><strong>Location:</strong> ${item.location}</span>`);
+  document.getElementById('modal-meta').innerHTML = meta.join('');
+  const isLiked = !!likes[item.$id];
+  document.getElementById('modal-like-btn').className = `modal-like-btn ${isLiked?'liked':''}`;
+  document.getElementById('modal-like-btn').innerHTML = `${isLiked?'❤️':'🤍'} ${isLiked?'Liked':'Like'}`;
+  const isFav = favourites.some(f => f.$id === item.$id);
+  document.getElementById('modal-fav-btn').className = `modal-fav-btn ${isFav?'saved':''}`;
+  document.getElementById('modal-fav-btn').innerHTML = isFav ? '🔖 Saved' : '+ My List';
+  document.getElementById('modal-claim').innerHTML = currentUser && (item.cast||item.director)
+    ? `<button class="claim-btn" onclick="alert('Credit claim submitted! Admin will verify soon. ⭐')">⭐ I worked on this</button>` : '';
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-video').innerHTML = '';
+  document.body.style.overflow = '';
+};
+
+window.modalLike = () => {
+  if (!currentUser || !modalItem) return;
+  const isLiked = !!likes[modalItem.$id];
+  if (isLiked) { delete likes[modalItem.$id]; } else { likes[modalItem.$id] = 1; }
+  localStorage.setItem('gtv_likes', JSON.stringify(likes));
+  const btn = document.getElementById('modal-like-btn');
+  const nowLiked = !!likes[modalItem.$id];
+  btn.className = `modal-like-btn ${nowLiked?'liked':''}`;
+  btn.innerHTML = `${nowLiked?'❤️':'🤍'} ${nowLiked?'Liked':'Like'}`;
+};
+
+window.modalFav = () => {
+  if (!currentUser || !modalItem) return;
+  const idx = favourites.findIndex(f => f.$id === modalItem.$id);
+  if (idx === -1) { favourites.push(modalItem); }
+  else { favourites.splice(idx, 1); }
+  localStorage.setItem('gtv_favs', JSON.stringify(favourites));
+  const isFav = favourites.some(f => f.$id === modalItem.$id);
+  const btn = document.getElementById('modal-fav-btn');
+  btn.className = `modal-fav-btn ${isFav?'saved':''}`;
+  btn.innerHTML = isFav ? '🔖 Saved' : '+ My List';
+};
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+window.loginGoogle = async () => {
+  const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
+  const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
+  const acc = new Account(client);
+  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+};
+
+load();
+</script>
+</body>
+</html>

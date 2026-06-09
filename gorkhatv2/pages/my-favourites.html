@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — My Favourites</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .page-wrap { max-width: 1200px; margin: 40px auto; padding: 0 48px; }
+    .page-title { font-family: 'Teko', sans-serif; font-size: 40px; margin-bottom: 4px; }
+    .page-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 10px; }
+    @media(max-width:600px){ .page-wrap{padding:0 16px;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="page-wrap">
+  <h1 class="page-title">🔖 My Favourites</h1>
+  <p class="page-sub">Content you've saved to watch later</p>
+  <div class="fav-grid" id="fav-grid"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-video" id="modal-video"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-fav-btn saved" id="modal-fav-btn" onclick="removeFav()">🔖 Remove from List</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { account } from '../js/appwrite.js';
+
+let currentUser = null;
+let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
+let modalItem = null;
+
+try {
+  currentUser = await account.get();
+  document.getElementById('nav-right').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span style="font-size:13px;color:var(--muted);">${currentUser.name}</span>
+      <a href="/" style="font-size:13px;color:var(--muted);">← Home</a>
+    </div>`;
+} catch {
+  document.getElementById('nav-right').innerHTML = `<a href="/" style="font-size:13px;color:var(--muted);">← Home</a>`;
+}
+
+function render() {
+  const grid = document.getElementById('fav-grid');
+  if (!favourites.length) {
+    grid.innerHTML = `
+      <div class="empty" style="grid-column:1/-1">
+        <div class="empty-icon">🔖</div>
+        <h3>No favourites yet</h3>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">Browse content and click "+ My List" to save here.</p>
+        <a href="/" style="color:var(--red);font-size:14px;">Browse GorkhaTV →</a>
+      </div>`;
+    return;
+  }
+  grid.innerHTML = favourites.map(item => `
+    <div class="card" onclick='openModal(${JSON.stringify(item).replace(/'/g,"&#39;")})'>
+      <div class="card-thumb">
+        <img src="https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg" alt="${item.title}" loading="lazy">
+        <div class="card-play-overlay"><div class="play-circle"><svg viewBox="0 0 24 24" fill="black" width="18" height="18"><path d="M8 5v14l11-7z"/></svg></div></div>
+        <span class="card-cat-badge">${item.category}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${item.title}</div>
+        <div class="card-sub">${item.language||''} ${item.location?'· '+item.location:''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openModal = (item) => {
+  if (typeof item === 'string') item = JSON.parse(item);
+  modalItem = item;
+  document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-desc').textContent = item.description || '';
+  const meta = [];
+  if (item.director) meta.push(`<span><strong>Director:</strong> ${item.director}</span>`);
+  if (item.cast) meta.push(`<span><strong>Cast:</strong> ${item.cast}</span>`);
+  document.getElementById('modal-meta').innerHTML = meta.join('');
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-video').innerHTML = '';
+  document.body.style.overflow = '';
+};
+
+window.removeFav = () => {
+  if (!modalItem) return;
+  favourites = favourites.filter(f => f.$id !== modalItem.$id);
+  localStorage.setItem('gtv_favs', JSON.stringify(favourites));
+  closeModal();
+  render();
+};
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+render();
+</script>
+</body>
+</html>

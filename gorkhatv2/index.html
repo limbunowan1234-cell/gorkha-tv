@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Darjeeling in Every Frame</title>
+  <meta name="description" content="Watch movies, web series, music videos and documentaries from the Gorkha community.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/>
+        <polygon points="14.5,5.5 14.5,8.5 17.5,7" fill="white" opacity="0.8"/>
+      </svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="/" class="active">Home</a></li>
+    <li><a href="pages/browse.html?cat=movie">Movies</a></li>
+    <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
+    <li><a href="pages/browse.html?cat=music">Music</a></li>
+    <li><a href="pages/browse.html?cat=documentary">Docs</a></li>
+    <li><a href="pages/browse.html?cat=news">News</a></li>
+    <li><a href="pages/artists.html">Artists</a></li>
+  </ul>
+
+  <div class="nav-right" id="nav-right">
+    <div class="search-wrap">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Search titles, cast...">
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg" id="hero-bg"></div>
+  <div class="hero-gradient"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-tag" id="hero-tag">Featured</span>
+    </div>
+    <h1 class="hero-title" id="hero-title"></h1>
+    <div class="hero-meta" id="hero-meta"></div>
+    <p class="hero-desc" id="hero-desc"></p>
+    <div class="hero-actions">
+      <button class="btn-play" id="hero-play-btn">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+        Play
+      </button>
+      <button class="btn-more" id="hero-more-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        More Info
+      </button>
+    </div>
+  </div>
+  <div class="hero-dots" id="hero-dots"></div>
+</section>
+
+<!-- CATEGORY PILLS -->
+<div class="cats-bar" id="cats-bar"></div>
+
+<!-- FEATURED ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Featured</h2>
+    <a href="pages/browse.html?featured=true" class="see-all">See all →</a>
+  </div>
+  <div class="cards-scroll" id="featured-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- TOP 5 ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Most Liked This Week</h2>
+  </div>
+  <div class="cards-scroll" id="topn-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- LATEST ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Latest</h2>
+    <a href="pages/browse.html" class="see-all">See all →</a>
+  </div>
+  <div class="cards-scroll" id="latest-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-video" id="modal-video"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-play-btn" onclick="document.getElementById('modal-video').querySelector('iframe')?.contentWindow.postMessage('{\"event\":\"command\",\"func\":\"playVideo\",\"args\":\"\"}','*')">
+          <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg> Play
+        </button>
+        <button class="modal-like-btn" id="modal-like-btn" onclick="modalLike()">🤍 Like</button>
+        <button class="modal-fav-btn" id="modal-fav-btn" onclick="modalFav()">+ My List</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+      <div id="modal-claim"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-about">
+      <a href="/" class="logo-svg">
+        <div class="logo-mark" style="width:30px;height:30px;">
+          <svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg>
+        </div>
+        <div class="logo-text">
+          <div class="logo-wordmark" style="font-size:22px;">Gorkha<em>TV</em></div>
+          <div class="logo-tagline">Darjeeling in Every Frame</div>
+        </div>
+      </a>
+      <p>The home of Gorkha entertainment. Watch movies, web series, music videos and documentaries from the hills of Darjeeling and beyond.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Browse</h4>
+      <ul>
+        <li><a href="pages/browse.html?cat=movie">Movies</a></li>
+        <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
+        <li><a href="pages/browse.html?cat=music">Music Videos</a></li>
+        <li><a href="pages/browse.html?cat=documentary">Documentaries</a></li>
+        <li><a href="pages/browse.html?cat=news">News</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <ul>
+        <li><a href="pages/my-favourites.html">My Favourites</a></li>
+        <li><a href="pages/my-credits.html">My Credits</a></li>
+        <li><a href="pages/about.html">About GorkhaTV</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Made with ❤️ for the Gorkha community</span>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

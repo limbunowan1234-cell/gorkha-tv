@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-wrap { max-width: 780px; margin: 40px auto; padding: 0 24px; }
+    .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 8px; }
+    .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 32px; }
+    .form-card-title { font-family: 'Teko', sans-serif; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .form-card-title::before { content: ''; display: block; width: 3px; height: 20px; background: var(--red); border-radius: 2px; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+    input, textarea, select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 10px 14px; border-radius: 4px;
+      font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--red); }
+    textarea { resize: vertical; min-height: 90px; }
+    select option { background: var(--surface2); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .btn-submit {
+      background: var(--red); color: #fff; border: none; padding: 12px 32px;
+      border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: opacity 0.2s; letter-spacing: 0.3px;
+    }
+    .btn-submit:hover { opacity: 0.85; }
+    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+    .alert { padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 20px; display: none; }
+    .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+    .thumb-preview { margin-top: 10px; }
+    .thumb-preview img { width: 180px; border-radius: 4px; border: 1px solid var(--border); }
+    .content-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;
+    }
+    .content-item img { width: 80px; height: 45px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--surface2); }
+    .content-item-info { flex: 1; min-width: 0; }
+    .content-item-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .content-item-meta { font-size: 12px; color: var(--muted); }
+    .btn-delete { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+    .btn-delete:hover { border-color: #ef4444; color: #ef4444; }
+    .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
+    .status-published { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .status-draft { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+    .access-denied { text-align: center; padding: 100px 24px; }
+    .access-denied h2 { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg>
+    </div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Admin Panel</div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div id="page-wrap"></div>
+
+<script type="module">
+import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
+
+let user = null;
+
+// ── AUTH CHECK ──
+try {
+  user = await account.get();
+} catch {
+  renderLoginPrompt();
+  throw new Error('Not logged in');
+}
+
+// ── ADMIN CHECK ──
+if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  document.getElementById('page-wrap').innerHTML = `
+    <div class="access-denied">
+      <div style="font-size:56px;margin-bottom:16px;">🔒</div>
+      <h2>Access Denied</h2>
+      <p style="color:var(--muted);font-size:14px;">This page is only accessible to the site administrator.</p>
+      <a href="/" style="display:inline-block;margin-top:20px;color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
+    </div>
+  `;
+  throw new Error('Not admin');
+}
+
+// ── RENDER ADMIN UI ──
+document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;color:var(--muted);">${user.name}</span>`;
+
+document.getElementById('page-wrap').innerHTML = `
+<div class="admin-wrap">
+  <h1 class="admin-title">🛠 Admin Panel</h1>
+  <p class="admin-sub">Logged in as ${user.email}</p>
+
+  <div class="alert success" id="alert-success">✅ Content added successfully!</div>
+  <div class="alert error" id="alert-error">❌ <span id="error-msg"></span></div>
+
+  <div class="form-card">
+    <div class="form-card-title">Add New Content</div>
+
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="f-title" placeholder="e.g. Eklo Bato">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category *</label>
+        <select id="f-category">
+          <option value="movie">Movie</option>
+          <option value="webseries">Web Series</option>
+          <option value="music">Music Video</option>
+          <option value="documentary">Documentary</option>
+          <option value="news">News</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status *</label>
+        <select id="f-status">
+          <option value="published">Published</option>
+          <option value="draft">Draft</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>YouTube ID * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(11 chars from YouTube URL)</span></label>
+      <input type="text" id="f-youtube" placeholder="e.g. dQw4w9WgXcQ" maxlength="11">
+      <div class="thumb-preview" id="thumb-preview"></div>
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="f-desc" placeholder="Brief description..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Director</label>
+        <input type="text" id="f-director" placeholder="e.g. Aarav Sharma">
+      </div>
+      <div class="form-group">
+        <label>Language</label>
+        <select id="f-language">
+          <option value="">Select...</option>
+          <option value="Nepali">Nepali</option>
+          <option value="Hindi">Hindi</option>
+          <option value="English">English</option>
+          <option value="Limbu">Limbu</option>
+          <option value="Tamang">Tamang</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Cast <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(comma separated)</span></label>
+      <input type="text" id="f-cast" placeholder="e.g. Rohan Rai, Sita Tamang, Bikash Gurung">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Location</label>
+        <select id="f-location">
+          <option value="">Select...</option>
+          <option value="Darjeeling">Darjeeling</option>
+          <option value="Kalimpong">Kalimpong</option>
+          <option value="Kurseong">Kurseong</option>
+          <option value="Mirik">Mirik</option>
+          <option value="Siliguri">Siliguri</option>
+          <option value="Sikkim">Sikkim</option>
+          <option value="Assam">Assam</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Featured on Homepage?</label>
+        <select id="f-featured">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Published Date</label>
+      <input type="datetime-local" id="f-date">
+    </div>
+
+    <button class="btn-submit" id="submit-btn" onclick="submitContent()">Add Content</button>
+  </div>
+
+  <div class="form-card">
+    <div class="form-card-title">All Content</div>
+    <div id="content-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+  </div>
+</div>
+`;
+
+// Set default date
+document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
+
+// YouTube preview
+document.getElementById('f-youtube').addEventListener('input', e => {
+  const id = e.target.value.trim();
+  document.getElementById('thumb-preview').innerHTML =
+    id.length === 11 ? `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="Preview">` : '';
+});
+
+// Submit
+window.submitContent = async () => {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  hideAlerts();
+
+  const title = document.getElementById('f-title').value.trim();
+  const youtube_id = document.getElementById('f-youtube').value.trim();
+  const category = document.getElementById('f-category').value;
+
+  if (!title || !youtube_id) { showError('Title and YouTube ID are required.'); btn.disabled=false; btn.textContent='Add Content'; return; }
+  if (youtube_id.length !== 11) { showError('YouTube ID must be exactly 11 characters.'); btn.disabled=false; btn.textContent='Add Content'; return; }
+
+  try {
+    const data = {
+      title, youtube_id, category,
+      status: document.getElementById('f-status').value,
+      featured: document.getElementById('f-featured').value === 'true',
+      publishedAt: new Date(document.getElementById('f-date').value).toISOString(),
+    };
+    const optionals = { description:'f-desc', director:'f-director', cast:'f-cast', language:'f-language', location:'f-location' };
+    Object.entries(optionals).forEach(([key, id]) => {
+      const val = document.getElementById(id).value.trim();
+      if (val) data[key] = val;
+    });
+
+    await databases.createDocument(DB_ID, COLLECTION_ID, 'unique()', data);
+    showSuccess();
+    clearForm();
+    loadList();
+  } catch (err) {
+    showError(err.message || 'Failed to add content.');
+  }
+  btn.disabled = false; btn.textContent = 'Add Content';
+};
+
+function clearForm() {
+  ['f-title','f-youtube','f-desc','f-director','f-cast'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('thumb-preview').innerHTML = '';
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
+}
+
+function showSuccess() {
+  const el = document.getElementById('alert-success');
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
+}
+function showError(msg) {
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('alert-error').style.display = 'block';
+}
+function hideAlerts() {
+  document.getElementById('alert-success').style.display = 'none';
+  document.getElementById('alert-error').style.display = 'none';
+}
+
+async function loadList() {
+  const wrap = document.getElementById('content-list');
+  try {
+    const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.orderDesc('publishedAt'), Query.limit(40)]);
+    if (!res.documents.length) { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content yet.</p>`; return; }
+    wrap.innerHTML = res.documents.map(doc => `
+      <div class="content-item">
+        <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="" onerror="this.style.visibility='hidden'">
+        <div class="content-item-info">
+          <div class="content-item-title">${doc.title}</div>
+          <div class="content-item-meta">${doc.category} · ${doc.language||''} ${doc.location?'· '+doc.location:''}</div>
+        </div>
+        <span class="status-badge status-${doc.status}">${doc.status}</span>
+        <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
+      </div>
+    `).join('');
+  } catch { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load.</p>`; }
+}
+
+window.deleteDoc = async (id, btn) => {
+  if (!confirm('Delete this content?')) return;
+  try { await databases.deleteDocument(DB_ID, COLLECTION_ID, id); btn.closest('.content-item').remove(); }
+  catch (err) { alert('Error: ' + err.message); }
+};
+
+function renderLoginPrompt() {
+  document.getElementById('page-wrap').innerHTML = `
+    <div style="text-align:center;padding:100px 24px;">
+      <h2 style="font-family:'Teko',sans-serif;font-size:32px;margin-bottom:8px;">Sign in required</h2>
+      <a href="/" style="color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
+    </div>
+  `;
+}
+
+loadList();
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Artists</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .page-header { padding: 40px 48px 24px; max-width: 1200px; margin: 0 auto; }
+    .page-title { font-family: 'Teko', sans-serif; font-size: 42px; font-weight: 600; }
+    .page-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .artists-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px; padding: 0 48px 60px; max-width: 1200px; margin: 0 auto;
+    }
+    .artist-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s; text-align: center;
+      padding: 24px 16px 20px;
+    }
+    .artist-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.5); border-color: var(--surface2); }
+    .artist-card-photo {
+      width: 88px; height: 88px; border-radius: 50%;
+      background: var(--surface2); margin: 0 auto 14px;
+      overflow: hidden; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Teko', sans-serif; font-size: 36px; font-weight: 700; color: var(--red);
+    }
+    .artist-card-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-card-name { font-family: 'Teko', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+    .artist-card-profession { font-size: 11px; font-weight: 700; color: var(--red); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .artist-card-meta { font-size: 12px; color: var(--muted); }
+    .artist-card-credits { display: inline-block; background: rgba(200,150,42,0.1); color: var(--gold); border: 1px solid rgba(200,150,42,0.2); font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-top: 8px; }
+    .prof-filter { padding: 0 48px 20px; max-width: 1200px; margin: 0 auto; display: flex; gap: 8px; flex-wrap: wrap; }
+    @media(max-width:600px){ .page-header,.artists-grid,.prof-filter{padding-left:16px;padding-right:16px;} }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="artists.html" class="active">Artists</a></li>
+    <li><a href="browse.html">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="page-header">
+  <h1 class="page-title">🎭 Artists</h1>
+  <p class="page-sub">Actors, directors, musicians and crew from the Gorkha community</p>
+</div>
+
+<div class="prof-filter" id="prof-filter"></div>
+<div class="artists-grid" id="artists-grid">
+  <div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>
+</div>
+
+<script type="module">
+import { databases, storage, account, DB_ID, ARTISTS_COLLECTION_ID, COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
+
+let currentUser = null;
+let allArtists = [];
+let allContent = [];
+
+try { currentUser = await account.get(); } catch {}
+
+if (currentUser) {
+  document.getElementById('nav-right').innerHTML = `<div class="user-avatar">${currentUser.name[0].toUpperCase()}</div>`;
+} else {
+  document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
+}
+
+// Load artists + content
+const [artistsRes, contentRes] = await Promise.all([
+  databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [Query.orderAsc('name'), Query.limit(100)]),
+  databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(100)])
+]);
+
+allArtists = artistsRes.documents;
+allContent = contentRes.documents;
+
+// Build profession filter
+const profs = ['All', ...new Set(allArtists.map(a => a.profession).filter(Boolean))];
+const filterEl = document.getElementById('prof-filter');
+filterEl.innerHTML = profs.map(p =>
+  `<div class="cat-pill ${p==='All'?'active':''}" data-prof="${p}">${p}</div>`
+).join('');
+filterEl.addEventListener('click', e => {
+  const pill = e.target.closest('.cat-pill');
+  if (!pill) return;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  renderArtists(pill.dataset.prof);
+});
+
+function countCredits(artistName) {
+  const name = artistName.toLowerCase();
+  return allContent.filter(doc =>
+    (doc.director && doc.director.toLowerCase().includes(name)) ||
+    (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim().includes(name)))
+  ).length;
+}
+
+function renderArtists(profFilter = 'All') {
+  const filtered = profFilter === 'All' ? allArtists : allArtists.filter(a => a.profession === profFilter);
+  const grid = document.getElementById('artists-grid');
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🎭</div><h3>No artists yet</h3></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(artist => {
+    let photoHTML = `<span>${artist.name[0].toUpperCase()}</span>`;
+    if (artist.photoFiled) {
+      const url = storage.getFileView(BUCKET_ID, artist.photoFiled);
+      photoHTML = `<img src="${url}" alt="${artist.name}">`;
+    }
+    const credits = countCredits(artist.name);
+    return `
+      <a href="artist.html?id=${artist.slug}" class="artist-card">
+        <div class="artist-card-photo">${photoHTML}</div>
+        <div class="artist-card-name">${artist.name}</div>
+        <div class="artist-card-profession">${artist.profession}</div>
+        <div class="artist-card-meta">${artist.location || ''}</div>
+        ${credits > 0 ? `<div class="artist-card-credits">⭐ ${credits} credit${credits!==1?'s':''}</div>` : ''}
+      </a>
+    `;
+  }).join('');
+}
+
+if (!allArtists.length) {
+  document.getElementById('artists-grid').innerHTML = `
+    <div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">🎭</div>
+      <h3>No artists yet</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;">Artists can sign in and create their profile.</p>
+      ${currentUser ? `<a href="edit-profile.html" style="color:var(--red);font-size:14px;">Create your profile →</a>` : `<button class="btn-signin" onclick="loginGoogle()" style="margin-top:8px;">Sign in to create profile</button>`}
+    </div>`;
+} else {
+  renderArtists();
+}
+
+window.loginGoogle = async () => {
+  const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
+  const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
+  const acc = new Account(client);
+  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+};
+</script>
+</body>
+</html>

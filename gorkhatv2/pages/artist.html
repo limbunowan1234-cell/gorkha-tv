@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Artist</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .artist-hero {
+      background: linear-gradient(to bottom, var(--surface) 0%, var(--dark) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 48px 40px;
+    }
+    .artist-hero-inner { max-width: 900px; margin: 0 auto; display: flex; gap: 32px; align-items: flex-start; }
+    .artist-photo {
+      width: 120px; height: 120px; border-radius: 12px;
+      background: var(--surface2); flex-shrink: 0; overflow: hidden;
+      border: 2px solid var(--border);
+    }
+    .artist-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .artist-photo-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Teko', sans-serif; font-size: 48px; font-weight: 700;
+      color: var(--red);
+    }
+    .artist-info { flex: 1; }
+    .artist-profession {
+      font-size: 11px; font-weight: 700; color: var(--red);
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;
+    }
+    .artist-name {
+      font-family: 'Teko', sans-serif; font-size: 48px; font-weight: 700;
+      line-height: 1; margin-bottom: 10px;
+    }
+    .artist-meta {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+      font-size: 13px; color: var(--muted); margin-bottom: 14px;
+    }
+    .artist-meta span { display: flex; align-items: center; gap: 5px; }
+    .artist-bio {
+      font-size: 14px; color: rgba(240,240,240,0.7); line-height: 1.8;
+      max-width: 600px; margin-bottom: 18px;
+    }
+    .artist-socials { display: flex; gap: 10px; flex-wrap: wrap; }
+    .social-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 7px 16px; border-radius: 4px;
+      font-size: 13px; font-weight: 500; transition: all 0.2s;
+    }
+    .social-btn:hover { border-color: var(--text); background: var(--surface); }
+    .credits-count {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(200,150,42,0.1); border: 1px solid rgba(200,150,42,0.25);
+      color: var(--gold); padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 700; margin-bottom: 14px;
+    }
+    .works-section { max-width: 900px; margin: 40px auto; padding: 0 48px 60px; }
+    .works-title {
+      font-family: 'Teko', sans-serif; font-size: 26px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .works-title::before { content: ''; display: block; width: 3px; height: 22px; background: var(--gold); border-radius: 2px; }
+    .work-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      display: flex; gap: 16px; align-items: center; padding: 14px 16px;
+      margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    }
+    .work-card:hover { border-color: var(--border); background: var(--surface2); }
+    .work-card img { width: 100px; height: 56px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--surface2); }
+    .work-title { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .work-role { font-size: 12px; color: var(--gold); font-weight: 700; margin-bottom: 2px; }
+    .work-meta { font-size: 12px; color: var(--muted); }
+    .edit-btn {
+      background: var(--red); color: #fff; border: none;
+      padding: 9px 20px; border-radius: 4px; font-size: 13px; font-weight: 700;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity 0.2s;
+      display: inline-flex; align-items: center; gap: 7px;
+    }
+    .edit-btn:hover { opacity: 0.85; }
+    @media(max-width:700px) {
+      .artist-hero { padding: 28px 16px 28px; }
+      .artist-hero-inner { flex-direction: column; gap: 20px; }
+      .artist-name { font-size: 36px; }
+      .works-section { padding: 0 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="artists.html">Artists</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div id="page-content">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-video" id="modal-video"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
+
+const params = new URLSearchParams(window.location.search);
+const slug = params.get('id');
+
+let currentUser = null;
+try { currentUser = await account.get(); } catch {}
+
+// Nav
+if (currentUser) {
+  document.getElementById('nav-right').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="user-avatar">${currentUser.name[0].toUpperCase()}</div>
+    </div>`;
+} else {
+  document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
+}
+
+if (!slug) {
+  document.getElementById('page-content').innerHTML = `<div class="empty"><div class="empty-icon">🎭</div><h3>Artist not found</h3><a href="artists.html" style="color:var(--red);font-size:14px;">← Browse Artists</a></div>`;
+} else {
+  await loadArtist();
+}
+
+async function loadArtist() {
+  try {
+    // Find artist by slug
+    const res = await databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [
+      Query.equal('slug', slug), Query.limit(1)
+    ]);
+
+    if (!res.documents.length) {
+      document.getElementById('page-content').innerHTML = `<div class="empty"><div class="empty-icon">🎭</div><h3>Artist not found</h3><a href="artists.html" style="color:var(--red);font-size:14px;">← Browse Artists</a></div>`;
+      return;
+    }
+
+    const artist = res.documents[0];
+
+    // Load their content credits
+    const contentRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+      Query.equal('status', 'published'), Query.limit(100)
+    ]);
+
+    const name = artist.name.toLowerCase();
+    const works = [];
+    contentRes.documents.forEach(doc => {
+      const roles = [];
+      if (doc.director && doc.director.toLowerCase().includes(name)) roles.push('Director');
+      if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim().includes(name))) roles.push('Cast');
+      if (roles.length) works.push({ ...doc, roles });
+    });
+
+    // Photo
+    let photoHTML = `<div class="artist-photo-placeholder">${artist.name[0].toUpperCase()}</div>`;
+    if (artist.photoFiled) {
+      const photoUrl = storage.getFileView(BUCKET_ID, artist.photoFiled);
+      photoHTML = `<img src="${photoUrl}" alt="${artist.name}">`;
+    }
+
+    // Socials
+    const socials = [];
+    if (artist.instagram) socials.push(`<a href="https://instagram.com/${artist.instagram.replace('@','')}" target="_blank" class="social-btn">📸 Instagram</a>`);
+    if (artist.youtube) socials.push(`<a href="${artist.youtube}" target="_blank" class="social-btn">▶️ YouTube</a>`);
+
+    // Is this the artist's own profile?
+    const isOwner = currentUser && (currentUser.$id === artist.userId || currentUser.email.toLowerCase() === 'nowanad@gmail.com');
+
+    // Meta
+    const metaParts = [];
+    if (artist.location) metaParts.push(`<span>📍 ${artist.location}</span>`);
+    if (artist.languages) metaParts.push(`<span>🗣 ${artist.languages}</span>`);
+
+    // Works HTML
+    const worksHTML = works.length
+      ? works.map(item => `
+          <div class="work-card" onclick="openModal(${JSON.stringify(item).replace(/'/g,"&#39;")})">
+            <img src="https://img.youtube.com/vi/${item.youtube_id}/default.jpg" alt="">
+            <div style="flex:1">
+              <div class="work-title">${item.title}</div>
+              <div class="work-role">⭐ ${item.roles.join(' · ')}</div>
+              <div class="work-meta">${item.category} · ${item.language||''} ${item.location?'· '+item.location:''}</div>
+            </div>
+            <span class="verified">✓ Verified</span>
+          </div>`)
+        .join('')
+      : `<div style="color:var(--muted);font-size:14px;padding:20px 0;">No verified credits yet.</div>`;
+
+    document.getElementById('page-content').innerHTML = `
+      <div class="artist-hero">
+        <div class="artist-hero-inner">
+          <div class="artist-photo">${photoHTML}</div>
+          <div class="artist-info">
+            <div class="artist-profession">${artist.profession}</div>
+            <h1 class="artist-name">${artist.name}</h1>
+            ${works.length ? `<div class="credits-count">⭐ ${works.length} Verified Credit${works.length!==1?'s':''}</div>` : ''}
+            <div class="artist-meta">${metaParts.join('')}</div>
+            ${artist.bio ? `<p class="artist-bio">${artist.bio}</p>` : ''}
+            <div class="artist-socials">
+              ${socials.join('')}
+              ${isOwner ? `<a href="edit-profile.html" class="edit-btn">✏️ Edit Profile</a>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="works-section">
+        <div class="works-title">Filmography</div>
+        ${worksHTML}
+      </div>
+    `;
+
+    // Update page title
+    document.title = `${artist.name} — GorkhaTV`;
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('page-content').innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Could not load artist</h3></div>`;
+  }
+}
+
+window.openModal = (item) => {
+  if (typeof item === 'string') item = JSON.parse(item);
+  document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-desc').textContent = item.description || '';
+  const meta = [];
+  if (item.director) meta.push(`<span><strong>Director:</strong> ${item.director}</span>`);
+  if (item.cast) meta.push(`<span><strong>Cast:</strong> ${item.cast}</span>`);
+  document.getElementById('modal-meta').innerHTML = meta.join('');
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeModal = () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('modal-video').innerHTML = '';
+  document.body.style.overflow = '';
+};
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+
+window.loginGoogle = async () => {
+  const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
+  const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
+  const acc = new Account(client);
+  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+};
+</script>
+</body>
+</html>
