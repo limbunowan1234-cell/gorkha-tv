@@ -50,6 +50,11 @@
       font-size: 13px; font-weight: 500; transition: all 0.2s;
     }
     .social-btn:hover { border-color: var(--text); background: var(--surface); }
+     .listed-tag {
+      display:inline-flex; align-items:center; background:var(--surface2); color:var(--muted);
+      font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
+      border:1px solid var(--border); text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;
+    }
     .credits-count {
       display: inline-flex; align-items: center; gap: 6px;
       background: rgba(200,150,42,0.1); border: 1px solid rgba(200,150,42,0.25);
@@ -175,11 +180,11 @@ async function loadArtist() {
       const dir = (doc.director || '').toLowerCase();
       if (dir && dir.split(',').some(d => d.trim() === name)) roles.push('Director');
       if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim() === name)) roles.push('Cast');
-      if (roles.length) { works.push({ ...doc, roles }); seenIds.add(doc.$id); }
+      if (roles.length) { works.push({ ...doc, roles, claimVerified: false }); seenIds.add(doc.$id); }
     });
 
     // Add approved claims by this artist's user account (if linked)
-    let isVerified = false;
+    let verifiedCount = 0;
     if (artist.userId) {
       try {
         const claimsRes = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
@@ -187,21 +192,25 @@ async function loadArtist() {
           Query.equal('status', 'approved'),
           Query.limit(100)
         ]);
-        if (claimsRes.documents.length > 0) isVerified = true;
+        verifiedCount = claimsRes.documents.length;
         const contentById = {};
         contentRes.documents.forEach(d => { contentById[d.$id] = d; });
         claimsRes.documents.forEach(claim => {
           if (seenIds.has(claim.contentId)) {
-            // already listed via name-match; add the claimed role
+            // already listed via name-match; mark it as claim-verified + add the claimed role
             const w = works.find(x => x.$id === claim.contentId);
-            if (w && !w.roles.includes(claim.claimedRole)) w.roles.push(claim.claimedRole);
+            if (w) {
+              w.claimVerified = true;
+              if (!w.roles.includes(claim.claimedRole)) w.roles.push(claim.claimedRole);
+            }
           } else {
             const doc = contentById[claim.contentId];
-            if (doc) { works.push({ ...doc, roles: [claim.claimedRole] }); seenIds.add(doc.$id); }
+            if (doc) { works.push({ ...doc, roles: [claim.claimedRole], claimVerified: true }); seenIds.add(doc.$id); }
           }
         });
       } catch (e) { console.error('claims load failed', e); }
     }
+    const isVerified = verifiedCount > 0;
 
     // Photo
     let photoHTML = `<div class="artist-photo-placeholder">${artist.name[0].toUpperCase()}</div>`;
@@ -223,7 +232,8 @@ async function loadArtist() {
     if (artist.location) metaParts.push(`<span>📍 ${artist.location}</span>`);
     if (artist.languages) metaParts.push(`<span>🗣 ${artist.languages}</span>`);
 
-    // Works HTML
+    // Works HTML — sort claim-verified first
+    works.sort((a, b) => (b.claimVerified ? 1 : 0) - (a.claimVerified ? 1 : 0));
     const worksHTML = works.length
       ? works.map(item => `
           <div class="work-card" onclick="openModal(${JSON.stringify(item).replace(/'/g,"&#39;")})">
@@ -233,10 +243,12 @@ async function loadArtist() {
               <div class="work-role">⭐ ${item.roles.join(' · ')}</div>
               <div class="work-meta">${item.category} · ${item.language||''} ${item.location?'· '+item.location:''}</div>
             </div>
-            <span class="verified">✓ Verified</span>
+            ${item.claimVerified
+              ? `<span class="verified">✓ Verified</span>`
+              : `<span class="listed-tag">Listed</span>`}
           </div>`)
         .join('')
-      : `<div style="color:var(--muted);font-size:14px;padding:20px 0;">No verified credits yet.</div>`;
+      : `<div style="color:var(--muted);font-size:14px;padding:20px 0;">No credits yet.</div>`;
 
     document.getElementById('page-content').innerHTML = `
       <div class="artist-hero">
@@ -245,7 +257,7 @@ async function loadArtist() {
           <div class="artist-info">
             <div class="artist-profession">${artist.profession}</div>
             <h1 class="artist-name">${artist.name}${isVerified ? ' <span class="artist-name-verified" title="Verified Artist">✓</span>' : ''}</h1>
-            ${works.length ? `<div class="credits-count">⭐ ${works.length} Verified Credit${works.length!==1?'s':''}</div>` : ''}
+            ${verifiedCount ? `<div class="credits-count">⭐ ${verifiedCount} Verified Credit${verifiedCount!==1?'s':''}</div>` : ''}
             <div class="artist-meta">${metaParts.join('')}</div>
             ${artist.bio ? `<p class="artist-bio">${artist.bio}</p>` : ''}
             <div class="artist-socials">
