@@ -13,6 +13,11 @@
     .player-box iframe { width:100%; height:100%; border:0; display:block; }
     .video-title { font-family:'Teko', sans-serif; font-size:46px; line-height:1; margin:18px 0 6px; }
     .video-badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .action-bar { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+    .act-btn { display:inline-flex; align-items:center; gap:8px; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; }
+    .act-btn:hover { border-color:var(--text); }
+    .act-btn.liked { color:#ff4d6d; border-color:#ff4d6d; background:rgba(255,77,109,0.1); }
+    .act-btn .ct { color:var(--muted); font-weight:500; }
     .vbadge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:3px; text-transform:uppercase; letter-spacing:0.5px; }
     .vbadge.cat { background:var(--red); color:#fff; }
     .vbadge.series { background:rgba(200,150,42,0.18); color:var(--gold); border:1px solid rgba(200,150,42,0.35); }
@@ -86,6 +91,7 @@
         <div class="player-box" id="player-box"></div>
         <h1 class="video-title" id="video-title"></h1>
         <div class="video-badges" id="video-badges"></div>
+        <div class="action-bar" id="action-bar"></div>
         <div class="detail-table" id="detail-table"></div>
         <div class="video-desc" id="video-desc"></div>
         <div id="claim-section"></div>
@@ -106,6 +112,7 @@
 
 <script type="module">
 import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, ID, Query } from '../js/appwrite.js';
+import { getCounts, getUserLike, toggleLike as apiToggleLike, recordShare, shareContent } from '../js/likes.js';
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
@@ -171,6 +178,9 @@ async function load() {
     if (item.seriesName) badges.push(`<span class="vbadge series">📺 ${esc(item.seriesName)}</span>`);
     if (item.publishedAt) badges.push(`<span class="vbadge plain">${new Date(item.publishedAt).getFullYear()}</span>`);
     document.getElementById('video-badges').innerHTML = badges.join('');
+
+    // ── Like + Share bar (real global counts) ──
+    await renderActionBar(item);
 
     // ── Detail table ──
     const rows = [];
@@ -331,6 +341,52 @@ window.submitClaim = async (contentId) => {
     console.error(e);
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Claim'; }
     alert('Could not submit claim: ' + (e.message || e));
+  }
+};
+
+// ── Like + Share ──
+let isLikedState = false;
+
+async function renderActionBar(item) {
+  const bar = document.getElementById('action-bar');
+  if (!bar) return;
+  const counts = await getCounts(item.$id);
+  let likedId = currentUser ? await getUserLike(item.$id, currentUser.$id) : null;
+  isLikedState = !!likedId;
+
+  bar.innerHTML = `
+    <button class="act-btn ${isLikedState ? 'liked' : ''}" id="like-btn" onclick="handleLike('${item.$id}')">
+      ${isLikedState ? '❤️' : '🤍'} <span id="like-label">${isLikedState ? 'Liked' : 'Like'}</span> <span class="ct" id="like-ct">${counts.like || ''}</span>
+    </button>
+    <button class="act-btn" onclick="handleShare('${item.$id}')">
+      🔗 Share <span class="ct" id="share-ct">${counts.share || ''}</span>
+    </button>`;
+}
+
+window.handleLike = async (contentId) => {
+  if (!currentUser) { alert('Sign in to like.'); return; }
+  const btn = document.getElementById('like-btn');
+  btn.disabled = true;
+  try {
+    const { liked, count } = await apiToggleLike(contentId, currentUser.$id);
+    isLikedState = liked;
+    btn.classList.toggle('liked', liked);
+    btn.querySelector('#like-label').textContent = liked ? 'Liked' : 'Like';
+    btn.querySelector('#like-ct').textContent = count || '';
+    btn.firstChild.textContent = liked ? '❤️ ' : '🤍 ';
+  } catch (e) { alert('Error: ' + (e.message || e)); }
+  btn.disabled = false;
+};
+
+window.handleShare = async (contentId) => {
+  const url = window.location.href;
+  const result = await shareContent(document.getElementById('video-title').textContent, url);
+  // Record the share (counts even if they cancel native sheet, only on success/copy)
+  if (result === true || result === 'copied') {
+    const newCount = await recordShare(contentId, currentUser?.$id);
+    const ct = document.getElementById('share-ct');
+    if (ct) ct.textContent = newCount || '';
+    if (result === 'copied') alert('Link copied to clipboard!');
   }
 };
 
