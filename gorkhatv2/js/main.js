@@ -1,6 +1,8 @@
-import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
+import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
 
 let currentUser = null;
+let userArtistProfile = null;   // their artist doc, if any
+let userIsVerified = false;     // has 1+ approved claim
 let allContent = [];      // raw documents
 let displayItems = [];    // series-grouped items (one entry per series + singles)
 let heroItems = [];
@@ -11,6 +13,7 @@ let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
 
 const VIDEO_PAGE = 'pages/video.html';
 const BROWSE_PAGE = 'pages/browse.html';
+const PAGES = 'pages/';
 const FAV_PAGE = 'pages/my-favourites.html';
 const CREDITS_PAGE = 'pages/my-credits.html';
 const EDIT_PROFILE_PAGE = 'pages/edit-profile.html';
@@ -29,10 +32,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkAuth() {
   try {
     currentUser = await account.get();
+    await loadUserStatus();
     renderUserNav();
   } catch {
     currentUser = null;
     renderLoginBtn();
+  }
+}
+
+// Check if user has an artist profile and any approved claims
+async function loadUserStatus() {
+  try {
+    const [profileRes, claimsRes] = await Promise.all([
+      databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [Query.equal('userId', currentUser.$id), Query.limit(1)]),
+      databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.equal('userId', currentUser.$id), Query.equal('status', 'approved'), Query.limit(1)])
+    ]);
+    userArtistProfile = profileRes.documents[0] || null;
+    userIsVerified = claimsRes.documents.length > 0;
+  } catch (e) {
+    console.error('user status load failed', e);
+    userArtistProfile = null;
+    userIsVerified = false;
   }
 }
 
@@ -41,19 +61,35 @@ function renderUserNav() {
   if (!nr) return;
   const initial = currentUser.name ? currentUser.name[0].toUpperCase() : '?';
   const isAdmin = currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
+  // Verified badge (1+ approved claim)
+  const verifiedTick = userIsVerified
+    ? ` <span class="verified-tick" title="Verified Artist">✓</span>` : '';
+
+  // Smart profile link: create vs view+edit
+  let profileLinks = '';
+  if (userArtistProfile) {
+    profileLinks = `
+      <a href="${PAGES}artist.html?id=${encodeURIComponent(userArtistProfile.slug || '')}" class="dropdown-item">👤 View My Profile</a>
+      <a href="${EDIT_PROFILE_PAGE}" class="dropdown-item">✏️ Edit Profile</a>`;
+  } else {
+    profileLinks = `<a href="${EDIT_PROFILE_PAGE}" class="dropdown-item">🎭 Create Artist Profile</a>`;
+  }
+
   nr.innerHTML = `
     <div class="user-menu-wrap">
-      <div class="user-avatar" onclick="toggleDropdown()" title="${currentUser.name}">
+      <div class="user-avatar ${userIsVerified ? 'verified' : ''}" onclick="toggleDropdown()" title="${currentUser.name}">
         ${currentUser.prefs?.avatar ? `<img src="${currentUser.prefs.avatar}" alt="">` : initial}
       </div>
       <div class="user-dropdown" id="user-dropdown">
         <div class="dropdown-header">
-          <div class="name">${currentUser.name}</div>
+          <div class="name">${currentUser.name}${verifiedTick}</div>
           <div class="email">${currentUser.email}</div>
+          ${userIsVerified ? `<div class="verified-label">✓ Verified Artist</div>` : ''}
         </div>
         <a href="${FAV_PAGE}" class="dropdown-item">🔖 My Favourites</a>
         <a href="${CREDITS_PAGE}" class="dropdown-item">⭐ My Credits</a>
-        <a href="${EDIT_PROFILE_PAGE}" class="dropdown-item">🎭 My Artist Profile</a>
+        ${profileLinks}
         ${isAdmin ? `<a href="${ADMIN_PAGE}" class="dropdown-item">🛠 Admin Panel</a>` : ''}
         <hr class="dropdown-divider">
         <button onclick="logout()" class="dropdown-item danger">Sign out</button>
@@ -384,6 +420,15 @@ function initSearch() {
   const input = document.getElementById('search-input');
   if (!input) return;
 
+  // Press Enter → go to dedicated search page
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = input.value.trim();
+      window.location.href = q ? `pages/search.html?q=${encodeURIComponent(q)}` : 'pages/search.html';
+    }
+  });
+
+  // Typing also live-filters the Latest row on the homepage (quick preview)
   input.addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     if (!q) {
@@ -394,14 +439,15 @@ function initSearch() {
     const results = displayItems.filter(d =>
       (d.title || '').toLowerCase().includes(q) ||
       (d.cast || '').toLowerCase().includes(q) ||
-      (d.director || '').toLowerCase().includes(q)
+      (d.director || '').toLowerCase().includes(q) ||
+      (d.category || '').toLowerCase().includes(q)
     );
 
     const latest = document.getElementById('latest-row');
     if (!latest) return;
     latest.innerHTML = results.length
       ? results.map(item => cardHTML(item)).join('')
-      : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No results for "${q}"</div>`;
+      : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No results for "${q}" — <a href="pages/search.html?q=${encodeURIComponent(q)}" style="color:var(--red);">full search →</a></div>`;
   });
 }
 
