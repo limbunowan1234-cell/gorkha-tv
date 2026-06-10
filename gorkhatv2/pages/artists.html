@@ -92,8 +92,10 @@ allArtists = artistsRes.documents;
 allContent = contentRes.documents;
 claimsRes.documents.forEach(c => verifiedUserIds.add(c.userId));
 
-// Build profession filter
-const profs = ['All', ...new Set(allArtists.map(a => a.profession).filter(Boolean))];
+// Build profession filter (artists can have multiple, comma-separated)
+const profSet = new Set();
+allArtists.forEach(a => (a.profession || '').split(',').forEach(p => { const t = p.trim(); if (t) profSet.add(t); }));
+const profs = ['All', ...profSet];
 const filterEl = document.getElementById('prof-filter');
 filterEl.innerHTML = profs.map(p =>
   `<div class="cat-pill ${p==='All'?'active':''}" data-prof="${p}">${p}</div>`
@@ -115,7 +117,9 @@ function countCredits(artistName) {
 }
 
 function renderArtists(profFilter = 'All') {
-  const filtered = profFilter === 'All' ? allArtists : allArtists.filter(a => a.profession === profFilter);
+  const filtered = profFilter === 'All' ? allArtists : allArtists.filter(a =>
+    (a.profession || '').split(',').map(p => p.trim()).includes(profFilter)
+  );
   const grid = document.getElementById('artists-grid');
 
   if (!filtered.length) {
