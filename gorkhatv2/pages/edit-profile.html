@@ -47,6 +47,11 @@
       font-size: 13px; margin-bottom: 20px; word-break: break-all;
     }
     .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .chk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .chk { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+    .chk:hover { border-color: var(--muted); }
+    .chk input { width: auto; margin: 0; cursor: pointer; accent-color: var(--red); }
+    .chk.checked { border-color: var(--red); background: rgba(232,25,44,0.08); }
     @media(max-width:600px){ .form-row{grid-template-columns:1fr;} }
   </style>
 </head>
@@ -147,12 +152,13 @@ function renderForm() {
       </div>
 
       <div class="form-group">
-        <label>Profession *</label>
-        <select id="f-profession">
-          ${['Actor','Director','Singer','Musician','Cinematographer','Editor','Producer','Crew','Writer','Other'].map(p =>
-            `<option value="${p}" ${a?.profession===p?'selected':''}>${p}</option>`
-          ).join('')}
-        </select>
+        <label>Professions * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(pick all that apply)</span></label>
+        <div id="profession-checkboxes" class="chk-grid"></div>
+      </div>
+
+      <div class="form-group">
+        <label>Genres <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(what you work in)</span></label>
+        <div id="genre-checkboxes" class="chk-grid"></div>
       </div>
 
       <div class="form-group">
@@ -197,6 +203,23 @@ function renderForm() {
       ${a ? 'Save Changes' : 'Create Profile'}
     </button>
   `;
+
+  // Populate profession + genre checkboxes
+  const PROFESSIONS = ['Actor','Director','Singer','Musician','Producer','Writer','Editor','Cinematographer','Dancer','Comedian','Crew','Model','Influencer','Host'];
+  const A_GENRES = ['Drama','Comedy','Action','Romance','Horror','Thriller','Family','Documentary','Music Video','Folk/Cultural','Devotional','Vlog','Short Film'];
+
+  const selProf = (a?.profession || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const selGen = (a?.genres || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+
+  document.getElementById('profession-checkboxes').innerHTML = PROFESSIONS.map(p => `
+    <label class="chk ${selProf.includes(p.toLowerCase()) ? 'checked' : ''}">
+      <input type="checkbox" class="prof-chk" value="${p}" ${selProf.includes(p.toLowerCase()) ? 'checked' : ''} onchange="this.closest('.chk').classList.toggle('checked', this.checked)"> ${p}
+    </label>`).join('');
+
+  document.getElementById('genre-checkboxes').innerHTML = A_GENRES.map(g => `
+    <label class="chk ${selGen.includes(g.toLowerCase()) ? 'checked' : ''}">
+      <input type="checkbox" class="gen-chk" value="${g}" ${selGen.includes(g.toLowerCase()) ? 'checked' : ''} onchange="this.closest('.chk').classList.toggle('checked', this.checked)"> ${g}
+    </label>`).join('');
 }
 
 window.previewPhoto = (input) => {
@@ -222,10 +245,11 @@ window.saveProfile = async () => {
 
   const name = document.getElementById('f-name').value.trim();
   const slug = document.getElementById('f-slug').value.trim();
-  const profession = document.getElementById('f-profession').value;
+  const profession = [...document.querySelectorAll('.prof-chk:checked')].map(c => c.value).join(', ');
+  const genres = [...document.querySelectorAll('.gen-chk:checked')].map(c => c.value).join(', ');
 
   if (!name || !slug || !profession) {
-    showError('Name, slug and profession are required.');
+    showError('Name, slug and at least one profession are required.');
     btn.disabled = false; btn.textContent = existingArtist ? 'Save Changes' : 'Create Profile';
     return;
   }
@@ -242,6 +266,7 @@ window.saveProfile = async () => {
 
     const data = {
       name, slug, profession, userId: currentUser.$id,
+      genres: genres || null,
       bio: document.getElementById('f-bio').value.trim() || null,
       location: document.getElementById('f-location').value || null,
       languages: document.getElementById('f-languages').value.trim() || null,
