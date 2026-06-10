@@ -13,6 +13,7 @@ export const DB_ID = "6a280cde0009e6b2b556";
 export const COLLECTION_ID = "content";
 export const ARTISTS_COLLECTION_ID = "artists";
 export const CLAIMS_COLLECTION_ID = "claims";
+export const LIKES_COLLECTION_ID = "likes";
 export const BUCKET_ID = "6a280d4100046ab86533";
 export const ADMIN_EMAIL = "Nowanad@gmail.com";
 
