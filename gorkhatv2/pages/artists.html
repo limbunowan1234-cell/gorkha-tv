@@ -66,11 +66,12 @@
 </div>
 
 <script type="module">
-import { databases, storage, account, DB_ID, ARTISTS_COLLECTION_ID, COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
+import { databases, storage, account, DB_ID, ARTISTS_COLLECTION_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
 
 let currentUser = null;
 let allArtists = [];
 let allContent = [];
+let verifiedUserIds = new Set();
 
 try { currentUser = await account.get(); } catch {}
 
@@ -80,14 +81,16 @@ if (currentUser) {
   document.getElementById('nav-right').innerHTML = `<button class="btn-signin" onclick="loginGoogle()">Sign In</button>`;
 }
 
-// Load artists + content
-const [artistsRes, contentRes] = await Promise.all([
+// Load artists + content + approved claims
+const [artistsRes, contentRes, claimsRes] = await Promise.all([
   databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [Query.orderAsc('name'), Query.limit(100)]),
-  databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(100)])
+  databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(100)]),
+  databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.equal('status','approved'), Query.limit(500)])
 ]);
 
 allArtists = artistsRes.documents;
 allContent = contentRes.documents;
+claimsRes.documents.forEach(c => verifiedUserIds.add(c.userId));
 
 // Build profession filter
 const profs = ['All', ...new Set(allArtists.map(a => a.profession).filter(Boolean))];
@@ -130,7 +133,7 @@ function renderArtists(profFilter = 'All') {
     return `
       <a href="artist.html?id=${artist.slug}" class="artist-card">
         <div class="artist-card-photo">${photoHTML}</div>
-        <div class="artist-card-name">${artist.name}</div>
+        <div class="artist-card-name">${artist.name}${artist.userId && verifiedUserIds.has(artist.userId) ? '<span class="artist-card-verified" title="Verified Artist">✓</span>' : ''}</div>
         <div class="artist-card-profession">${artist.profession}</div>
         <div class="artist-card-meta">${artist.location || ''}</div>
         ${credits > 0 ? `<div class="artist-card-credits">⭐ ${credits} credit${credits!==1?'s':''}</div>` : ''}
