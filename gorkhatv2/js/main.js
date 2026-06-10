@@ -24,11 +24,13 @@ const ADMIN_PAGE = 'pages/admin.html';
 const GOOGLE_REDIRECT = 'https://gorkhatv.site/pages/auth-callback.html';
 const GOOGLE_SUCCESS = 'https://gorkhatv.site';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await checkAuth();
-  await loadContent();
+document.addEventListener('DOMContentLoaded', () => {
+  // Load content FIRST and independently — never let auth block the page
+  loadContent();
   initCategoryPills();
   initSearch();
+  // Auth runs separately; if it hangs or fails, content is unaffected
+  checkAuth();
 });
 
 async function checkAuth() {
