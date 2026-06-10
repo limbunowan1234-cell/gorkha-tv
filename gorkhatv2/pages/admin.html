@@ -3,114 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GorkhaTV — Admin</title>
+  <title>GorkhaTV — Admin Dashboard</title>
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .admin-wrap { max-width: 780px; margin: 40px auto; padding: 0 24px; }
-    .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 8px; }
+    .admin-wrap { max-width: 880px; margin: 40px auto; padding: 0 24px; }
+    .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 6px; }
     .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
-    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 32px; }
-    .form-card-title { font-family: 'Teko', sans-serif; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .form-card-title::before { content: ''; display: block; width: 3px; height: 20px; background: var(--red); border-radius: 2px; }
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
-    input, textarea, select {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); padding: 10px 14px; border-radius: 4px;
-      font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
-    }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--red); }
-    textarea { resize: vertical; min-height: 90px; }
-    select option { background: var(--surface2); }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .btn-submit {
-      background: var(--red); color: #fff; border: none; padding: 12px 32px;
-      border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer;
-      font-family: 'Inter', sans-serif; transition: opacity 0.2s; letter-spacing: 0.3px;
-    }
-    .btn-submit:hover { opacity: 0.85; }
-    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-cancel {
-      background: none; color: var(--muted); border: 1px solid var(--border); padding: 12px 24px;
-      border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-left: 10px;
-      font-family: 'Inter', sans-serif; transition: all 0.2s; display: none;
-    }
-    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
-    .alert { padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 20px; display: none; }
-    .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
-    .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
-    .thumb-preview { margin-top: 10px; }
-    .thumb-preview img { width: 180px; border-radius: 4px; border: 1px solid var(--border); }
-    .content-item {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-      padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;
-    }
-    .content-item img { width: 80px; height: 45px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--surface2); }
-    .content-item-info { flex: 1; min-width: 0; }
-    .content-item-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .content-item-meta { font-size: 12px; color: var(--muted); }
-    .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
-    .btn-edit { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-    .btn-edit:hover { border-color: var(--red); color: var(--red); }
-    .btn-delete { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
-    .btn-delete:hover { border-color: #ef4444; color: #ef4444; }
-    .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
-    .status-published { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
-    .status-draft { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+    .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; margin-bottom: 32px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+    .stat-num { font-family: 'Teko', sans-serif; font-size: 40px; line-height: 1; color: var(--red); }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
+    .stat-num.gold { color: var(--gold); }
+    .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 16px; }
+    .hub-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; text-decoration: none; color: inherit; transition: all 0.2s; display: block; }
+    .hub-card:hover { border-color: var(--red); transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+    .hub-icon { font-size: 34px; margin-bottom: 12px; }
+    .hub-title { font-family: 'Teko', sans-serif; font-size: 24px; margin-bottom: 6px; }
+    .hub-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .hub-badge { display:inline-block; background: var(--gold); color:#000; font-size:11px; font-weight:700; padding:2px 9px; border-radius:20px; margin-top:10px; }
     .access-denied { text-align: center; padding: 100px 24px; }
     .access-denied h2 { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 8px; }
-    .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-    .genre-chk { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; }
-    .genre-chk:hover { border-color: var(--muted); }
-    .genre-chk input { width: auto; margin: 0; cursor: pointer; accent-color: var(--red); }
-    .genre-chk.checked { border-color: var(--red); background: rgba(232,25,44,0.08); }
-    .claim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
-    .claim-card.pending { border-left: 3px solid var(--gold); }
-    .claim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-    .claim-who { font-size: 14px; font-weight: 600; }
-    .claim-who span { color: var(--muted); font-weight: 400; font-size: 12px; }
-    .claim-what { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
-    .claim-what strong { color: var(--gold); }
-    .claim-btns { display: flex; gap: 8px; }
-    .btn-approve { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
-    .btn-approve:hover { background: rgba(34,197,94,0.25); }
-    .btn-reject { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
-    .btn-reject:hover { border-color: #ef4444; color: #ef4444; }
-    .btn-delete-claim { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
-    .btn-delete-claim:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
-    .claim-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
-    .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
-    .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; }
   </style>
 </head>
 <body>
-
 <nav>
   <a href="/" class="logo-svg">
-    <div class="logo-mark">
-      <svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg>
-    </div>
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
     <div class="logo-text">
       <div class="logo-wordmark">Gorkha<em>TV</em></div>
       <div class="logo-tagline">Darjeeling in Every Frame</div>
     </div>
   </a>
-  <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Admin Panel</div>
+  <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Admin Dashboard</div>
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
-<div id="page-wrap"></div>
+<div id="page-wrap"><div class="loading"><div class="spinner"></div></div></div>
 
 <script type="module">
-import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, ADMIN_EMAIL, ID, Query } from '../js/appwrite.js';
+import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
 
 let user = null;
-let editingId = null;  // null = add mode, doc id = edit mode
-
 try {
   user = await account.get();
 } catch {
-  renderLoginPrompt();
+  document.getElementById('page-wrap').innerHTML = `<div class="access-denied"><h2>Sign in required</h2><a href="/" style="color:var(--red);">← Back to GorkhaTV</a></div>`;
   throw new Error('Not logged in');
 }
 
@@ -119,465 +56,50 @@ if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
     <div class="access-denied">
       <div style="font-size:56px;margin-bottom:16px;">🔒</div>
       <h2>Access Denied</h2>
-      <p style="color:var(--muted);font-size:14px;">This page is only accessible to the site administrator.</p>
+      <p style="color:var(--muted);font-size:14px;">This page is only for the site administrator.</p>
       <a href="/" style="display:inline-block;margin-top:20px;color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
-    </div>
-  `;
+    </div>`;
   throw new Error('Not admin');
 }
 
 document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;color:var(--muted);">${user.name}</span>`;
 
+// Quick stats
+let totalContent = 0, totalPublished = 0, pendingClaims = 0;
+try {
+  const [allC, pubC, pendC] = await Promise.all([
+    databases.listDocuments(DB_ID, COLLECTION_ID, [Query.limit(1)]),
+    databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(1)]),
+    databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.equal('status','pending'), Query.limit(1)])
+  ]);
+  totalContent = allC.total; totalPublished = pubC.total; pendingClaims = pendC.total;
+} catch(e) { console.error(e); }
+
 document.getElementById('page-wrap').innerHTML = `
 <div class="admin-wrap">
-  <h1 class="admin-title">🛠 Admin Panel</h1>
-  <p class="admin-sub">Logged in as ${user.email}</p>
+  <h1 class="admin-title">🛠 Admin Dashboard</h1>
+  <p class="admin-sub">Welcome back, ${user.name}</p>
 
-  <div class="alert success" id="alert-success">✅ Saved successfully!</div>
-  <div class="alert error" id="alert-error">❌ <span id="error-msg"></span></div>
-
-  <div class="form-card">
-    <div class="form-card-title" id="form-mode-title">Add New Content</div>
-
-    <div class="form-group">
-      <label>Title *</label>
-      <input type="text" id="f-title" placeholder="e.g. Eklo Bato">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Category *</label>
-        <select id="f-category">
-          <option value="movie">Movie</option>
-          <option value="webseries">Web Series</option>
-          <option value="music">Music Video</option>
-          <option value="documentary">Documentary</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Status *</label>
-        <select id="f-status">
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>YouTube ID * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(11 chars from YouTube URL)</span></label>
-      <input type="text" id="f-youtube" placeholder="e.g. dQw4w9WgXcQ" maxlength="11">
-      <div class="thumb-preview" id="thumb-preview"></div>
-    </div>
-
-    <div class="form-group">
-      <label>Series Name</label>
-      <input type="text" id="f-series-name" placeholder="e.g. Gorkha Stories Season 1">
-    </div>
-
-    <div class="form-group">
-      <label>Series ID</label>
-      <input type="text" id="f-series-id" placeholder="e.g. gorkha-stories-s1">
-    </div>
-
-    <div class="form-group">
-      <label>Description</label>
-      <textarea id="f-desc" placeholder="Brief description..."></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Genre / Tags</label>
-      <div id="genre-checkboxes" class="genre-grid"></div>
-      <input type="text" id="f-genre-custom" placeholder="Add custom genres (comma separated)" style="margin-top:10px;">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Director</label>
-        <input type="text" id="f-director" placeholder="e.g. Aarav Sharma">
-      </div>
-      <div class="form-group">
-        <label>Language</label>
-        <select id="f-language">
-          <option value="">Select...</option>
-          <option value="Nepali">Nepali</option>
-          <option value="Hindi">Hindi</option>
-          <option value="English">English</option>
-          <option value="Limbu">Limbu</option>
-          <option value="Tamang">Tamang</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Cast <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(comma separated)</span></label>
-      <input type="text" id="f-cast" placeholder="e.g. Rohan Rai, Sita Tamang, Bikash Gurung">
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label>Location</label>
-        <select id="f-location">
-          <option value="">Select...</option>
-          <option value="Darjeeling">Darjeeling</option>
-          <option value="Kalimpong">Kalimpong</option>
-          <option value="Kurseong">Kurseong</option>
-          <option value="Mirik">Mirik</option>
-          <option value="Siliguri">Siliguri</option>
-          <option value="Sikkim">Sikkim</option>
-          <option value="Assam">Assam</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Featured on Homepage?</label>
-        <select id="f-featured">
-          <option value="false">No</option>
-          <option value="true">Yes</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>Published Date</label>
-      <input type="datetime-local" id="f-date">
-    </div>
-
-    <button class="btn-submit" id="submit-btn" onclick="submitContent()">Add Content</button>
-    <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">Cancel</button>
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-num">${totalContent}</div><div class="stat-label">Total Videos</div></div>
+    <div class="stat-card"><div class="stat-num">${totalPublished}</div><div class="stat-label">Published</div></div>
+    <div class="stat-card"><div class="stat-num gold">${pendingClaims}</div><div class="stat-label">Pending Claims</div></div>
   </div>
 
-  <div class="form-card">
-    <div class="form-card-title">⭐ Credit Claims</div>
-    <div id="claims-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+  <div class="hub-grid">
+    <a href="admin-content.html" class="hub-card">
+      <div class="hub-icon">🎬</div>
+      <div class="hub-title">Add / Edit Videos</div>
+      <div class="hub-desc">Upload new content, edit details, manage genres, or delete videos from the gallery.</div>
+    </a>
+    <a href="admin-claims.html" class="hub-card">
+      <div class="hub-icon">⭐</div>
+      <div class="hub-title">Credit Claims</div>
+      <div class="hub-desc">Review artists claiming credits. Approve, reject, or delete claims.</div>
+      ${pendingClaims > 0 ? `<span class="hub-badge">${pendingClaims} pending</span>` : ''}
+    </a>
   </div>
-
-  <div class="form-card">
-    <div class="form-card-title">All Content</div>
-    <div id="content-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
-  </div>
-</div>
-`;
-
-document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
-
-// ── Genre setup ──
-const GENRES = ['Drama','Comedy','Action','Romance','Horror','Thriller','Family','Documentary','Music Video','Folk/Cultural','Devotional','News/Current Affairs','Interview','Vlog','Short Film','Educational'];
-
-function renderGenreBoxes(selected = []) {
-  const sel = selected.map(s => s.toLowerCase().trim());
-  document.getElementById('genre-checkboxes').innerHTML = GENRES.map(g => `
-    <label class="genre-chk ${sel.includes(g.toLowerCase()) ? 'checked' : ''}">
-      <input type="checkbox" value="${g}" ${sel.includes(g.toLowerCase()) ? 'checked' : ''} onchange="this.closest('.genre-chk').classList.toggle('checked', this.checked)">
-      ${g}
-    </label>
-  `).join('');
-}
-renderGenreBoxes();
-
-function getSelectedGenres() {
-  const checked = [...document.querySelectorAll('#genre-checkboxes input:checked')].map(c => c.value);
-  const custom = document.getElementById('f-genre-custom').value.split(',').map(s => s.trim()).filter(Boolean);
-  return [...new Set([...checked, ...custom])].join(', ');
-}
-
-document.getElementById('f-youtube').addEventListener('input', e => {
-  const id = e.target.value.trim();
-  document.getElementById('thumb-preview').innerHTML =
-    id.length === 11 ? `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="Preview">` : '';
-});
-
-window.submitContent = async () => {
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = editingId ? 'Saving...' : 'Adding...';
-  hideAlerts();
-
-  const title = document.getElementById('f-title').value.trim();
-  const youtube_id = document.getElementById('f-youtube').value.trim();
-  const category = document.getElementById('f-category').value;
-
-  if (!title || !youtube_id) {
-    showError('Title and YouTube ID are required.');
-    resetBtn();
-    return;
-  }
-
-  if (youtube_id.length !== 11) {
-    showError('YouTube ID must be exactly 11 characters.');
-    resetBtn();
-    return;
-  }
-
-  try {
-    const data = {
-      title,
-      youtube_id,
-      category,
-      status: document.getElementById('f-status').value,
-      featured: document.getElementById('f-featured').value === 'true',
-      publishedAt: new Date(document.getElementById('f-date').value).toISOString(),
-    };
-
-    // Optional fields - send empty string to clear when editing, or skip when adding
-    const optionals = {
-      description: 'f-desc',
-      director: 'f-director',
-      cast: 'f-cast',
-      language: 'f-language',
-      location: 'f-location',
-      seriesName: 'f-series-name',
-      seriesId: 'f-series-id'
-    };
-
-    Object.entries(optionals).forEach(([key, id]) => {
-      const val = document.getElementById(id).value.trim();
-      if (val) data[key] = val;
-      else if (editingId) data[key] = null; // clear field on edit if emptied
-    });
-
-    // Genre (checkboxes + custom)
-    const genreVal = getSelectedGenres();
-    if (genreVal) data.genre = genreVal;
-    else if (editingId) data.genre = null;
-
-    if (editingId) {
-      await databases.updateDocument(DB_ID, COLLECTION_ID, editingId, data);
-    } else {
-      await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
-    }
-
-    showSuccess();
-    cancelEdit();   // resets to add mode + clears form
-    loadList();
-  } catch (err) {
-    showError(err.message || 'Failed to save content.');
-  }
-
-  resetBtn();
-};
-
-function resetBtn() {
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = false;
-  btn.textContent = editingId ? 'Update Content' : 'Add Content';
-}
-
-window.editDoc = async (id) => {
-  hideAlerts();
-  try {
-    const doc = await databases.getDocument(DB_ID, COLLECTION_ID, id);
-    editingId = id;
-
-    document.getElementById('f-title').value = doc.title || '';
-    document.getElementById('f-youtube').value = doc.youtube_id || '';
-    document.getElementById('f-category').value = doc.category || 'movie';
-    document.getElementById('f-status').value = doc.status || 'published';
-    document.getElementById('f-desc').value = doc.description || '';
-    document.getElementById('f-director').value = doc.director || '';
-    document.getElementById('f-cast').value = doc.cast || '';
-    document.getElementById('f-language').value = doc.language || '';
-    document.getElementById('f-location').value = doc.location || '';
-    document.getElementById('f-series-name').value = doc.seriesName || '';
-    document.getElementById('f-series-id').value = doc.seriesId || '';
-    document.getElementById('f-featured').value = doc.featured ? 'true' : 'false';
-    document.getElementById('f-date').value = doc.publishedAt
-      ? new Date(doc.publishedAt).toISOString().slice(0,16)
-      : new Date().toISOString().slice(0,16);
-
-    // Genre: tick known ones, put unknowns into custom field
-    const docGenres = (doc.genre || '').split(',').map(s => s.trim()).filter(Boolean);
-    const known = docGenres.filter(g => GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
-    const unknown = docGenres.filter(g => !GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
-    renderGenreBoxes(known);
-    document.getElementById('f-genre-custom').value = unknown.join(', ');
-
-    // thumbnail preview
-    document.getElementById('thumb-preview').innerHTML =
-      (doc.youtube_id && doc.youtube_id.length === 11)
-        ? `<img src="https://img.youtube.com/vi/${doc.youtube_id}/hqdefault.jpg" alt="Preview">` : '';
-
-    // switch UI to edit mode
-    document.getElementById('form-mode-title').textContent = 'Edit Content';
-    document.getElementById('submit-btn').textContent = 'Update Content';
-    document.getElementById('cancel-btn').style.display = 'inline-block';
-
-    // scroll up to form
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (err) {
-    showError('Could not load item for editing: ' + (err.message || err));
-  }
-};
-
-window.cancelEdit = () => {
-  editingId = null;
-  clearForm();
-  document.getElementById('form-mode-title').textContent = 'Add New Content';
-  document.getElementById('submit-btn').textContent = 'Add Content';
-  document.getElementById('cancel-btn').style.display = 'none';
-};
-
-function clearForm() {
-  ['f-title','f-youtube','f-desc','f-director','f-cast','f-series-name','f-series-id'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f-category').value = 'movie';
-  document.getElementById('f-status').value = 'published';
-  document.getElementById('f-language').value = '';
-  document.getElementById('f-location').value = '';
-  document.getElementById('f-featured').value = 'false';
-  document.getElementById('thumb-preview').innerHTML = '';
-  document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
-  document.getElementById('f-genre-custom').value = '';
-  renderGenreBoxes();
-}
-
-function showSuccess() {
-  const el = document.getElementById('alert-success');
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3500);
-}
-
-function showError(msg) {
-  document.getElementById('error-msg').textContent = msg;
-  document.getElementById('alert-error').style.display = 'block';
-}
-
-function hideAlerts() {
-  document.getElementById('alert-success').style.display = 'none';
-  document.getElementById('alert-error').style.display = 'none';
-}
-
-async function loadList() {
-  const wrap = document.getElementById('content-list');
-  try {
-    const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.orderDesc('publishedAt'), Query.limit(40)]);
-    if (!res.documents.length) {
-      wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content yet.</p>`;
-      return;
-    }
-    wrap.innerHTML = res.documents.map(doc => `
-      <div class="content-item">
-        <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="" onerror="this.style.visibility='hidden'">
-        <div class="content-item-info">
-          <div class="content-item-title">${doc.title}</div>
-          <div class="content-item-meta">
-            ${doc.category}
-            ${doc.seriesName ? ' · Series: ' + doc.seriesName : ''}
-            ${doc.language ? ' · ' + doc.language : ''}
-            ${doc.location ? ' · ' + doc.location : ''}
-          </div>
-        </div>
-        <span class="status-badge status-${doc.status}">${doc.status}</span>
-        <div class="item-actions">
-          <button class="btn-edit" onclick="editDoc('${doc.$id}')">Edit</button>
-          <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch {
-    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load.</p>`;
-  }
-}
-
-window.deleteDoc = async (id, btn) => {
-  if (!confirm('Delete this content?')) return;
-  try {
-    await databases.deleteDocument(DB_ID, COLLECTION_ID, id);
-    btn.closest('.content-item').remove();
-    if (editingId === id) cancelEdit();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-};
-
-function renderLoginPrompt() {
-  document.getElementById('page-wrap').innerHTML = `
-    <div style="text-align:center;padding:100px 24px;">
-      <h2 style="font-family:'Teko',sans-serif;font-size:32px;margin-bottom:8px;">Sign in required</h2>
-      <a href="/" style="color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
-    </div>
-  `;
-}
-
-async function loadClaims() {
-  const wrap = document.getElementById('claims-list');
-  if (!wrap) return;
-  try {
-    const res = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
-      Query.orderDesc('$createdAt'),
-      Query.limit(50)
-    ]);
-    if (!res.documents.length) {
-      wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No claims yet.</p>`;
-      return;
-    }
-    const docs = res.documents.sort((a, b) => {
-      if (a.status === 'pending' && b.status !== 'pending') return -1;
-      if (b.status === 'pending' && a.status !== 'pending') return 1;
-      return 0;
-    });
-    wrap.innerHTML = docs.map(c => `
-      <div class="claim-card ${c.status === 'pending' ? 'pending' : ''}">
-        <div class="claim-head">
-          <div class="claim-who">${c.userName} <span>(${c.userEmail})</span></div>
-          ${c.status !== 'pending' ? `<span class="claim-badge ${c.status}">${c.status}</span>` : ''}
-        </div>
-        <div class="claim-what">Claims <strong>${c.claimedRole}</strong> on "${c.contentTitle}"</div>
-        <div class="claim-btns">
-          ${c.status === 'pending' ? `
-            <button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>
-            <button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">Reject</button>
-          ` : ''}
-          ${c.status === 'approved' ? `
-            <button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">↩ Undo (Reject)</button>
-          ` : ''}
-          ${c.status === 'rejected' ? `
-            <button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>
-          ` : ''}
-          <button class="btn-delete-claim" onclick="deleteClaim('${c.$id}', this)">🗑 Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load claims.</p>`;
-    console.error(err);
-  }
-}
-
-window.approveClaim = async (id, btn) => {
-  btn.disabled = true; btn.textContent = '...';
-  try {
-    await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'approved' });
-    loadClaims();
-  } catch (err) {
-    alert('Error: ' + err.message);
-    btn.disabled = false; btn.textContent = '✓ Approve';
-  }
-};
-
-window.rejectClaim = async (id, btn) => {
-  if (!confirm('Reject this claim? The verified badge will be removed.')) return;
-  btn.disabled = true; btn.textContent = '...';
-  try {
-    await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'rejected' });
-    loadClaims();
-  } catch (err) {
-    alert('Error: ' + err.message);
-    btn.disabled = false; btn.textContent = 'Reject';
-  }
-};
-
-window.deleteClaim = async (id, btn) => {
-  if (!confirm('Permanently delete this claim? This cannot be undone.')) return;
-  btn.disabled = true; btn.textContent = '...';
-  try {
-    await databases.deleteDocument(DB_ID, CLAIMS_COLLECTION_ID, id);
-    btn.closest('.claim-card').remove();
-  } catch (err) {
-    alert('Error: ' + err.message);
-    btn.disabled = false; btn.textContent = '🗑 Delete';
-  }
-};
-
-loadClaims();
-loadList();
+</div>`;
 </script>
 </body>
 </html>
