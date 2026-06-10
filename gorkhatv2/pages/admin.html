@@ -59,6 +59,11 @@
     .status-draft { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
     .access-denied { text-align: center; padding: 100px 24px; }
     .access-denied h2 { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 8px; }
+    .genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .genre-chk { display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+    .genre-chk:hover { border-color: var(--muted); }
+    .genre-chk input { width: auto; margin: 0; cursor: pointer; accent-color: var(--red); }
+    .genre-chk.checked { border-color: var(--red); background: rgba(232,25,44,0.08); }
     .claim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
     .claim-card.pending { border-left: 3px solid var(--gold); }
     .claim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
@@ -177,6 +182,12 @@ document.getElementById('page-wrap').innerHTML = `
       <textarea id="f-desc" placeholder="Brief description..."></textarea>
     </div>
 
+    <div class="form-group">
+      <label>Genre / Tags</label>
+      <div id="genre-checkboxes" class="genre-grid"></div>
+      <input type="text" id="f-genre-custom" placeholder="Add custom genres (comma separated)" style="margin-top:10px;">
+    </div>
+
     <div class="form-row">
       <div class="form-group">
         <label>Director</label>
@@ -247,6 +258,26 @@ document.getElementById('page-wrap').innerHTML = `
 
 document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
 
+// ── Genre setup ──
+const GENRES = ['Drama','Comedy','Action','Romance','Horror','Thriller','Family','Documentary','Music Video','Folk/Cultural','Devotional','News/Current Affairs','Interview','Vlog','Short Film','Educational'];
+
+function renderGenreBoxes(selected = []) {
+  const sel = selected.map(s => s.toLowerCase().trim());
+  document.getElementById('genre-checkboxes').innerHTML = GENRES.map(g => `
+    <label class="genre-chk ${sel.includes(g.toLowerCase()) ? 'checked' : ''}">
+      <input type="checkbox" value="${g}" ${sel.includes(g.toLowerCase()) ? 'checked' : ''} onchange="this.closest('.genre-chk').classList.toggle('checked', this.checked)">
+      ${g}
+    </label>
+  `).join('');
+}
+renderGenreBoxes();
+
+function getSelectedGenres() {
+  const checked = [...document.querySelectorAll('#genre-checkboxes input:checked')].map(c => c.value);
+  const custom = document.getElementById('f-genre-custom').value.split(',').map(s => s.trim()).filter(Boolean);
+  return [...new Set([...checked, ...custom])].join(', ');
+}
+
 document.getElementById('f-youtube').addEventListener('input', e => {
   const id = e.target.value.trim();
   document.getElementById('thumb-preview').innerHTML =
@@ -301,6 +332,11 @@ window.submitContent = async () => {
       else if (editingId) data[key] = null; // clear field on edit if emptied
     });
 
+    // Genre (checkboxes + custom)
+    const genreVal = getSelectedGenres();
+    if (genreVal) data.genre = genreVal;
+    else if (editingId) data.genre = null;
+
     if (editingId) {
       await databases.updateDocument(DB_ID, COLLECTION_ID, editingId, data);
     } else {
@@ -345,6 +381,13 @@ window.editDoc = async (id) => {
       ? new Date(doc.publishedAt).toISOString().slice(0,16)
       : new Date().toISOString().slice(0,16);
 
+    // Genre: tick known ones, put unknowns into custom field
+    const docGenres = (doc.genre || '').split(',').map(s => s.trim()).filter(Boolean);
+    const known = docGenres.filter(g => GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
+    const unknown = docGenres.filter(g => !GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
+    renderGenreBoxes(known);
+    document.getElementById('f-genre-custom').value = unknown.join(', ');
+
     // thumbnail preview
     document.getElementById('thumb-preview').innerHTML =
       (doc.youtube_id && doc.youtube_id.length === 11)
@@ -379,6 +422,8 @@ function clearForm() {
   document.getElementById('f-featured').value = 'false';
   document.getElementById('thumb-preview').innerHTML = '';
   document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
+  document.getElementById('f-genre-custom').value = '';
+  renderGenreBoxes();
 }
 
 function showSuccess() {
