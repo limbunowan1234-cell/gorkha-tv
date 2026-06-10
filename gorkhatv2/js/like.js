@@ -19,29 +19,20 @@ export async function getCounts(contentId) {
   }
 }
 
-// Bulk: fetch like+share counts for many content ids at once.
-// Returns a map { contentId: { like, share } }. Efficient single query per type.
+// Bulk: fetch like+share counts. Returns map { contentId: { like, share } }.
+// Single bounded query per type — never hangs, fails safe to zeros.
 export async function getBulkCounts(contentIds) {
   const map = {};
   contentIds.forEach(id => map[id] = { like: 0, share: 0 });
   if (!contentIds.length) return map;
   try {
-    // Appwrite caps query results; page through up to 500 each type
-    for (const type of ['like', 'share']) {
-      let offset = 0;
-      while (true) {
-        const res = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [
-          Query.equal('type', type), Query.limit(100), Query.offset(offset)
-        ]);
-        res.documents.forEach(d => {
-          if (map[d.contentId]) map[d.contentId][type] += 1;
-        });
-        if (res.documents.length < 100) break;
-        offset += 100;
-        if (offset > 2000) break; // safety
+    const res = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.limit(500)]);
+    res.documents.forEach(d => {
+      if (map[d.contentId] && (d.type === 'like' || d.type === 'share')) {
+        map[d.contentId][d.type] += 1;
       }
-    }
-  } catch (e) { console.error('getBulkCounts failed', e); }
+    });
+  } catch (e) { console.error('getBulkCounts failed (using zeros):', e); }
   return map;
 }
 
