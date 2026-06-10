@@ -30,6 +30,12 @@
     }
     .btn-submit:hover { opacity: 0.85; }
     .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-cancel {
+      background: none; color: var(--muted); border: 1px solid var(--border); padding: 12px 24px;
+      border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-left: 10px;
+      font-family: 'Inter', sans-serif; transition: all 0.2s; display: none;
+    }
+    .btn-cancel:hover { border-color: var(--text); color: var(--text); }
     .alert { padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 20px; display: none; }
     .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
     .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
@@ -43,7 +49,10 @@
     .content-item-info { flex: 1; min-width: 0; }
     .content-item-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .content-item-meta { font-size: 12px; color: var(--muted); }
-    .btn-delete { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+    .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-edit { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
+    .btn-edit:hover { border-color: var(--red); color: var(--red); }
+    .btn-delete { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
     .btn-delete:hover { border-color: #ef4444; color: #ef4444; }
     .status-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
     .status-published { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
@@ -74,6 +83,7 @@
 import { databases, account, DB_ID, COLLECTION_ID, ADMIN_EMAIL, ID, Query } from '../js/appwrite.js';
 
 let user = null;
+let editingId = null;  // null = add mode, doc id = edit mode
 
 try {
   user = await account.get();
@@ -101,11 +111,11 @@ document.getElementById('page-wrap').innerHTML = `
   <h1 class="admin-title">🛠 Admin Panel</h1>
   <p class="admin-sub">Logged in as ${user.email}</p>
 
-  <div class="alert success" id="alert-success">✅ Content added successfully!</div>
+  <div class="alert success" id="alert-success">✅ Saved successfully!</div>
   <div class="alert error" id="alert-error">❌ <span id="error-msg"></span></div>
 
   <div class="form-card">
-    <div class="form-card-title">Add New Content</div>
+    <div class="form-card-title" id="form-mode-title">Add New Content</div>
 
     <div class="form-group">
       <label>Title *</label>
@@ -205,6 +215,7 @@ document.getElementById('page-wrap').innerHTML = `
     </div>
 
     <button class="btn-submit" id="submit-btn" onclick="submitContent()">Add Content</button>
+    <button class="btn-cancel" id="cancel-btn" onclick="cancelEdit()">Cancel</button>
   </div>
 
   <div class="form-card">
@@ -224,7 +235,7 @@ document.getElementById('f-youtube').addEventListener('input', e => {
 
 window.submitContent = async () => {
   const btn = document.getElementById('submit-btn');
-  btn.disabled = true; btn.textContent = 'Adding...';
+  btn.disabled = true; btn.textContent = editingId ? 'Saving...' : 'Adding...';
   hideAlerts();
 
   const title = document.getElementById('f-title').value.trim();
@@ -233,13 +244,13 @@ window.submitContent = async () => {
 
   if (!title || !youtube_id) {
     showError('Title and YouTube ID are required.');
-    btn.disabled = false; btn.textContent = 'Add Content';
+    resetBtn();
     return;
   }
 
   if (youtube_id.length !== 11) {
     showError('YouTube ID must be exactly 11 characters.');
-    btn.disabled = false; btn.textContent = 'Add Content';
+    resetBtn();
     return;
   }
 
@@ -253,6 +264,7 @@ window.submitContent = async () => {
       publishedAt: new Date(document.getElementById('f-date').value).toISOString(),
     };
 
+    // Optional fields - send empty string to clear when editing, or skip when adding
     const optionals = {
       description: 'f-desc',
       director: 'f-director',
@@ -266,21 +278,85 @@ window.submitContent = async () => {
     Object.entries(optionals).forEach(([key, id]) => {
       const val = document.getElementById(id).value.trim();
       if (val) data[key] = val;
+      else if (editingId) data[key] = null; // clear field on edit if emptied
     });
 
-    await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
+    if (editingId) {
+      await databases.updateDocument(DB_ID, COLLECTION_ID, editingId, data);
+    } else {
+      await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
+    }
+
     showSuccess();
-    clearForm();
+    cancelEdit();   // resets to add mode + clears form
     loadList();
   } catch (err) {
-    showError(err.message || 'Failed to add content.');
+    showError(err.message || 'Failed to save content.');
   }
 
-  btn.disabled = false; btn.textContent = 'Add Content';
+  resetBtn();
+};
+
+function resetBtn() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = false;
+  btn.textContent = editingId ? 'Update Content' : 'Add Content';
+}
+
+window.editDoc = async (id) => {
+  hideAlerts();
+  try {
+    const doc = await databases.getDocument(DB_ID, COLLECTION_ID, id);
+    editingId = id;
+
+    document.getElementById('f-title').value = doc.title || '';
+    document.getElementById('f-youtube').value = doc.youtube_id || '';
+    document.getElementById('f-category').value = doc.category || 'movie';
+    document.getElementById('f-status').value = doc.status || 'published';
+    document.getElementById('f-desc').value = doc.description || '';
+    document.getElementById('f-director').value = doc.director || '';
+    document.getElementById('f-cast').value = doc.cast || '';
+    document.getElementById('f-language').value = doc.language || '';
+    document.getElementById('f-location').value = doc.location || '';
+    document.getElementById('f-series-name').value = doc.seriesName || '';
+    document.getElementById('f-series-id').value = doc.seriesId || '';
+    document.getElementById('f-featured').value = doc.featured ? 'true' : 'false';
+    document.getElementById('f-date').value = doc.publishedAt
+      ? new Date(doc.publishedAt).toISOString().slice(0,16)
+      : new Date().toISOString().slice(0,16);
+
+    // thumbnail preview
+    document.getElementById('thumb-preview').innerHTML =
+      (doc.youtube_id && doc.youtube_id.length === 11)
+        ? `<img src="https://img.youtube.com/vi/${doc.youtube_id}/hqdefault.jpg" alt="Preview">` : '';
+
+    // switch UI to edit mode
+    document.getElementById('form-mode-title').textContent = 'Edit Content';
+    document.getElementById('submit-btn').textContent = 'Update Content';
+    document.getElementById('cancel-btn').style.display = 'inline-block';
+
+    // scroll up to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    showError('Could not load item for editing: ' + (err.message || err));
+  }
+};
+
+window.cancelEdit = () => {
+  editingId = null;
+  clearForm();
+  document.getElementById('form-mode-title').textContent = 'Add New Content';
+  document.getElementById('submit-btn').textContent = 'Add Content';
+  document.getElementById('cancel-btn').style.display = 'none';
 };
 
 function clearForm() {
   ['f-title','f-youtube','f-desc','f-director','f-cast','f-series-name','f-series-id'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-category').value = 'movie';
+  document.getElementById('f-status').value = 'published';
+  document.getElementById('f-language').value = '';
+  document.getElementById('f-location').value = '';
+  document.getElementById('f-featured').value = 'false';
   document.getElementById('thumb-preview').innerHTML = '';
   document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
 }
@@ -322,7 +398,10 @@ async function loadList() {
           </div>
         </div>
         <span class="status-badge status-${doc.status}">${doc.status}</span>
-        <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
+        <div class="item-actions">
+          <button class="btn-edit" onclick="editDoc('${doc.$id}')">Edit</button>
+          <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
+        </div>
       </div>
     `).join('');
   } catch {
@@ -335,6 +414,7 @@ window.deleteDoc = async (id, btn) => {
   try {
     await databases.deleteDocument(DB_ID, COLLECTION_ID, id);
     btn.closest('.content-item').remove();
+    if (editingId === id) cancelEdit();
   } catch (err) {
     alert('Error: ' + err.message);
   }
