@@ -151,6 +151,7 @@ function runSearch(raw) {
   const artistHits = allArtists.filter(a =>
     (a.name||'').toLowerCase().includes(q) ||
     (a.profession||'').toLowerCase().includes(q) ||
+    (a.genres||'').toLowerCase().includes(q) ||
     (a.languages||'').toLowerCase().includes(q) ||
     (a.location||'').toLowerCase().includes(q)
   );
