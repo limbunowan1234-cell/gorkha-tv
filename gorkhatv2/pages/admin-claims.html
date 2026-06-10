@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Credit Claims</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .admin-wrap { max-width: 780px; margin: 40px auto; padding: 0 24px; }
+    .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 8px; }
+    .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 32px; }
+    .form-card-title { font-family: 'Teko', sans-serif; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .form-card-title::before { content: ''; display: block; width: 3px; height: 20px; background: var(--red); border-radius: 2px; }
+    .claim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
+    .claim-card.pending { border-left: 3px solid var(--gold); }
+    .claim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
+    .claim-who { font-size: 14px; font-weight: 600; }
+    .claim-who span { color: var(--muted); font-weight: 400; font-size: 12px; }
+    .claim-what { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .claim-what strong { color: var(--gold); }
+    .claim-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-approve { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
+    .btn-approve:hover { background: rgba(34,197,94,0.25); }
+    .btn-reject { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
+    .btn-reject:hover { border-color: #ef4444; color: #ef4444; }
+    .btn-delete-claim { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
+    .btn-delete-claim:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
+    .claim-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
+    .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
+    .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; }
+    .access-denied { text-align: center; padding: 100px 24px; }
+    .access-denied h2 { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 8px; }
+    .filter-row { display:flex; gap:8px; margin-bottom:20px; }
+    .filter-pill { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 16px; border-radius:20px; font-size:13px; cursor:pointer; }
+    .filter-pill.active { background:var(--red); border-color:var(--red); color:#fff; }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo-svg">
+    <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg></div>
+    <div class="logo-text">
+      <div class="logo-wordmark">Gorkha<em>TV</em></div>
+      <div class="logo-tagline">Darjeeling in Every Frame</div>
+    </div>
+  </a>
+  <a href="admin.html" style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">← Dashboard</a>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div id="page-wrap"><div class="loading"><div class="spinner"></div></div></div>
+
+<script type="module">
+import { databases, account, DB_ID, CLAIMS_COLLECTION_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
+
+let user = null;
+try {
+  user = await account.get();
+} catch {
+  document.getElementById('page-wrap').innerHTML = `<div class="access-denied"><h2>Sign in required</h2><a href="/" style="color:var(--red);">← Back</a></div>`;
+  throw new Error('Not logged in');
+}
+if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+  document.getElementById('page-wrap').innerHTML = `<div class="access-denied"><div style="font-size:56px;margin-bottom:16px;">🔒</div><h2>Access Denied</h2><a href="/" style="color:var(--red);">← Back to GorkhaTV</a></div>`;
+  throw new Error('Not admin');
+}
+
+document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;color:var(--muted);">${user.name}</span>`;
+
+document.getElementById('page-wrap').innerHTML = `
+<div class="admin-wrap">
+  <h1 class="admin-title">⭐ Credit Claims</h1>
+  <p class="admin-sub">Review and manage artist credit claims</p>
+  <div class="filter-row">
+    <div class="filter-pill active" data-f="all" onclick="setFilter('all',this)">All</div>
+    <div class="filter-pill" data-f="pending" onclick="setFilter('pending',this)">Pending</div>
+    <div class="filter-pill" data-f="approved" onclick="setFilter('approved',this)">Approved</div>
+    <div class="filter-pill" data-f="rejected" onclick="setFilter('rejected',this)">Rejected</div>
+  </div>
+  <div class="form-card">
+    <div id="claims-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+  </div>
+</div>`;
+
+let allClaims = [];
+let currentFilter = 'all';
+
+window.setFilter = (f, el) => {
+  currentFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderClaims();
+};
+
+async function loadClaims() {
+  try {
+    const res = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.orderDesc('$createdAt'), Query.limit(100)]);
+    allClaims = res.documents;
+    renderClaims();
+  } catch (err) {
+    document.getElementById('claims-list').innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load claims.</p>`;
+    console.error(err);
+  }
+}
+
+function renderClaims() {
+  const wrap = document.getElementById('claims-list');
+  let docs = allClaims.slice();
+  if (currentFilter !== 'all') docs = docs.filter(c => c.status === currentFilter);
+  docs.sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (b.status === 'pending' && a.status !== 'pending') return 1;
+    return 0;
+  });
+  if (!docs.length) { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No ${currentFilter==='all'?'':currentFilter+' '}claims.</p>`; return; }
+  wrap.innerHTML = docs.map(c => `
+    <div class="claim-card ${c.status === 'pending' ? 'pending' : ''}">
+      <div class="claim-head">
+        <div class="claim-who">${c.userName} <span>(${c.userEmail})</span></div>
+        ${c.status !== 'pending' ? `<span class="claim-badge ${c.status}">${c.status}</span>` : ''}
+      </div>
+      <div class="claim-what">Claims <strong>${c.claimedRole}</strong> on "${c.contentTitle}"</div>
+      <div class="claim-btns">
+        ${c.status === 'pending' ? `<button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button><button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">Reject</button>` : ''}
+        ${c.status === 'approved' ? `<button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">↩ Undo (Reject)</button>` : ''}
+        ${c.status === 'rejected' ? `<button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>` : ''}
+        <button class="btn-delete-claim" onclick="deleteClaim('${c.$id}', this)">🗑 Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+window.approveClaim = async (id, btn) => {
+  btn.disabled = true; btn.textContent = '...';
+  try { await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'approved' }); await loadClaims(); }
+  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = '✓ Approve'; }
+};
+
+window.rejectClaim = async (id, btn) => {
+  if (!confirm('Reject this claim? The verified badge will be removed.')) return;
+  btn.disabled = true; btn.textContent = '...';
+  try { await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'rejected' }); await loadClaims(); }
+  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = 'Reject'; }
+};
+
+window.deleteClaim = async (id, btn) => {
+  if (!confirm('Permanently delete this claim? This cannot be undone.')) return;
+  btn.disabled = true; btn.textContent = '...';
+  try { await databases.deleteDocument(DB_ID, CLAIMS_COLLECTION_ID, id); allClaims = allClaims.filter(c => c.$id !== id); renderClaims(); }
+  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = '🗑 Delete'; }
+};
+
+loadClaims();
+</script>
+</body>
+</html>
