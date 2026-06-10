@@ -1,1 +1,2 @@
-/* /index.html 200
+# GorkhaTV is a multi-page static site.
+# Cloudflare Pages serves all .html files directly — no catch-all needed.
