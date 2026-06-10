@@ -167,12 +167,15 @@ async function loadArtist() {
       Query.equal('status', 'published'), Query.limit(100)
     ]);
 
-    const name = artist.name.toLowerCase();
+    const name = artist.name.toLowerCase().trim();
     const works = [];
     contentRes.documents.forEach(doc => {
       const roles = [];
-      if (doc.director && doc.director.toLowerCase().includes(name)) roles.push('Director');
-      if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim().includes(name))) roles.push('Cast');
+      const dir = (doc.director || '').toLowerCase();
+      // Director: match whole name within comma list or exact
+      if (dir && dir.split(',').some(d => d.trim() === name)) roles.push('Director');
+      // Cast: exact whole-name match within the comma-separated list
+      if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim() === name)) roles.push('Cast');
       if (roles.length) works.push({ ...doc, roles });
     });
 
@@ -270,7 +273,7 @@ window.loginGoogle = async () => {
   const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
   const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
   const acc = new Account(client);
-  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+  await acc.createOAuth2Token('google', 'https://gorkhatv.site/pages/auth-callback.html', 'https://gorkhatv.site');
 };
 </script>
 </body>
