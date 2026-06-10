@@ -11,15 +11,27 @@
     .watch-grid { display:grid; grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr); gap:24px; }
     .player-box { background:#111; border-radius:18px; overflow:hidden; aspect-ratio:16/9; }
     .player-box iframe { width:100%; height:100%; border:0; display:block; }
-    .video-title { font-family:'Teko', sans-serif; font-size:46px; line-height:1; margin:18px 0 8px; }
-    .video-meta { color:var(--muted); font-size:14px; margin-bottom:16px; }
-    .video-desc { color:#ddd; line-height:1.65; white-space:pre-wrap; }
+    .video-title { font-family:'Teko', sans-serif; font-size:46px; line-height:1; margin:18px 0 6px; }
+    .video-badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .vbadge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:3px; text-transform:uppercase; letter-spacing:0.5px; }
+    .vbadge.cat { background:var(--red); color:#fff; }
+    .vbadge.series { background:rgba(200,150,42,0.18); color:var(--gold); border:1px solid rgba(200,150,42,0.35); }
+    .vbadge.plain { background:var(--surface2); color:var(--muted); border:1px solid var(--border); }
+    .detail-table { margin:18px 0; border-top:1px solid var(--border); }
+    .detail-row { display:flex; gap:14px; padding:11px 0; border-bottom:1px solid var(--border); font-size:14px; }
+    .detail-label { flex:0 0 120px; color:var(--muted); font-weight:600; text-transform:uppercase; font-size:11px; letter-spacing:0.6px; padding-top:2px; }
+    .detail-value { flex:1; color:var(--text); }
+    .cast-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .cast-chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:13px; transition:all 0.15s; }
+    a.cast-chip:hover { border-color:var(--gold); color:var(--gold); }
+    .video-desc { color:#ddd; line-height:1.7; white-space:pre-wrap; margin-top:6px; }
     .series-box, .side-card { background:#111; border-radius:16px; padding:18px; }
     .series-box { margin-top:18px; }
     .series-box h3, .side-card h3 { margin:0 0 14px; font-family:'Teko', sans-serif; font-size:28px; }
     .episode-list { display:grid; gap:10px; }
     .episode-item { display:flex; gap:12px; padding:10px 0; text-decoration:none; color:inherit; border-top:1px solid rgba(255,255,255,.06); }
     .episode-item:first-child { border-top:0; }
+    .episode-item.playing { background:rgba(196,30,58,0.1); border-radius:8px; padding:10px; }
     .episode-item img { width:132px; height:74px; object-fit:cover; border-radius:10px; flex:0 0 auto; }
     .episode-item .e-title { font-size:14px; font-weight:600; margin-bottom:4px; }
     .episode-item .e-sub { color:var(--muted); font-size:12px; }
@@ -29,7 +41,7 @@
     .related-item .r-title { font-size:14px; font-weight:600; margin-bottom:4px; }
     .related-item .r-sub { color:var(--muted); font-size:12px; }
     .empty-note { color:var(--muted); font-size:13px; }
-    @media(max-width:900px){ .watch-wrap{padding-left:16px;padding-right:16px;} .watch-grid{grid-template-columns:1fr;} }
+    @media(max-width:900px){ .watch-wrap{padding-left:16px;padding-right:16px;} .watch-grid{grid-template-columns:1fr;} .video-title{font-size:34px;} .detail-label{flex-basis:90px;} }
   </style>
 </head>
 <body>
@@ -62,7 +74,8 @@
       <div>
         <div class="player-box" id="player-box"></div>
         <h1 class="video-title" id="video-title"></h1>
-        <div class="video-meta" id="video-meta"></div>
+        <div class="video-badges" id="video-badges"></div>
+        <div class="detail-table" id="detail-table"></div>
         <div class="video-desc" id="video-desc"></div>
 
         <div class="series-box" id="series-box" style="display:none;">
@@ -90,7 +103,7 @@ try { currentUser = await account.get(); } catch {}
 
 if (currentUser) {
   document.getElementById('nav-right').innerHTML = `
-    <div class="user-avatar" style="cursor:pointer;" onclick="window.location.href='my-favourites.html'">
+    <div class="user-avatar" style="cursor:pointer;" onclick="window.location.href='/pages/my-favourites.html'">
       ${currentUser.name ? currentUser.name[0].toUpperCase() : '?'}
     </div>
   `;
@@ -107,6 +120,18 @@ function ytUrlFromItem(item) {
     if (m) return `https://www.youtube.com/embed/${m[1]}?rel=0&modestbranding=1`;
   }
   return '';
+}
+
+function esc(s) { return (s || '').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Build a clickable chip list from a comma-separated string. Links to artist profile by slug.
+function chips(str) {
+  return str.split(',').map(name => {
+    const n = name.trim();
+    if (!n) return '';
+    const slug = n.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    return `<a class="cast-chip" href="artist.html?id=${encodeURIComponent(slug)}">${esc(n)}</a>`;
+  }).join('');
 }
 
 async function load() {
@@ -127,15 +152,32 @@ async function load() {
 
     document.getElementById('video-title').textContent = item.title || '';
 
-    const meta = [];
-    if (item.category) meta.push(item.category);
-    if (item.language) meta.push(item.language);
-    if (item.location) meta.push(item.location);
-    if (item.publishedAt) meta.push(new Date(item.publishedAt).toLocaleDateString());
-    document.getElementById('video-meta').textContent = meta.join(' • ');
+    // ── Badges row ──
+    const badges = [];
+    if (item.category) badges.push(`<span class="vbadge cat">${esc(item.category)}</span>`);
+    if (item.seriesName) badges.push(`<span class="vbadge series">📺 ${esc(item.seriesName)}</span>`);
+    if (item.publishedAt) badges.push(`<span class="vbadge plain">${new Date(item.publishedAt).getFullYear()}</span>`);
+    document.getElementById('video-badges').innerHTML = badges.join('');
+
+    // ── Detail table ──
+    const rows = [];
+    if (item.seriesName) rows.push(['Series', esc(item.seriesName)]);
+    if (item.director) rows.push(['Director', chips(item.director)]);
+    if (item.cast) rows.push(['Cast', `<div class="cast-chips">${chips(item.cast)}</div>`]);
+    if (item.language) rows.push(['Language', esc(item.language)]);
+    if (item.location) rows.push(['Location', esc(item.location)]);
+    if (item.publishedAt) rows.push(['Published', new Date(item.publishedAt).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })]);
+
+    document.getElementById('detail-table').innerHTML = rows.map(([label, value]) => `
+      <div class="detail-row">
+        <div class="detail-label">${label}</div>
+        <div class="detail-value">${value}</div>
+      </div>
+    `).join('');
 
     document.getElementById('video-desc').textContent = item.description || '';
 
+    // ── Series episodes ──
     if (item.seriesId) {
       const seriesRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
         Query.equal('seriesId', item.seriesId),
@@ -147,15 +189,14 @@ async function load() {
       const eps = seriesRes.documents;
       if (eps.length > 1) {
         document.getElementById('series-box').style.display = 'block';
-        document.getElementById('series-title').textContent = item.seriesName ? `Series: ${item.seriesName}` : `Series: ${item.seriesId}`;
-        document.getElementById('episode-list').innerHTML = eps.map(v => `
-          <a class="episode-item" href="video.html?id=${v.$id}">
-            <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${v.title || ''}">
+        document.getElementById('series-title').textContent = item.seriesName ? `${item.seriesName} — ${eps.length} Episodes` : `Series — ${eps.length} Episodes`;
+        document.getElementById('episode-list').innerHTML = eps.map((v, i) => `
+          <a class="episode-item ${v.$id === item.$id ? 'playing' : ''}" href="video.html?id=${v.$id}">
+            <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${esc(v.title)}">
             <div>
-              <div class="e-title">${v.title || ''}</div>
+              <div class="e-title">${i+1}. ${esc(v.title)}</div>
               <div class="e-sub">
-                ${v.category || ''}${v.language ? ' • ' + v.language : ''}
-                ${v.$id === item.$id ? ' • Playing now' : ''}
+                ${v.$id === item.$id ? '▶ Now playing' : 'Tap to play'}${v.language ? ' • ' + esc(v.language) : ''}
               </div>
             </div>
           </a>
@@ -163,19 +204,22 @@ async function load() {
       }
     }
 
-    const rel = await databases.listDocuments(DB_ID, COLLECTION_ID, [
-      Query.equal('status', 'published'),
-      Query.limit(8)
-    ]);
+    // ── Related (same category, excluding current + same series) ──
+    const relQueries = [Query.equal('status', 'published'), Query.limit(12)];
+    if (item.category) relQueries.push(Query.equal('category', item.category));
+    const rel = await databases.listDocuments(DB_ID, COLLECTION_ID, relQueries);
 
-    const related = rel.documents.filter(x => x.$id !== item.$id).slice(0, 6);
+    const related = rel.documents
+      .filter(x => x.$id !== item.$id && (!item.seriesId || x.seriesId !== item.seriesId))
+      .slice(0, 6);
+
     document.getElementById('related-list').innerHTML = related.length
       ? related.map(v => `
         <a class="related-item" href="video.html?id=${v.$id}">
-          <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${v.title || ''}">
+          <img src="${v.youtube_id ? `https://img.youtube.com/vi/${v.youtube_id}/hqdefault.jpg` : ''}" alt="${esc(v.title)}">
           <div>
-            <div class="r-title">${v.title || ''}</div>
-            <div class="r-sub">${v.category || ''}${v.language ? ' • ' + v.language : ''}</div>
+            <div class="r-title">${esc(v.title)}</div>
+            <div class="r-sub">${esc(v.category)}${v.language ? ' • ' + esc(v.language) : ''}</div>
           </div>
         </a>
       `).join('')
@@ -195,7 +239,7 @@ window.loginGoogle = async () => {
     .setEndpoint('https://nyc.cloud.appwrite.io/v1')
     .setProject('6a280cbd0022eeb574a5');
   const acc = new Account(client);
-  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+  await acc.createOAuth2Token('google', 'https://gorkhatv.site/pages/auth-callback.html', 'https://gorkhatv.site');
 };
 
 load();
