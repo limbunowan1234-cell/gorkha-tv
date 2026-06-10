@@ -167,6 +167,7 @@ async function load() {
     // ── Badges row ──
     const badges = [];
     if (item.category) badges.push(`<span class="vbadge cat">${esc(item.category)}</span>`);
+    if (item.genre) item.genre.split(',').map(g => g.trim()).filter(Boolean).forEach(g => badges.push(`<span class="vbadge plain">${esc(g)}</span>`));
     if (item.seriesName) badges.push(`<span class="vbadge series">📺 ${esc(item.seriesName)}</span>`);
     if (item.publishedAt) badges.push(`<span class="vbadge plain">${new Date(item.publishedAt).getFullYear()}</span>`);
     document.getElementById('video-badges').innerHTML = badges.join('');
@@ -174,6 +175,7 @@ async function load() {
     // ── Detail table ──
     const rows = [];
     if (item.seriesName) rows.push(['Series', esc(item.seriesName)]);
+    if (item.genre) rows.push(['Genre', esc(item.genre)]);
     if (item.director) rows.push(['Director', chips(item.director)]);
     if (item.cast) rows.push(['Cast', `<div class="cast-chips">${chips(item.cast)}</div>`]);
     if (item.language) rows.push(['Language', esc(item.language)]);
