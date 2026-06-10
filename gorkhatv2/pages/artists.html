@@ -104,10 +104,10 @@ filterEl.addEventListener('click', e => {
 });
 
 function countCredits(artistName) {
-  const name = artistName.toLowerCase();
+  const name = artistName.toLowerCase().trim();
   return allContent.filter(doc =>
-    (doc.director && doc.director.toLowerCase().includes(name)) ||
-    (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim().includes(name)))
+    (doc.director && doc.director.toLowerCase().split(',').some(d => d.trim() === name)) ||
+    (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim() === name))
   ).length;
 }
 
@@ -155,7 +155,7 @@ window.loginGoogle = async () => {
   const { Account, Client } = await import('https://cdn.jsdelivr.net/npm/appwrite@14.0.1/+esm');
   const client = new Client().setEndpoint('https://nyc.cloud.appwrite.io/v1').setProject('6a280cbd0022eeb574a5');
   const acc = new Account(client);
-  await acc.createOAuth2Session('google', window.location.origin + '/pages/auth-callback.html', window.location.href);
+  await acc.createOAuth2Token('google', 'https://gorkhatv.site/pages/auth-callback.html', 'https://gorkhatv.site');
 };
 </script>
 </body>
