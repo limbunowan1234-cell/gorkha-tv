@@ -159,15 +159,14 @@ async function loadContent() {
     startHeroTimer();
     renderRows();
 
-    // Load real global like+share counts in the background, then refresh popularity-based rows
-    try {
-      countsMap = await getBulkCounts(allContent.map(d => d.$id));
-      // recompute counts on existing items
-      displayItems = groupBySeries(allContent);
-      renderRows();
-    } catch (e) {
-      console.error('counts load failed (rows still shown):', e);
-    }
+    // Load real counts in the background — fire and forget, never blocks the page
+    getBulkCounts(allContent.map(d => d.$id))
+      .then(counts => {
+        countsMap = counts;
+        displayItems = groupBySeries(allContent);
+        renderRows();
+      })
+      .catch(e => console.error('counts load failed (rows still shown):', e));
   } catch (err) {
     console.error('Load error:', err);
   }
