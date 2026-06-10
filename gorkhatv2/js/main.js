@@ -306,6 +306,58 @@ function renderRows(category = 'all') {
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
   renderRowCards('latest-row', latest);
+
+  renderDynamicRows();
+}
+
+// Build one row per category that has content, plus one row per genre that has content
+function renderDynamicRows() {
+  const wrap = document.getElementById('dynamic-rows');
+  if (!wrap) return;
+
+  const rows = [];
+
+  // ── Category rows ──
+  const catLabels = { movie: 'Movies', webseries: 'Web Series', music: 'Music Videos', documentary: 'Documentaries' };
+  Object.entries(catLabels).forEach(([cat, label]) => {
+    const items = displayItems.filter(d => d.category === cat)
+      .sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate));
+    if (items.length) rows.push({ title: label, link: `pages/browse.html?cat=${cat}`, items: items.slice(0, 12) });
+  });
+
+  // ── Genre rows ── (genres are comma-separated on each doc)
+  const genreMap = {};
+  displayItems.forEach(d => {
+    (d.genre || '').split(',').map(g => g.trim()).filter(Boolean).forEach(g => {
+      const key = g.toLowerCase();
+      if (!genreMap[key]) genreMap[key] = { label: g, items: [] };
+      genreMap[key].items.push(d);
+    });
+  });
+  // Only genres with 2+ items, sorted by count desc
+  Object.values(genreMap)
+    .filter(g => g.items.length >= 2)
+    .sort((a, b) => b.items.length - a.items.length)
+    .forEach(g => {
+      const items = g.items.sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate)).slice(0, 12);
+      rows.push({ title: g.label, link: `pages/search.html?q=${encodeURIComponent(g.label)}`, items });
+    });
+
+  wrap.innerHTML = rows.map((row, i) => `
+    <div class="row">
+      <div class="row-header">
+        <h2 class="row-title">${row.title}</h2>
+        <a href="${row.link}" class="see-all">See all →</a>
+      </div>
+      <div class="cards-scroll" id="dyn-row-${i}"></div>
+    </div>
+  `).join('');
+
+  // Fill each row's cards
+  rows.forEach((row, i) => {
+    const el = document.getElementById(`dyn-row-${i}`);
+    if (el) el.innerHTML = row.items.map(item => cardHTML(item)).join('');
+  });
 }
 
 function renderRowCards(id, items) {
