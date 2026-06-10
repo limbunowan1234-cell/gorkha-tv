@@ -124,7 +124,7 @@
 </div>
 
 <script type="module">
-import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
+import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, Query } from '../js/appwrite.js';
 
 const params = new URLSearchParams(window.location.search);
 const slug = params.get('id');
@@ -169,15 +169,37 @@ async function loadArtist() {
 
     const name = artist.name.toLowerCase().trim();
     const works = [];
+    const seenIds = new Set();
     contentRes.documents.forEach(doc => {
       const roles = [];
       const dir = (doc.director || '').toLowerCase();
-      // Director: match whole name within comma list or exact
       if (dir && dir.split(',').some(d => d.trim() === name)) roles.push('Director');
-      // Cast: exact whole-name match within the comma-separated list
       if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim() === name)) roles.push('Cast');
-      if (roles.length) works.push({ ...doc, roles });
+      if (roles.length) { works.push({ ...doc, roles }); seenIds.add(doc.$id); }
     });
+
+    // Add approved claims by this artist's user account (if linked)
+    if (artist.userId) {
+      try {
+        const claimsRes = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
+          Query.equal('userId', artist.userId),
+          Query.equal('status', 'approved'),
+          Query.limit(100)
+        ]);
+        const contentById = {};
+        contentRes.documents.forEach(d => { contentById[d.$id] = d; });
+        claimsRes.documents.forEach(claim => {
+          if (seenIds.has(claim.contentId)) {
+            // already listed via name-match; add the claimed role
+            const w = works.find(x => x.$id === claim.contentId);
+            if (w && !w.roles.includes(claim.claimedRole)) w.roles.push(claim.claimedRole);
+          } else {
+            const doc = contentById[claim.contentId];
+            if (doc) { works.push({ ...doc, roles: [claim.claimedRole] }); seenIds.add(doc.$id); }
+          }
+        });
+      } catch (e) { console.error('claims load failed', e); }
+    }
 
     // Photo
     let photoHTML = `<div class="artist-photo-placeholder">${artist.name[0].toUpperCase()}</div>`;
