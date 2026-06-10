@@ -231,6 +231,7 @@ async function loadArtist() {
     const metaParts = [];
     if (artist.location) metaParts.push(`<span>📍 ${artist.location}</span>`);
     if (artist.languages) metaParts.push(`<span>🗣 ${artist.languages}</span>`);
+    if (artist.genres) metaParts.push(`<span>🎬 ${artist.genres}</span>`);
 
     // Works HTML — sort claim-verified first
     works.sort((a, b) => (b.claimVerified ? 1 : 0) - (a.claimVerified ? 1 : 0));
