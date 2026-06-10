@@ -1,7 +1,8 @@
 import { databases, storage, account, DB_ID, COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
 
 let currentUser = null;
-let allContent = [];
+let allContent = [];      // raw documents
+let displayItems = [];    // series-grouped items (one entry per series + singles)
 let heroItems = [];
 let heroIndex = 0;
 let heroTimer = null;
@@ -99,16 +100,18 @@ async function loadContent() {
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
       Query.equal('status', 'published'),
       Query.orderDesc('publishedAt'),
-      Query.limit(60)
+      Query.limit(100)
     ]);
 
     allContent = res.documents;
-    heroItems = [...allContent.filter(d => d.featured), ...allContent].slice(0, 6);
+    displayItems = groupBySeries(allContent);
 
+    // Hero: featured first, then others — from grouped items so a series appears once
+    heroItems = [...displayItems.filter(d => d._featured), ...displayItems].slice(0, 6);
     const seen = new Set();
     heroItems = heroItems.filter(d => {
-      if (seen.has(d.$id)) return false;
-      seen.add(d.$id);
+      if (seen.has(d._key)) return false;
+      seen.add(d._key);
       return true;
     }).slice(0, 5);
 
@@ -120,8 +123,76 @@ async function loadContent() {
   }
 }
 
+/*
+ * Group documents by seriesId. Each series collapses into ONE display item
+ * that carries: representative episode (first/oldest), episode list, combined
+ * like count, newest date (for "Latest"), and a flag for featured.
+ * Single videos (no seriesId) pass through as their own display item.
+ */
+function groupBySeries(docs) {
+  const map = {};
+  const order = [];
+  const items = [];
+
+  docs.forEach(doc => {
+    const sid = (doc.seriesId || '').trim();
+    if (sid) {
+      if (!map[sid]) { map[sid] = []; order.push(sid); }
+      map[sid].push(doc);
+    } else {
+      items.push(makeSingle(doc));
+    }
+  });
+
+  order.forEach(sid => {
+    const eps = map[sid].slice().sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
+    const first = eps[0];
+    const newest = eps.reduce((acc, e) => new Date(e.publishedAt) > new Date(acc.publishedAt) ? e : acc, eps[0]);
+    const totalLikes = eps.reduce((sum, e) => sum + (likes[e.$id] || 0), 0);
+    items.push({
+      _key: 'series:' + sid,
+      _isSeries: true,
+      _seriesId: sid,
+      _episodes: eps,
+      _epCount: eps.length,
+      _featured: eps.some(e => e.featured),
+      _likeCount: totalLikes,
+      _newestDate: newest.publishedAt,
+      // representative fields for display = first episode
+      $id: first.$id,
+      title: first.seriesName || sid,
+      category: first.category,
+      language: first.language,
+      location: first.location,
+      description: first.description,
+      youtube_id: first.youtube_id,
+      thumbnailFileId: first.thumbnailFileId,
+      publishedAt: newest.publishedAt,
+      seriesName: first.seriesName,
+      seriesId: sid
+    });
+  });
+
+  return items;
+}
+
+function makeSingle(doc) {
+  return {
+    _key: 'single:' + doc.$id,
+    _isSeries: false,
+    _episodes: [doc],
+    _epCount: 1,
+    _featured: !!doc.featured,
+    _likeCount: likes[doc.$id] || 0,
+    _newestDate: doc.publishedAt,
+    ...doc
+  };
+}
+
 function videoUrl(item) {
-  return `${VIDEO_PAGE}?id=${encodeURIComponent(item.$id)}`;
+  // Series → open first episode; single → open the video
+  const targetId = item._isSeries ? item._episodes[0].$id : item.$id;
+  return `${VIDEO_PAGE}?id=${encodeURIComponent(targetId)}`;
 }
 
 function browseUrl(cat) {
@@ -153,6 +224,7 @@ function renderHero() {
 
   const meta = [];
   if (item.publishedAt) meta.push(`<span>${new Date(item.publishedAt).getFullYear()}</span>`);
+  if (item._isSeries) meta.push(`<div class="dot"></div><span class="lang-badge">${item._epCount} EP${item._epCount > 1 ? 'S' : ''}</span>`);
   if (item.language) meta.push(`<div class="dot"></div><span class="lang-badge">${item.language.slice(0, 3).toUpperCase()}</span>`);
   if (item.location) meta.push(`<div class="dot"></div><span>${item.location}</span>`);
   if (metaEl) metaEl.innerHTML = meta.join('');
@@ -190,10 +262,10 @@ function resetHeroTimer() {
 }
 
 function renderRows(category = 'all') {
-  const filtered = category === 'all' ? allContent : allContent.filter(d => d.category === category);
-  const featured = allContent.filter(d => d.featured).slice(0, 8);
-  const latest = filtered.slice(0, 12);
-  const topLiked = [...allContent].sort((a, b) => (likes[b.$id] || 0) - (likes[a.$id] || 0)).slice(0, 5);
+  const filtered = category === 'all' ? displayItems : displayItems.filter(d => d.category === category);
+  const featured = displayItems.filter(d => d._featured).slice(0, 8);
+  const latest = filtered.slice().sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate)).slice(0, 12);
+  const topLiked = [...displayItems].sort((a, b) => b._likeCount - a._likeCount).slice(0, 5);
 
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
@@ -225,8 +297,10 @@ function renderTopN(id, items) {
 
 function cardHTML(item) {
   const thumb = getThumb(item);
-  const isLiked = !!likes[item.$id];
-  const likeCount = likes[item.$id] || 0;
+  const isSeries = item._isSeries;
+  // For singles, keep the like button. For series, show an episode-count badge instead.
+  const isLiked = !isSeries && !!likes[item.$id];
+  const likeCount = !isSeries ? (likes[item.$id] || 0) : 0;
 
   return `
     <div class="card" onclick="window.location.href='${videoUrl(item)}'">
@@ -236,13 +310,15 @@ function cardHTML(item) {
           <div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
         <span class="card-cat-badge">${item.category || ''}</span>
-        <button class="card-like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${item.$id}', this)">
-          ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
-        </button>
+        ${isSeries
+          ? `<span class="card-ep-badge">${item._epCount} EP${item._epCount > 1 ? 'S' : ''}</span>`
+          : `<button class="card-like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${item.$id}', this)">
+               ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
+             </button>`}
       </div>
       <div class="card-body">
         <div class="card-title">${item.title || ''}</div>
-        <div class="card-sub">${item.language || ''} ${item.location ? '· ' + item.location : ''}</div>
+        <div class="card-sub">${isSeries ? 'Series · ' : ''}${item.language || ''} ${item.location ? '· ' + item.location : ''}</div>
       </div>
     </div>
   `;
@@ -315,7 +391,7 @@ function initSearch() {
       return;
     }
 
-    const results = allContent.filter(d =>
+    const results = displayItems.filter(d =>
       (d.title || '').toLowerCase().includes(q) ||
       (d.cast || '').toLowerCase().includes(q) ||
       (d.director || '').toLowerCase().includes(q)
