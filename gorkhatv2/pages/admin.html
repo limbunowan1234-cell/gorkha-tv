@@ -76,6 +76,8 @@
     .btn-approve:hover { background: rgba(34,197,94,0.25); }
     .btn-reject { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
     .btn-reject:hover { border-color: #ef4444; color: #ef4444; }
+    .btn-delete-claim { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
+    .btn-delete-claim:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
     .claim-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
     .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
     .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; }
@@ -518,11 +520,19 @@ async function loadClaims() {
           ${c.status !== 'pending' ? `<span class="claim-badge ${c.status}">${c.status}</span>` : ''}
         </div>
         <div class="claim-what">Claims <strong>${c.claimedRole}</strong> on "${c.contentTitle}"</div>
-        ${c.status === 'pending' ? `
-          <div class="claim-btns">
+        <div class="claim-btns">
+          ${c.status === 'pending' ? `
             <button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>
             <button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">Reject</button>
-          </div>` : ''}
+          ` : ''}
+          ${c.status === 'approved' ? `
+            <button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">↩ Undo (Reject)</button>
+          ` : ''}
+          ${c.status === 'rejected' ? `
+            <button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>
+          ` : ''}
+          <button class="btn-delete-claim" onclick="deleteClaim('${c.$id}', this)">🗑 Delete</button>
+        </div>
       </div>
     `).join('');
   } catch (err) {
@@ -543,7 +553,7 @@ window.approveClaim = async (id, btn) => {
 };
 
 window.rejectClaim = async (id, btn) => {
-  if (!confirm('Reject this claim?')) return;
+  if (!confirm('Reject this claim? The verified badge will be removed.')) return;
   btn.disabled = true; btn.textContent = '...';
   try {
     await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'rejected' });
@@ -551,6 +561,18 @@ window.rejectClaim = async (id, btn) => {
   } catch (err) {
     alert('Error: ' + err.message);
     btn.disabled = false; btn.textContent = 'Reject';
+  }
+};
+
+window.deleteClaim = async (id, btn) => {
+  if (!confirm('Permanently delete this claim? This cannot be undone.')) return;
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    await databases.deleteDocument(DB_ID, CLAIMS_COLLECTION_ID, id);
+    btn.closest('.claim-card').remove();
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false; btn.textContent = '🗑 Delete';
   }
 };
 
