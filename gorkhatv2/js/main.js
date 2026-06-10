@@ -143,9 +143,7 @@ async function loadContent() {
 
     allContent = res.documents;
 
-    // Load real global like+share counts for all content
-    countsMap = await getBulkCounts(allContent.map(d => d.$id));
-
+    // Build display items first so rows render immediately
     displayItems = groupBySeries(allContent);
 
     // Hero: featured first, then others — from grouped items so a series appears once
@@ -160,6 +158,16 @@ async function loadContent() {
     renderHero();
     startHeroTimer();
     renderRows();
+
+    // Load real global like+share counts in the background, then refresh popularity-based rows
+    try {
+      countsMap = await getBulkCounts(allContent.map(d => d.$id));
+      // recompute counts on existing items
+      displayItems = groupBySeries(allContent);
+      renderRows();
+    } catch (e) {
+      console.error('counts load failed (rows still shown):', e);
+    }
   } catch (err) {
     console.error('Load error:', err);
   }
@@ -365,6 +373,12 @@ function renderDynamicRows() {
       <div class="cards-scroll" id="dyn-row-${i}"></div>
     </div>
   `).join('');
+
+  // Diagnostic: if no rows built but we have content, log why
+  if (!rows.length) {
+    console.log('[dynamic-rows] built 0 rows. displayItems:', displayItems.length,
+      'categories:', [...new Set(displayItems.map(d => d.category))]);
+  }
 
   // Fill each row's cards
   rows.forEach((row, i) => {
