@@ -179,6 +179,7 @@ async function loadArtist() {
     });
 
     // Add approved claims by this artist's user account (if linked)
+    let isVerified = false;
     if (artist.userId) {
       try {
         const claimsRes = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
@@ -186,6 +187,7 @@ async function loadArtist() {
           Query.equal('status', 'approved'),
           Query.limit(100)
         ]);
+        if (claimsRes.documents.length > 0) isVerified = true;
         const contentById = {};
         contentRes.documents.forEach(d => { contentById[d.$id] = d; });
         claimsRes.documents.forEach(claim => {
@@ -242,7 +244,7 @@ async function loadArtist() {
           <div class="artist-photo">${photoHTML}</div>
           <div class="artist-info">
             <div class="artist-profession">${artist.profession}</div>
-            <h1 class="artist-name">${artist.name}</h1>
+            <h1 class="artist-name">${artist.name}${isVerified ? ' <span class="artist-name-verified" title="Verified Artist">✓</span>' : ''}</h1>
             ${works.length ? `<div class="credits-count">⭐ ${works.length} Verified Credit${works.length!==1?'s':''}</div>` : ''}
             <div class="artist-meta">${metaParts.join('')}</div>
             ${artist.bio ? `<p class="artist-bio">${artist.bio}</p>` : ''}
