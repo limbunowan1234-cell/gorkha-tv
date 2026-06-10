@@ -1,8 +1,10 @@
 import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
+import { getBulkCounts, toggleLike as apiToggleLike, recordShare, shareContent } from './likes.js';
 
 let currentUser = null;
 let userArtistProfile = null;   // their artist doc, if any
 let userIsVerified = false;     // has 1+ approved claim
+let countsMap = {};             // { contentId: { like, share } } real global counts
 let allContent = [];      // raw documents
 let displayItems = [];    // series-grouped items (one entry per series + singles)
 let heroItems = [];
@@ -140,6 +142,10 @@ async function loadContent() {
     ]);
 
     allContent = res.documents;
+
+    // Load real global like+share counts for all content
+    countsMap = await getBulkCounts(allContent.map(d => d.$id));
+
     displayItems = groupBySeries(allContent);
 
     // Hero: featured first, then others — from grouped items so a series appears once
@@ -184,7 +190,8 @@ function groupBySeries(docs) {
     const eps = map[sid].slice().sort((a, b) => new Date(a.publishedAt) - new Date(b.publishedAt));
     const first = eps[0];
     const newest = eps.reduce((acc, e) => new Date(e.publishedAt) > new Date(acc.publishedAt) ? e : acc, eps[0]);
-    const totalLikes = eps.reduce((sum, e) => sum + (likes[e.$id] || 0), 0);
+    const totalLikes = eps.reduce((sum, e) => sum + (countsMap[e.$id]?.like || 0), 0);
+    const totalShares = eps.reduce((sum, e) => sum + (countsMap[e.$id]?.share || 0), 0);
     items.push({
       _key: 'series:' + sid,
       _isSeries: true,
@@ -193,6 +200,8 @@ function groupBySeries(docs) {
       _epCount: eps.length,
       _featured: eps.some(e => e.featured),
       _likeCount: totalLikes,
+      _shareCount: totalShares,
+      _popularity: totalLikes + totalShares,
       _newestDate: newest.publishedAt,
       // representative fields for display = first episode
       $id: first.$id,
@@ -213,13 +222,17 @@ function groupBySeries(docs) {
 }
 
 function makeSingle(doc) {
+  const lk = countsMap[doc.$id]?.like || 0;
+  const sh = countsMap[doc.$id]?.share || 0;
   return {
     _key: 'single:' + doc.$id,
     _isSeries: false,
     _episodes: [doc],
     _epCount: 1,
     _featured: !!doc.featured,
-    _likeCount: likes[doc.$id] || 0,
+    _likeCount: lk,
+    _shareCount: sh,
+    _popularity: lk + sh,
     _newestDate: doc.publishedAt,
     ...doc
   };
@@ -301,7 +314,7 @@ function renderRows(category = 'all') {
   const filtered = category === 'all' ? displayItems : displayItems.filter(d => d.category === category);
   const featured = displayItems.filter(d => d._featured).slice(0, 8);
   const latest = filtered.slice().sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate)).slice(0, 12);
-  const topLiked = [...displayItems].sort((a, b) => b._likeCount - a._likeCount).slice(0, 5);
+  const topLiked = [...displayItems].filter(d => d._popularity > 0).sort((a, b) => b._popularity - a._popularity).slice(0, 5);
 
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
@@ -386,9 +399,7 @@ function renderTopN(id, items) {
 function cardHTML(item) {
   const thumb = getThumb(item);
   const isSeries = item._isSeries;
-  // For singles, keep the like button. For series, show an episode-count badge instead.
-  const isLiked = !isSeries && !!likes[item.$id];
-  const likeCount = !isSeries ? (likes[item.$id] || 0) : 0;
+  const realLikes = item._likeCount || 0;
 
   return `
     <div class="card" onclick="window.location.href='${videoUrl(item)}'">
@@ -400,9 +411,7 @@ function cardHTML(item) {
         <span class="card-cat-badge">${item.category || ''}</span>
         ${isSeries
           ? `<span class="card-ep-badge">${item._epCount} EP${item._epCount > 1 ? 'S' : ''}</span>`
-          : `<button class="card-like-btn ${isLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${item.$id}', this)">
-               ${isLiked ? '❤️' : '🤍'} ${likeCount > 0 ? likeCount : ''}
-             </button>`}
+          : `<span class="card-like-count">❤️ ${realLikes > 0 ? realLikes : ''}</span>`}
       </div>
       <div class="card-body">
         <div class="card-title">${item.title || ''}</div>
