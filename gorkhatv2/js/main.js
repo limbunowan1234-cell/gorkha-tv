@@ -3,12 +3,12 @@ import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_I
 // ── Inlined likes helpers (no separate module to avoid load failures) ──
 async function getBulkCounts(contentIds) {
   const map = {};
-  contentIds.forEach(id => map[id] = { like: 0, share: 0 });
+  contentIds.forEach(id => map[id] = { like: 0, share: 0, view: 0 });
   if (!contentIds.length) return map;
   try {
     const res = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.limit(500)]);
     res.documents.forEach(d => {
-      if (map[d.contentId] && (d.type === 'like' || d.type === 'share')) map[d.contentId][d.type] += 1;
+      if (map[d.contentId] && (d.type === 'like' || d.type === 'share' || d.type === 'view')) map[d.contentId][d.type] += 1;
     });
   } catch (e) { console.error('getBulkCounts failed (using zeros):', e); }
   return map;
@@ -28,7 +28,7 @@ async function shareContent(title, url) {
 let currentUser = null;
 let userArtistProfile = null;   // their artist doc, if any
 let userIsVerified = false;     // has 1+ approved claim
-let countsMap = {};             // { contentId: { like, share } } real global counts
+let countsMap = {};             // { contentId: { like, share, view } } real global counts
 let allContent = [];      // raw documents
 let displayItems = [];    // series-grouped items (one entry per series + singles)
 let heroItems = [];
@@ -229,6 +229,7 @@ function groupBySeries(docs) {
     const newest = eps.reduce((acc, e) => new Date(e.publishedAt) > new Date(acc.publishedAt) ? e : acc, eps[0]);
     const totalLikes = eps.reduce((sum, e) => sum + (countsMap[e.$id]?.like || 0), 0);
     const totalShares = eps.reduce((sum, e) => sum + (countsMap[e.$id]?.share || 0), 0);
+    const totalViews = eps.reduce((sum, e) => sum + (countsMap[e.$id]?.view || 0), 0);
     items.push({
       _key: 'series:' + sid,
       _isSeries: true,
@@ -238,6 +239,7 @@ function groupBySeries(docs) {
       _featured: eps.some(e => e.featured),
       _likeCount: totalLikes,
       _shareCount: totalShares,
+      _viewCount: totalViews,
       _popularity: totalLikes + totalShares,
       _newestDate: newest.publishedAt,
       // representative fields for display = first episode
@@ -261,6 +263,7 @@ function groupBySeries(docs) {
 function makeSingle(doc) {
   const lk = countsMap[doc.$id]?.like || 0;
   const sh = countsMap[doc.$id]?.share || 0;
+  const vw = countsMap[doc.$id]?.view || 0;
   return {
     _key: 'single:' + doc.$id,
     _isSeries: false,
@@ -269,6 +272,7 @@ function makeSingle(doc) {
     _featured: !!doc.featured,
     _likeCount: lk,
     _shareCount: sh,
+    _viewCount: vw,
     _popularity: lk + sh,
     _newestDate: doc.publishedAt,
     ...doc
@@ -353,8 +357,15 @@ function renderRows(category = 'all') {
   const latest = filtered.slice().sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate)).slice(0, 12);
   const topLiked = [...displayItems].filter(d => d._popularity > 0).sort((a, b) => b._popularity - a._popularity).slice(0, 5);
 
+  // Top 10 in Darjeeling — ranked purely by view count (auto-updates as people watch)
+  const topDarjeeling = [...displayItems]
+    .filter(d => (d.location || '').toLowerCase() === 'darjeeling' && d._viewCount > 0)
+    .sort((a, b) => b._viewCount - a._viewCount || b._popularity - a._popularity)
+    .slice(0, 10);
+
   renderRowCards('featured-row', featured);
   renderTopN('topn-row', topLiked);
+  renderTopN('top-darjeeling-row', topDarjeeling, true);
   renderRowCards('latest-row', latest);
 
   renderDynamicRows();
@@ -426,9 +437,14 @@ function renderRowCards(id, items) {
   el.innerHTML = items.map(item => cardHTML(item)).join('');
 }
 
-function renderTopN(id, items) {
+function renderTopN(id, items, hideRowIfEmpty = false) {
   const el = document.getElementById(id);
   if (!el) return;
+  // Hide the entire row (header + cards) when there's nothing to rank yet
+  if (hideRowIfEmpty) {
+    const rowWrap = el.closest('.row');
+    if (rowWrap) rowWrap.style.display = items.length ? '' : 'none';
+  }
   el.innerHTML = items.map((item, i) => `
     <div class="num-card" onclick="window.location.href='${videoUrl(item)}'">
       <div class="num-big">${i + 1}</div>
