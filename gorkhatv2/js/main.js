@@ -48,14 +48,22 @@ const ADMIN_PAGE = 'pages/admin.html';
 const GOOGLE_REDIRECT = 'https://gorkhatv.site/pages/auth-callback.html';
 const GOOGLE_SUCCESS = 'https://gorkhatv.site';
 
-document.addEventListener('DOMContentLoaded', () => {
+// Module scripts execute after the DOM is parsed, so DOMContentLoaded may have
+// already fired. Run init immediately if the DOM is ready, else wait for it.
+function initApp() {
   // Load content FIRST and independently — never let auth block the page
   loadContent();
   initCategoryPills();
   initSearch();
   // Auth runs separately; if it hangs or fails, content is unaffected
   checkAuth();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 async function checkAuth() {
   try {
