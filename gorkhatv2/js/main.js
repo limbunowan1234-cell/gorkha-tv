@@ -1,5 +1,29 @@
-import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, Query } from './appwrite.js';
-import { getBulkCounts, toggleLike as apiToggleLike, recordShare, shareContent } from './likes.js';
+import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, LIKES_COLLECTION_ID, BUCKET_ID, ADMIN_EMAIL, ID, Query } from './appwrite.js';
+
+// ── Inlined likes helpers (no separate module to avoid load failures) ──
+async function getBulkCounts(contentIds) {
+  const map = {};
+  contentIds.forEach(id => map[id] = { like: 0, share: 0 });
+  if (!contentIds.length) return map;
+  try {
+    const res = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.limit(500)]);
+    res.documents.forEach(d => {
+      if (map[d.contentId] && (d.type === 'like' || d.type === 'share')) map[d.contentId][d.type] += 1;
+    });
+  } catch (e) { console.error('getBulkCounts failed (using zeros):', e); }
+  return map;
+}
+
+async function recordShare(contentId, userId) {
+  try {
+    await databases.createDocument(DB_ID, LIKES_COLLECTION_ID, ID.unique(), { contentId, userId: userId || 'anon', type: 'share' });
+  } catch (e) { console.error('share record failed', e); }
+}
+
+async function shareContent(title, url) {
+  if (navigator.share) { try { await navigator.share({ title, url }); return true; } catch { return false; } }
+  else { try { await navigator.clipboard.writeText(url); return 'copied'; } catch { return false; } }
+}
 
 let currentUser = null;
 let userArtistProfile = null;   // their artist doc, if any
@@ -136,23 +160,15 @@ window.logout = async () => {
 };
 
 async function loadContent() {
-  const dbg = (m) => {
-    let d = document.getElementById('gtv-debug');
-    if (!d) { d = document.createElement('div'); d.id = 'gtv-debug'; d.style.cssText = 'position:fixed;top:70px;left:8px;right:8px;z-index:99999;background:#200;color:#0f0;font:12px monospace;padding:8px;border:1px solid #0f0;white-space:pre-wrap;max-height:40vh;overflow:auto'; document.body.appendChild(d); }
-    d.textContent += m + '\n';
-  };
   try {
-    dbg('1. querying content...');
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
       Query.equal('status', 'published'),
       Query.orderDesc('publishedAt'),
       Query.limit(100)
     ]);
-    dbg('2. got ' + res.documents.length + ' docs');
 
     allContent = res.documents;
     displayItems = groupBySeries(allContent);
-    dbg('3. displayItems = ' + displayItems.length);
 
     heroItems = [...displayItems.filter(d => d._featured), ...displayItems].slice(0, 6);
     const seen = new Set();
@@ -161,13 +177,10 @@ async function loadContent() {
       seen.add(d._key);
       return true;
     }).slice(0, 5);
-    dbg('4. heroItems = ' + heroItems.length);
 
     renderHero();
-    dbg('5. hero rendered');
     startHeroTimer();
     renderRows();
-    dbg('6. rows rendered, cards = ' + document.querySelectorAll('.card').length);
 
     getBulkCounts(allContent.map(d => d.$id))
       .then(counts => {
@@ -177,7 +190,6 @@ async function loadContent() {
       })
       .catch(e => console.error('counts load failed (rows still shown):', e));
   } catch (err) {
-    dbg('ERROR: ' + (err.message || err));
     console.error('Load error:', err);
   }
 }
