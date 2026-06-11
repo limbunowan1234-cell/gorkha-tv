@@ -104,8 +104,52 @@
 </div>
 
 <script type="module">
-import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, ID, Query } from '../js/appwrite.js';
-import { getCounts, getUserLike, toggleLike as apiToggleLike, recordShare, shareContent } from '../js/likes.js';
+import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, LIKES_COLLECTION_ID, ID, Query } from '../js/appwrite.js';
+
+// ── Inlined likes helpers (no separate module, avoids load failures) ──
+async function getCounts(contentId) {
+  try {
+    const [likeRes, shareRes] = await Promise.all([
+      databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('contentId', contentId), Query.equal('type', 'like'), Query.limit(1)]),
+      databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('contentId', contentId), Query.equal('type', 'share'), Query.limit(1)])
+    ]);
+    return { like: likeRes.total, share: shareRes.total };
+  } catch (e) { console.error('getCounts failed', e); return { like: 0, share: 0 }; }
+}
+
+async function getUserLike(contentId, userId) {
+  if (!userId) return null;
+  try {
+    const res = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [
+      Query.equal('contentId', contentId), Query.equal('userId', userId), Query.equal('type', 'like'), Query.limit(1)
+    ]);
+    return res.documents[0]?.$id || null;
+  } catch (e) { console.error(e); return null; }
+}
+
+async function apiToggleLike(contentId, userId) {
+  const existingId = await getUserLike(contentId, userId);
+  if (existingId) {
+    await databases.deleteDocument(DB_ID, LIKES_COLLECTION_ID, existingId);
+  } else {
+    await databases.createDocument(DB_ID, LIKES_COLLECTION_ID, ID.unique(), { contentId, userId, type: 'like' });
+  }
+  const counts = await getCounts(contentId);
+  return { liked: !existingId, count: counts.like };
+}
+
+async function recordShare(contentId, userId) {
+  try {
+    await databases.createDocument(DB_ID, LIKES_COLLECTION_ID, ID.unique(), { contentId, userId: userId || 'anon', type: 'share' });
+  } catch (e) { console.error('share record failed', e); }
+  const counts = await getCounts(contentId);
+  return counts.share;
+}
+
+async function shareContent(title, url) {
+  if (navigator.share) { try { await navigator.share({ title, url }); return true; } catch { return false; } }
+  else { try { await navigator.clipboard.writeText(url); return 'copied'; } catch { return false; } }
+}
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get('id');
@@ -396,3 +440,4 @@ load();
 </script>
 </body>
 </html>
+
