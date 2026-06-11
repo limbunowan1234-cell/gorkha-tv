@@ -70,6 +70,10 @@
     <li><a href="browse.html?cat=webseries">Web Series</a></li>
     <li><a href="browse.html?cat=music">Music</a></li>
     <li><a href="browse.html?cat=documentary">Docs</a></li>
+    <li><a href="browse.html?cat=vlog">Vlogs</a></li>
+    <li><a href="browse.html?cat=standup">Standup</a></li>
+    <li><a href="browse.html?cat=podcast">Podcasts</a></li>
+    <li><a href="browse.html?cat=prank">Pranks</a></li>
   </ul>
   <div class="nav-right" id="nav-right"></div>
 </nav>
@@ -146,6 +150,17 @@ async function recordShare(contentId, userId) {
   return counts.share;
 }
 
+// ── View tracking (one view per browser per video) ──
+const viewed = JSON.parse(localStorage.getItem('gtv_viewed') || '{}');
+async function recordView(contentId) {
+  if (!contentId || viewed[contentId]) return;
+  viewed[contentId] = 1;
+  localStorage.setItem('gtv_viewed', JSON.stringify(viewed));
+  try {
+    await databases.createDocument(DB_ID, LIKES_COLLECTION_ID, ID.unique(), { contentId, userId: currentUser?.$id || 'anon', type: 'view' });
+  } catch (e) { console.error('view record failed', e); }
+}
+
 async function shareContent(title, url) {
   if (navigator.share) { try { await navigator.share({ title, url }); return true; } catch { return false; } }
   else { try { await navigator.clipboard.writeText(url); return 'copied'; } catch { return false; } }
@@ -205,6 +220,9 @@ async function load() {
     document.getElementById('player-box').innerHTML = embed
       ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
       : `<div style="padding:24px;color:#fff;">Video link missing.</div>`;
+
+    // Count this as a view (fire-and-forget, deduped per browser)
+    recordView(item.$id);
 
     document.getElementById('video-title').textContent = item.title || '';
 
@@ -440,4 +458,3 @@ load();
 </script>
 </body>
 </html>
-
