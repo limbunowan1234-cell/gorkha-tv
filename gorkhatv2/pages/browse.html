@@ -78,7 +78,7 @@ import { databases, account, DB_ID, COLLECTION_ID, Query } from '../js/appwrite.
 const params = new URLSearchParams(window.location.search);
 const cat = params.get('cat');
 const featured = params.get('featured');
-const labels = { movie:'Movies', webseries:'Web Series', music:'Music Videos', documentary:'Documentaries' };
+const labels = { movie:'Movies', webseries:'Web Series', music:'Music Videos', documentary:'Documentaries', vlog:'Vlogs', standup:'Standup Comedy', podcast:'Podcasts', prank:'Pranks' };
 
 let currentUser = null;
 let likes = JSON.parse(localStorage.getItem('gtv_likes') || '{}');
@@ -102,8 +102,8 @@ document.getElementById('browse-sub').textContent = cat ? `All ${labels[cat]||ca
 document.querySelectorAll('.nav-links a').forEach(a => { if (cat && a.href.includes(`cat=${cat}`)) a.classList.add('active'); });
 
 // Category pills
-const cats = ['all','movie','webseries','music','documentary'];
-const catLabels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs' };
+const cats = ['all','movie','webseries','music','documentary','vlog','standup','podcast','prank'];
+const catLabels = { all:'All', movie:'Movies', webseries:'Web Series', music:'Music', documentary:'Docs', vlog:'Vlogs', standup:'Standup', podcast:'Podcasts', prank:'Pranks' };
 document.getElementById('cats-bar').innerHTML = cats.map(c =>
   `<a href="browse.html${c==='all'?'':'?cat='+c}" class="cat-pill ${(!cat&&c==='all')||(cat===c)?'active':''}">${catLabels[c]}</a>`
 ).join('');
