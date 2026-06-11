@@ -136,19 +136,24 @@ window.logout = async () => {
 };
 
 async function loadContent() {
+  const dbg = (m) => {
+    let d = document.getElementById('gtv-debug');
+    if (!d) { d = document.createElement('div'); d.id = 'gtv-debug'; d.style.cssText = 'position:fixed;top:70px;left:8px;right:8px;z-index:99999;background:#200;color:#0f0;font:12px monospace;padding:8px;border:1px solid #0f0;white-space:pre-wrap;max-height:40vh;overflow:auto'; document.body.appendChild(d); }
+    d.textContent += m + '\n';
+  };
   try {
+    dbg('1. querying content...');
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
       Query.equal('status', 'published'),
       Query.orderDesc('publishedAt'),
       Query.limit(100)
     ]);
+    dbg('2. got ' + res.documents.length + ' docs');
 
     allContent = res.documents;
-
-    // Build display items first so rows render immediately
     displayItems = groupBySeries(allContent);
+    dbg('3. displayItems = ' + displayItems.length);
 
-    // Hero: featured first, then others — from grouped items so a series appears once
     heroItems = [...displayItems.filter(d => d._featured), ...displayItems].slice(0, 6);
     const seen = new Set();
     heroItems = heroItems.filter(d => {
@@ -156,12 +161,14 @@ async function loadContent() {
       seen.add(d._key);
       return true;
     }).slice(0, 5);
+    dbg('4. heroItems = ' + heroItems.length);
 
     renderHero();
+    dbg('5. hero rendered');
     startHeroTimer();
     renderRows();
+    dbg('6. rows rendered, cards = ' + document.querySelectorAll('.card').length);
 
-    // Load real counts in the background — fire and forget, never blocks the page
     getBulkCounts(allContent.map(d => d.$id))
       .then(counts => {
         countsMap = counts;
@@ -170,6 +177,7 @@ async function loadContent() {
       })
       .catch(e => console.error('counts load failed (rows still shown):', e));
   } catch (err) {
+    dbg('ERROR: ' + (err.message || err));
     console.error('Load error:', err);
   }
 }
@@ -540,4 +548,3 @@ window.showToast = (msg) => {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), 2800);
 };
- 
