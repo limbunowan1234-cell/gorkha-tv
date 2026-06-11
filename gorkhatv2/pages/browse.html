@@ -36,6 +36,10 @@
     <li><a href="browse.html?cat=webseries">Web Series</a></li>
     <li><a href="browse.html?cat=music">Music</a></li>
     <li><a href="browse.html?cat=documentary">Docs</a></li>
+    <li><a href="browse.html?cat=vlog">Vlogs</a></li>
+    <li><a href="browse.html?cat=standup">Standup</a></li>
+    <li><a href="browse.html?cat=podcast">Podcasts</a></li>
+    <li><a href="browse.html?cat=prank">Pranks</a></li>
   </ul>
   <div class="nav-right" id="nav-right"></div>
 </nav>
@@ -73,7 +77,7 @@
 </div>
 
 <script type="module">
-import { databases, account, DB_ID, COLLECTION_ID, Query } from '../js/appwrite.js';
+import { databases, account, DB_ID, COLLECTION_ID, LIKES_COLLECTION_ID, ID, Query } from '../js/appwrite.js';
 
 const params = new URLSearchParams(window.location.search);
 const cat = params.get('cat');
@@ -86,6 +90,17 @@ let favourites = JSON.parse(localStorage.getItem('gtv_favs') || '[]');
 let modalItem = null;
 
 try { currentUser = await account.get(); } catch {}
+
+// ── View tracking (one view per browser per video) ──
+const viewed = JSON.parse(localStorage.getItem('gtv_viewed') || '{}');
+async function recordView(contentId) {
+  if (!contentId || viewed[contentId]) return;
+  viewed[contentId] = 1;
+  localStorage.setItem('gtv_viewed', JSON.stringify(viewed));
+  try {
+    await databases.createDocument(DB_ID, LIKES_COLLECTION_ID, ID.unique(), { contentId, userId: currentUser?.$id || 'anon', type: 'view' });
+  } catch (e) { console.error('view record failed', e); }
+}
 
 // Nav
 if (currentUser) {
@@ -212,6 +227,7 @@ window.quickLike = (id, btn) => {
 window.openModal = (item, seriesId = null) => {
   if (typeof item === 'string') item = JSON.parse(item);
   modalItem = item;
+  recordView(item.$id);
   document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${item.youtube_id}?autoplay=1&rel=0" allowfullscreen allow="autoplay"></iframe>`;
   document.getElementById('modal-title').textContent = item.title;
   document.getElementById('modal-desc').textContent = item.description || '';
