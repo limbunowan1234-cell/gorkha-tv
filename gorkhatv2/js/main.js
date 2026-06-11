@@ -368,7 +368,7 @@ function renderDynamicRows() {
   const rows = [];
 
   // ── Category rows ──
-  const catLabels = { movie: 'Movies', webseries: 'Web Series', music: 'Music Videos', documentary: 'Documentaries' };
+  const catLabels = { movie: 'Movies', webseries: 'Web Series', music: 'Music Videos', documentary: 'Documentaries', vlog: 'Vlogs', standup: 'Standup Comedy', podcast: 'Podcasts', prank: 'Pranks' };
   Object.entries(catLabels).forEach(([cat, label]) => {
     const items = displayItems.filter(d => d.category === cat)
       .sort((a, b) => new Date(b._newestDate) - new Date(a._newestDate));
@@ -504,8 +504,8 @@ function toggleFavourite(item) {
 }
 
 function initCategoryPills() {
-  const cats = ['all', 'movie', 'webseries', 'music', 'documentary'];
-  const labels = { all: 'All', movie: 'Movies', webseries: 'Web Series', music: 'Music', documentary: 'Docs' };
+  const cats = ['all', 'movie', 'webseries', 'music', 'documentary', 'vlog', 'standup', 'podcast', 'prank'];
+  const labels = { all: 'All', movie: 'Movies', webseries: 'Web Series', music: 'Music', documentary: 'Docs', vlog: 'Vlogs', standup: 'Standup', podcast: 'Podcasts', prank: 'Pranks' };
   const bar = document.getElementById('cats-bar');
   if (!bar) return;
 
