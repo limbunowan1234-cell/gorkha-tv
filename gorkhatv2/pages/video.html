@@ -7,6 +7,12 @@
   <title>GorkhaTV — Watch</title>
   <link rel="stylesheet" href="../css/style.css">
   <script src="../js/seo.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#141414">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GorkhaTV">
   <style>
     .watch-wrap { padding: 24px 48px 60px; max-width: 1200px; margin: 0 auto; }
     .watch-back { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--text); text-decoration:none; }
@@ -457,6 +463,15 @@ window.loginGoogle = async () => {
 };
 
 load();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('[GorkhaTV] Service worker registered'))
+        .catch((err) => console.warn('[GorkhaTV] SW registration failed', err));
+    });
+  }
 </script>
 </body>
 </html>
