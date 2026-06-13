@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GorkhaTV — Artist</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/seo.js"></script>
   <style>
     .artist-hero {
       background: linear-gradient(to bottom, var(--surface) 0%, var(--dark) 100%);
@@ -209,8 +210,9 @@ async function loadArtist() {
 
     // Photo
     let photoHTML = `<div class="artist-photo-placeholder">${artist.name[0].toUpperCase()}</div>`;
+    let photoUrl = null;
     if (artist.photoFiled) {
-      const photoUrl = storage.getFileView(BUCKET_ID, artist.photoFiled);
+      photoUrl = storage.getFileView(BUCKET_ID, artist.photoFiled);
       photoHTML = `<img src="${photoUrl}" alt="${artist.name}">`;
     }
 
@@ -269,8 +271,8 @@ async function loadArtist() {
       </div>
     `;
 
-    // Update page title
-    document.title = `${artist.name} — GorkhaTV`;
+    // Update SEO meta tags (title, description, OG, JSON-LD)
+    updateArtistSEO(artist, photoUrl);
 
   } catch (err) {
     console.error(err);
