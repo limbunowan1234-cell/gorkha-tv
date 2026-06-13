@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /pages/browse.html
+Allow: /pages/search.html
+Allow: /pages/artists.html
+Allow: /pages/artist.html
+Allow: /pages/video.html
+
+Disallow: /pages/admin.html
+Disallow: /pages/admin-content.html
+Disallow: /pages/admin-claims.html
+Disallow: /pages/edit-profile.html
+Disallow: /pages/my-credits.html
+Disallow: /pages/my-favourites.html
+Disallow: /pages/auth-callback.html
+
+Sitemap: https://gorkhatv.site/sitemap.xml
