@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GorkhaTV — Watch</title>
   <link rel="stylesheet" href="../css/style.css">
+  <script src="../js/seo.js"></script>
   <style>
     .watch-wrap { padding: 24px 48px 60px; max-width: 1200px; margin: 0 auto; }
     .watch-back { display:inline-flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--text); text-decoration:none; }
@@ -216,6 +217,7 @@ async function load() {
     const embed = ytUrlFromItem(item);
 
     document.title = `${item.title || 'Watch'} — GorkhaTV`;
+    updateSEO(item);
 
     document.getElementById('player-box').innerHTML = embed
       ? `<iframe src="${embed}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
