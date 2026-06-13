@@ -7,6 +7,12 @@
   <title>GorkhaTV — Artist</title>
   <link rel="stylesheet" href="../css/style.css">
   <script src="../js/seo.js"></script>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#141414">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GorkhaTV">
   <style>
     .artist-hero {
       background: linear-gradient(to bottom, var(--surface) 0%, var(--dark) 100%);
@@ -309,6 +315,15 @@ window.loginGoogle = async () => {
   const acc = new Account(client);
   await acc.createOAuth2Token('google', 'https://gorkhatv.site/pages/auth-callback.html', 'https://gorkhatv.site');
 };
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('[GorkhaTV] Service worker registered'))
+        .catch((err) => console.warn('[GorkhaTV] SW registration failed', err));
+    });
+  }
 </script>
 </body>
 </html>
