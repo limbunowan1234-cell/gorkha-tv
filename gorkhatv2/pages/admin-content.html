@@ -7,7 +7,7 @@
   <title>GorkhaTV — Manage Videos</title>
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .admin-wrap { max-width: 780px; margin: 40px auto; padding: 0 24px; }
+    .admin-wrap { max-width: 900px; margin: 40px auto; padding: 0 24px; }
     .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 8px; }
     .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
     .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 32px; }
@@ -15,41 +15,30 @@
     .form-card-title::before { content: ''; display: block; width: 3px; height: 20px; background: var(--red); border-radius: 2px; }
     .form-group { margin-bottom: 18px; }
     label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
-    input, textarea, select {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border);
-      color: var(--text); padding: 10px 14px; border-radius: 4px;
-      font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s;
-    }
+    input, textarea, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 4px; font-family: 'Inter', sans-serif; font-size: 14px; transition: border-color 0.2s; }
     input:focus, textarea:focus, select:focus { outline: none; border-color: var(--red); }
     textarea { resize: vertical; min-height: 90px; }
     select option { background: var(--surface2); }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .btn-submit {
-      background: var(--red); color: #fff; border: none; padding: 12px 32px;
-      border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer;
-      font-family: 'Inter', sans-serif; transition: opacity 0.2s; letter-spacing: 0.3px;
-    }
+    .btn-submit { background: var(--red); color: #fff; border: none; padding: 12px 32px; border-radius: 4px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity 0.2s; }
     .btn-submit:hover { opacity: 0.85; }
     .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-cancel {
-      background: none; color: var(--muted); border: 1px solid var(--border); padding: 12px 24px;
-      border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-left: 10px;
-      font-family: 'Inter', sans-serif; transition: all 0.2s; display: none;
-    }
+    .btn-cancel { background: none; color: var(--muted); border: 1px solid var(--border); padding: 12px 24px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; margin-left: 10px; font-family: 'Inter', sans-serif; transition: all 0.2s; display: none; }
     .btn-cancel:hover { border-color: var(--text); color: var(--text); }
     .alert { padding: 12px 16px; border-radius: 4px; font-size: 14px; margin-bottom: 20px; display: none; }
     .alert.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
     .alert.error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
     .thumb-preview { margin-top: 10px; }
     .thumb-preview img { width: 180px; border-radius: 4px; border: 1px solid var(--border); }
-    .content-item {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
-      padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center;
-    }
+    .content-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; }
     .content-item img { width: 80px; height: 45px; object-fit: cover; border-radius: 4px; flex-shrink: 0; background: var(--surface2); }
     .content-item-info { flex: 1; min-width: 0; }
     .content-item-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .content-item-meta { font-size: 12px; color: var(--muted); }
+    .content-item-stats { display:flex; gap:10px; font-size:12px; margin-top:4px; }
+    .stat-pill { display:inline-flex; align-items:center; gap:4px; color:var(--muted); }
+    .stat-pill.views { color:#60a5fa; }
+    .stat-pill.likes { color:#f87171; }
     .item-actions { display: flex; gap: 6px; flex-shrink: 0; }
     .btn-edit { background: none; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
     .btn-edit:hover { border-color: var(--red); color: var(--red); }
@@ -65,23 +54,19 @@
     .genre-chk:hover { border-color: var(--muted); }
     .genre-chk input { width: auto; margin: 0; cursor: pointer; accent-color: var(--red); }
     .genre-chk.checked { border-color: var(--red); background: rgba(232,25,44,0.08); }
-    .claim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
-    .claim-card.pending { border-left: 3px solid var(--gold); }
-    .claim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
-    .claim-who { font-size: 14px; font-weight: 600; }
-    .claim-who span { color: var(--muted); font-weight: 400; font-size: 12px; }
-    .claim-what { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
-    .claim-what strong { color: var(--gold); }
-    .claim-btns { display: flex; gap: 8px; }
-    .btn-approve { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
-    .btn-approve:hover { background: rgba(34,197,94,0.25); }
-    .btn-reject { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
-    .btn-reject:hover { border-color: #ef4444; color: #ef4444; }
-    .btn-delete-claim { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
-    .btn-delete-claim:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
-    .claim-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
-    .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
-    .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; }
+    /* List controls */
+    .list-controls { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+    .list-search { flex:1; min-width:200px; }
+    .list-filter { width:140px; }
+    .list-stats-bar { display:flex; gap:16px; margin-bottom:14px; font-size:13px; color:var(--muted); }
+    .list-stats-bar span { display:flex; align-items:center; gap:5px; }
+    .list-stats-bar .num { font-weight:700; color:var(--text); }
+    /* Pagination */
+    .pagination { display:flex; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap; }
+    .page-btn { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:4px; cursor:pointer; font-size:13px; font-family:'Inter',sans-serif; }
+    .page-btn:hover { border-color:var(--red); color:var(--red); }
+    .page-btn.active { background:var(--red); border-color:var(--red); color:#fff; }
+    .page-btn:disabled { opacity:0.4; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -95,27 +80,27 @@
 <div id="page-wrap"></div>
 
 <script type="module">
-import { databases, account, DB_ID, COLLECTION_ID, ADMIN_EMAIL, ID, Query } from '../js/appwrite.js';
+import { databases, account, DB_ID, COLLECTION_ID, LIKES_COLLECTION_ID, ADMIN_EMAIL, ID, Query } from '../js/appwrite.js';
 
 let user = null;
-let editingId = null;  // null = add mode, doc id = edit mode
+let editingId = null;
+let allDocs = [];
+let filteredDocs = [];
+let statsMap = {}; // contentId -> { views, likes }
+const PAGE_SIZE = 20;
+let currentPage = 1;
+let searchQuery = '';
+let catFilter = '';
 
-try {
-  user = await account.get();
-} catch {
-  renderLoginPrompt();
-  throw new Error('Not logged in');
+try { user = await account.get(); } catch {
+  renderLoginPrompt(); throw new Error('Not logged in');
 }
 
 if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
   document.getElementById('page-wrap').innerHTML = `
-    <div class="access-denied">
-      <div style="font-size:56px;margin-bottom:16px;">🔒</div>
-      <h2>Access Denied</h2>
-      <p style="color:var(--muted);font-size:14px;">This page is only accessible to the site administrator.</p>
-      <a href="/" style="display:inline-block;margin-top:20px;color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
-    </div>
-  `;
+    <div class="access-denied"><div style="font-size:56px;margin-bottom:16px;">🔒</div>
+    <h2>Access Denied</h2><p style="color:var(--muted);font-size:14px;">Admins only.</p>
+    <a href="/" style="display:inline-block;margin-top:20px;color:var(--red);font-size:14px;">← Back to GorkhaTV</a></div>`;
   throw new Error('Not admin');
 }
 
@@ -123,7 +108,7 @@ document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;co
 
 document.getElementById('page-wrap').innerHTML = `
 <div class="admin-wrap">
-  <h1 class="admin-title">🛠 Admin Panel</h1>
+  <h1 class="admin-title">🎬 Manage Videos</h1>
   <p class="admin-sub">Logged in as ${user.email}</p>
 
   <div class="alert success" id="alert-success">✅ Saved successfully!</div>
@@ -161,7 +146,7 @@ document.getElementById('page-wrap').innerHTML = `
     </div>
 
     <div class="form-group">
-      <label>YouTube ID * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(11 chars from YouTube URL)</span></label>
+      <label>YouTube ID * <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(11 chars)</span></label>
       <input type="text" id="f-youtube" placeholder="e.g. dQw4w9WgXcQ" maxlength="11">
       <div class="thumb-preview" id="thumb-preview"></div>
     </div>
@@ -207,7 +192,7 @@ document.getElementById('page-wrap').innerHTML = `
 
     <div class="form-group">
       <label>Cast <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(comma separated)</span></label>
-      <input type="text" id="f-cast" placeholder="e.g. Rohan Rai, Sita Tamang, Bikash Gurung">
+      <input type="text" id="f-cast" placeholder="e.g. Rohan Rai, Sita Tamang">
     </div>
 
     <div class="form-row">
@@ -245,7 +230,23 @@ document.getElementById('page-wrap').innerHTML = `
 
   <div class="form-card">
     <div class="form-card-title">All Content</div>
+    <div class="list-controls">
+      <input class="list-search" type="text" id="list-search" placeholder="Search by title, category, cast..." oninput="onSearch(this.value)">
+      <select class="list-filter" id="list-cat" onchange="onCatFilter(this.value)">
+        <option value="">All Categories</option>
+        <option value="movie">Movies</option>
+        <option value="webseries">Web Series</option>
+        <option value="music">Music</option>
+        <option value="documentary">Documentary</option>
+        <option value="vlog">Vlogs</option>
+        <option value="standup">Standup</option>
+        <option value="podcast">Podcasts</option>
+        <option value="prank">Pranks</option>
+      </select>
+    </div>
+    <div class="list-stats-bar" id="list-stats-bar"></div>
     <div id="content-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
+    <div class="pagination" id="pagination"></div>
   </div>
 </div>
 `;
@@ -278,6 +279,144 @@ document.getElementById('f-youtube').addEventListener('input', e => {
     id.length === 11 ? `<img src="https://img.youtube.com/vi/${id}/hqdefault.jpg" alt="Preview">` : '';
 });
 
+// ── Search & Filter ──
+window.onSearch = (val) => { searchQuery = val.toLowerCase(); currentPage = 1; applyFilter(); };
+window.onCatFilter = (val) => { catFilter = val; currentPage = 1; applyFilter(); };
+
+function applyFilter() {
+  filteredDocs = allDocs.filter(d => {
+    const matchCat = !catFilter || d.category === catFilter;
+    const matchQ = !searchQuery ||
+      (d.title||'').toLowerCase().includes(searchQuery) ||
+      (d.category||'').toLowerCase().includes(searchQuery) ||
+      (d.cast||'').toLowerCase().includes(searchQuery) ||
+      (d.director||'').toLowerCase().includes(searchQuery) ||
+      (d.seriesName||'').toLowerCase().includes(searchQuery);
+    return matchCat && matchQ;
+  });
+  renderList();
+}
+
+// ── Render list with pagination ──
+function renderList() {
+  const wrap = document.getElementById('content-list');
+  const totalViews = Object.values(statsMap).reduce((s,v) => s + (v.views||0), 0);
+  const totalLikes = Object.values(statsMap).reduce((s,v) => s + (v.likes||0), 0);
+
+  document.getElementById('list-stats-bar').innerHTML = `
+    <span>📹 <span class="num">${filteredDocs.length}</span> videos</span>
+    <span>👁 <span class="num">${totalViews.toLocaleString()}</span> total views</span>
+    <span>❤️ <span class="num">${totalLikes.toLocaleString()}</span> total likes</span>
+  `;
+
+  if (!filteredDocs.length) {
+    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content found.</p>`;
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.ceil(filteredDocs.length / PAGE_SIZE);
+  if (currentPage > totalPages) currentPage = totalPages;
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const page = filteredDocs.slice(start, start + PAGE_SIZE);
+
+  wrap.innerHTML = page.map(doc => {
+    const stats = statsMap[doc.$id] || { views: 0, likes: 0 };
+    return `
+      <div class="content-item">
+        <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="" onerror="this.style.visibility='hidden'">
+        <div class="content-item-info">
+          <div class="content-item-title">${doc.title}</div>
+          <div class="content-item-meta">
+            ${doc.category}${doc.seriesName ? ' · Series: ' + doc.seriesName : ''}${doc.language ? ' · ' + doc.language : ''}${doc.location ? ' · ' + doc.location : ''}
+          </div>
+          <div class="content-item-stats">
+            <span class="stat-pill views">👁 ${stats.views.toLocaleString()} views</span>
+            <span class="stat-pill likes">❤️ ${stats.likes.toLocaleString()} likes</span>
+          </div>
+        </div>
+        <span class="status-badge status-${doc.status}">${doc.status}</span>
+        <div class="item-actions">
+          <button class="btn-edit" onclick="editDoc('${doc.$id}')">Edit</button>
+          <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Pagination
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>← Prev</button>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage-2 && i <= currentPage+2)) {
+      html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (i === currentPage-3 || i === currentPage+3) {
+      html += `<span style="color:var(--muted);padding:6px 4px;">…</span>`;
+    }
+  }
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>Next →</button>`;
+  pag.innerHTML = html;
+}
+
+window.goPage = (p) => { currentPage = p; renderList(); window.scrollTo({top: document.getElementById('content-list').offsetTop - 20, behavior:'smooth'}); };
+
+// ── Load all content + stats ──
+async function loadList() {
+  const wrap = document.getElementById('content-list');
+  try {
+    // Load all docs (batch if needed)
+    let docs = [];
+    let offset = 0;
+    while (true) {
+      const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.orderDesc('publishedAt'), Query.limit(100), Query.offset(offset)]);
+      docs = docs.concat(res.documents);
+      if (docs.length >= res.total) break;
+      offset += 100;
+    }
+    allDocs = docs;
+
+    // Load stats counts from likes collection
+    const [viewsRes, likesRes] = await Promise.all([
+      databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('type','view'), Query.limit(1)]),
+      databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('type','like'), Query.limit(1)])
+    ]);
+
+    // For per-video stats, fetch in batches by contentId
+    // We'll load all view/like records and group client-side
+    // (works well up to ~2000 videos with reasonable like counts)
+    statsMap = {};
+    allDocs.forEach(d => { statsMap[d.$id] = { views: 0, likes: 0 }; });
+
+    // Load views
+    let vOffset = 0;
+    while (true) {
+      const vRes = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [
+        Query.equal('type','view'), Query.limit(100), Query.offset(vOffset), Query.select(['contentId'])
+      ]);
+      vRes.documents.forEach(v => { if (statsMap[v.contentId]) statsMap[v.contentId].views++; });
+      vOffset += 100;
+      if (vOffset >= vRes.total) break;
+    }
+
+    // Load likes
+    let lOffset = 0;
+    while (true) {
+      const lRes = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [
+        Query.equal('type','like'), Query.limit(100), Query.offset(lOffset), Query.select(['contentId'])
+      ]);
+      lRes.documents.forEach(l => { if (statsMap[l.contentId]) statsMap[l.contentId].likes++; });
+      lOffset += 100;
+      if (lOffset >= lRes.total) break;
+    }
+
+    applyFilter();
+  } catch(e) {
+    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load. ${e.message}</p>`;
+    console.error(e);
+  }
+}
+
 window.submitContent = async () => {
   const btn = document.getElementById('submit-btn');
   btn.disabled = true; btn.textContent = editingId ? 'Saving...' : 'Adding...';
@@ -287,63 +426,42 @@ window.submitContent = async () => {
   const youtube_id = document.getElementById('f-youtube').value.trim();
   const category = document.getElementById('f-category').value;
 
-  if (!title || !youtube_id) {
-    showError('Title and YouTube ID are required.');
-    resetBtn();
-    return;
-  }
-
-  if (youtube_id.length !== 11) {
-    showError('YouTube ID must be exactly 11 characters.');
-    resetBtn();
-    return;
-  }
+  if (!title || !youtube_id) { showError('Title and YouTube ID are required.'); resetBtn(); return; }
+  if (youtube_id.length !== 11) { showError('YouTube ID must be exactly 11 characters.'); resetBtn(); return; }
 
   try {
     const data = {
-      title,
-      youtube_id,
-      category,
+      title, youtube_id, category,
       status: document.getElementById('f-status').value,
       featured: document.getElementById('f-featured').value === 'true',
       publishedAt: new Date(document.getElementById('f-date').value).toISOString(),
     };
 
-    // Optional fields - send empty string to clear when editing, or skip when adding
-    const optionals = {
-      description: 'f-desc',
-      director: 'f-director',
-      cast: 'f-cast',
-      language: 'f-language',
-      location: 'f-location',
-      seriesName: 'f-series-name',
-      seriesId: 'f-series-id'
-    };
-
+    const optionals = { description:'f-desc', director:'f-director', cast:'f-cast', language:'f-language', location:'f-location', seriesName:'f-series-name', seriesId:'f-series-id' };
     Object.entries(optionals).forEach(([key, id]) => {
       const val = document.getElementById(id).value.trim();
       if (val) data[key] = val;
-      else if (editingId) data[key] = null; // clear field on edit if emptied
+      else if (editingId) data[key] = null;
     });
 
-    // Genre (checkboxes + custom)
     const genreVal = getSelectedGenres();
     if (genreVal) data.genre = genreVal;
     else if (editingId) data.genre = null;
 
     if (editingId) {
       await databases.updateDocument(DB_ID, COLLECTION_ID, editingId, data);
+      const idx = allDocs.findIndex(d => d.$id === editingId);
+      if (idx !== -1) allDocs[idx] = { ...allDocs[idx], ...data, $id: editingId };
     } else {
-      await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
+      const newDoc = await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), data);
+      allDocs.unshift(newDoc);
+      statsMap[newDoc.$id] = { views: 0, likes: 0 };
     }
 
     showSuccess();
-    cancelEdit();   // resets to add mode + clears form
-    loadList();
-  } catch (err) {
-    showError(err.message || 'Failed to save content.');
-  }
-
+    cancelEdit();
+    applyFilter();
+  } catch (err) { showError(err.message || 'Failed to save content.'); }
   resetBtn();
 };
 
@@ -358,7 +476,6 @@ window.editDoc = async (id) => {
   try {
     const doc = await databases.getDocument(DB_ID, COLLECTION_ID, id);
     editingId = id;
-
     document.getElementById('f-title').value = doc.title || '';
     document.getElementById('f-youtube').value = doc.youtube_id || '';
     document.getElementById('f-category').value = doc.category || 'movie';
@@ -371,43 +488,24 @@ window.editDoc = async (id) => {
     document.getElementById('f-series-name').value = doc.seriesName || '';
     document.getElementById('f-series-id').value = doc.seriesId || '';
     document.getElementById('f-featured').value = doc.featured ? 'true' : 'false';
-    document.getElementById('f-date').value = doc.publishedAt
-      ? new Date(doc.publishedAt).toISOString().slice(0,16)
-      : new Date().toISOString().slice(0,16);
+    document.getElementById('f-date').value = doc.publishedAt ? new Date(doc.publishedAt).toISOString().slice(0,16) : new Date().toISOString().slice(0,16);
 
-    // Genre: tick known ones, put unknowns into custom field
     const docGenres = (doc.genre || '').split(',').map(s => s.trim()).filter(Boolean);
     const known = docGenres.filter(g => GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
     const unknown = docGenres.filter(g => !GENRES.some(G => G.toLowerCase() === g.toLowerCase()));
     renderGenreBoxes(known);
     document.getElementById('f-genre-custom').value = unknown.join(', ');
+    document.getElementById('thumb-preview').innerHTML = (doc.youtube_id && doc.youtube_id.length === 11) ? `<img src="https://img.youtube.com/vi/${doc.youtube_id}/hqdefault.jpg" alt="Preview">` : '';
 
-    // thumbnail preview
-    document.getElementById('thumb-preview').innerHTML =
-      (doc.youtube_id && doc.youtube_id.length === 11)
-        ? `<img src="https://img.youtube.com/vi/${doc.youtube_id}/hqdefault.jpg" alt="Preview">` : '';
-
-    // switch UI to edit mode
     document.getElementById('form-mode-title').textContent = 'Edit Content';
     document.getElementById('submit-btn').textContent = 'Update Content';
     document.getElementById('cancel-btn').style.display = 'inline-block';
-
-    // scroll up to form
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch (err) {
-    showError('Could not load item for editing: ' + (err.message || err));
-  }
+  } catch (err) { showError('Could not load item: ' + (err.message || err)); }
 };
 
 window.cancelEdit = () => {
   editingId = null;
-  clearForm();
-  document.getElementById('form-mode-title').textContent = 'Add New Content';
-  document.getElementById('submit-btn').textContent = 'Add Content';
-  document.getElementById('cancel-btn').style.display = 'none';
-};
-
-function clearForm() {
   ['f-title','f-youtube','f-desc','f-director','f-cast','f-series-name','f-series-id'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-category').value = 'movie';
   document.getElementById('f-status').value = 'published';
@@ -418,74 +516,28 @@ function clearForm() {
   document.getElementById('f-date').value = new Date().toISOString().slice(0,16);
   document.getElementById('f-genre-custom').value = '';
   renderGenreBoxes();
-}
+  document.getElementById('form-mode-title').textContent = 'Add New Content';
+  document.getElementById('submit-btn').textContent = 'Add Content';
+  document.getElementById('cancel-btn').style.display = 'none';
+};
 
-function showSuccess() {
-  const el = document.getElementById('alert-success');
-  el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 3500);
-}
-
-function showError(msg) {
-  document.getElementById('error-msg').textContent = msg;
-  document.getElementById('alert-error').style.display = 'block';
-}
-
-function hideAlerts() {
-  document.getElementById('alert-success').style.display = 'none';
-  document.getElementById('alert-error').style.display = 'none';
-}
-
-async function loadList() {
-  const wrap = document.getElementById('content-list');
-  try {
-    const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [Query.orderDesc('publishedAt'), Query.limit(40)]);
-    if (!res.documents.length) {
-      wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No content yet.</p>`;
-      return;
-    }
-    wrap.innerHTML = res.documents.map(doc => `
-      <div class="content-item">
-        <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="" onerror="this.style.visibility='hidden'">
-        <div class="content-item-info">
-          <div class="content-item-title">${doc.title}</div>
-          <div class="content-item-meta">
-            ${doc.category}
-            ${doc.seriesName ? ' · Series: ' + doc.seriesName : ''}
-            ${doc.language ? ' · ' + doc.language : ''}
-            ${doc.location ? ' · ' + doc.location : ''}
-          </div>
-        </div>
-        <span class="status-badge status-${doc.status}">${doc.status}</span>
-        <div class="item-actions">
-          <button class="btn-edit" onclick="editDoc('${doc.$id}')">Edit</button>
-          <button class="btn-delete" onclick="deleteDoc('${doc.$id}', this)">Delete</button>
-        </div>
-      </div>
-    `).join('');
-  } catch {
-    wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load.</p>`;
-  }
-}
+function showSuccess() { const el = document.getElementById('alert-success'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3500); }
+function showError(msg) { document.getElementById('error-msg').textContent = msg; document.getElementById('alert-error').style.display = 'block'; }
+function hideAlerts() { document.getElementById('alert-success').style.display = 'none'; document.getElementById('alert-error').style.display = 'none'; }
 
 window.deleteDoc = async (id, btn) => {
   if (!confirm('Delete this content?')) return;
   try {
     await databases.deleteDocument(DB_ID, COLLECTION_ID, id);
-    btn.closest('.content-item').remove();
+    allDocs = allDocs.filter(d => d.$id !== id);
+    delete statsMap[id];
     if (editingId === id) cancelEdit();
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
+    applyFilter();
+  } catch (err) { alert('Error: ' + err.message); }
 };
 
 function renderLoginPrompt() {
-  document.getElementById('page-wrap').innerHTML = `
-    <div style="text-align:center;padding:100px 24px;">
-      <h2 style="font-family:'Teko',sans-serif;font-size:32px;margin-bottom:8px;">Sign in required</h2>
-      <a href="/" style="color:var(--red);font-size:14px;">← Back to GorkhaTV</a>
-    </div>
-  `;
+  document.getElementById('page-wrap').innerHTML = `<div style="text-align:center;padding:100px 24px;"><h2 style="font-family:'Teko',sans-serif;font-size:32px;margin-bottom:8px;">Sign in required</h2><a href="/" style="color:var(--red);font-size:14px;">← Back to GorkhaTV</a></div>`;
 }
 
 loadList();
