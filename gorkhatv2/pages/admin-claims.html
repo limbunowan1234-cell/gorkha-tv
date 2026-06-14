@@ -9,17 +9,23 @@
   <style>
     .admin-wrap { max-width: 780px; margin: 40px auto; padding: 0 24px; }
     .admin-title { font-family: 'Teko', sans-serif; font-size: 34px; margin-bottom: 8px; }
-    .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+    .admin-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+    .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 12px; margin-bottom: 28px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
+    .stat-num { font-family: 'Teko', sans-serif; font-size: 36px; line-height: 1; }
+    .stat-num.gold { color: var(--gold); }
+    .stat-num.green { color: #4ade80; }
+    .stat-num.red { color: #f87171; }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
     .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 32px; }
-    .form-card-title { font-family: 'Teko', sans-serif; font-size: 22px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .form-card-title::before { content: ''; display: block; width: 3px; height: 20px; background: var(--red); border-radius: 2px; }
-    .claim-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
+    .claim-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; }
     .claim-card.pending { border-left: 3px solid var(--gold); }
     .claim-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 8px; }
     .claim-who { font-size: 14px; font-weight: 600; }
     .claim-who span { color: var(--muted); font-weight: 400; font-size: 12px; }
     .claim-what { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
     .claim-what strong { color: var(--gold); }
+    .claim-date { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
     .claim-btns { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-approve { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #4ade80; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; }
     .btn-approve:hover { background: rgba(34,197,94,0.25); }
@@ -28,13 +34,16 @@
     .btn-delete-claim { background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; font-family: 'Inter', sans-serif; }
     .btn-delete-claim:hover { border-color: #ef4444; color: #ef4444; background: rgba(239,68,68,0.08); }
     .claim-badge { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; text-transform: uppercase; }
-    .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; }
-    .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; }
+    .claim-badge.approved { background: rgba(34,197,94,0.1); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .claim-badge.rejected { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .claim-badge.pending { background: rgba(200,150,42,0.1); color: var(--gold); border: 1px solid rgba(200,150,42,0.3); }
     .access-denied { text-align: center; padding: 100px 24px; }
     .access-denied h2 { font-family: 'Teko', sans-serif; font-size: 36px; margin-bottom: 8px; }
-    .filter-row { display:flex; gap:8px; margin-bottom:20px; }
-    .filter-pill { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 16px; border-radius:20px; font-size:13px; cursor:pointer; }
+    .filter-row { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+    .filter-pill { background:var(--surface2); border:1px solid var(--border); color:var(--muted); padding:6px 16px; border-radius:20px; font-size:13px; cursor:pointer; transition:all 0.15s; }
     .filter-pill.active { background:var(--red); border-color:var(--red); color:#fff; }
+    .search-bar-wrap { margin-bottom:16px; }
+    .empty-note { color:var(--muted); font-size:13px; padding:20px 0; }
   </style>
 </head>
 <body>
@@ -50,9 +59,7 @@
 import { databases, account, DB_ID, CLAIMS_COLLECTION_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
 
 let user = null;
-try {
-  user = await account.get();
-} catch {
+try { user = await account.get(); } catch {
   document.getElementById('page-wrap').innerHTML = `<div class="access-denied"><h2>Sign in required</h2><a href="/" style="color:var(--red);">← Back</a></div>`;
   throw new Error('Not logged in');
 }
@@ -67,13 +74,21 @@ document.getElementById('page-wrap').innerHTML = `
 <div class="admin-wrap">
   <h1 class="admin-title">⭐ Credit Claims</h1>
   <p class="admin-sub">Review and manage artist credit claims</p>
+
+  <div class="stat-row" id="claims-stats"></div>
+
   <div class="filter-row">
     <div class="filter-pill active" data-f="all" onclick="setFilter('all',this)">All</div>
-    <div class="filter-pill" data-f="pending" onclick="setFilter('pending',this)">Pending</div>
-    <div class="filter-pill" data-f="approved" onclick="setFilter('approved',this)">Approved</div>
-    <div class="filter-pill" data-f="rejected" onclick="setFilter('rejected',this)">Rejected</div>
+    <div class="filter-pill" data-f="pending" onclick="setFilter('pending',this)">⏳ Pending</div>
+    <div class="filter-pill" data-f="approved" onclick="setFilter('approved',this)">✓ Approved</div>
+    <div class="filter-pill" data-f="rejected" onclick="setFilter('rejected',this)">✕ Rejected</div>
   </div>
-  <div class="form-card">
+
+  <div class="search-bar-wrap">
+    <input type="text" id="claim-search" placeholder="Search by name, email, or content title..." oninput="renderClaims()">
+  </div>
+
+  <div class="form-card" style="padding:16px;">
     <div id="claims-list"><div class="loading"><div class="spinner"></div> Loading...</div></div>
   </div>
 </div>`;
@@ -90,40 +105,71 @@ window.setFilter = (f, el) => {
 
 async function loadClaims() {
   try {
-    const res = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.orderDesc('$createdAt'), Query.limit(100)]);
-    allClaims = res.documents;
+    let docs = [];
+    let offset = 0;
+    while (true) {
+      const res = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.orderDesc('$createdAt'), Query.limit(100), Query.offset(offset)]);
+      docs = docs.concat(res.documents);
+      if (docs.length >= res.total) break;
+      offset += 100;
+    }
+    allClaims = docs;
+
+    // Stats
+    const pending = allClaims.filter(c => c.status === 'pending').length;
+    const approved = allClaims.filter(c => c.status === 'approved').length;
+    const rejected = allClaims.filter(c => c.status === 'rejected').length;
+    document.getElementById('claims-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-num">${allClaims.length}</div><div class="stat-label">Total Claims</div></div>
+      <div class="stat-card"><div class="stat-num gold">${pending}</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-num green">${approved}</div><div class="stat-label">Approved</div></div>
+      <div class="stat-card"><div class="stat-num red">${rejected}</div><div class="stat-label">Rejected</div></div>
+    `;
+
     renderClaims();
   } catch (err) {
-    document.getElementById('claims-list').innerHTML = `<p style="color:var(--muted);font-size:13px;">Could not load claims.</p>`;
+    document.getElementById('claims-list').innerHTML = `<p class="empty-note">Could not load claims.</p>`;
     console.error(err);
   }
 }
 
-function renderClaims() {
+window.renderClaims = () => {
   const wrap = document.getElementById('claims-list');
+  const q = (document.getElementById('claim-search')?.value || '').toLowerCase();
+
   let docs = allClaims.slice();
   if (currentFilter !== 'all') docs = docs.filter(c => c.status === currentFilter);
-  docs.sort((a, b) => {
-    if (a.status === 'pending' && b.status !== 'pending') return -1;
-    if (b.status === 'pending' && a.status !== 'pending') return 1;
-    return 0;
-  });
-  if (!docs.length) { wrap.innerHTML = `<p style="color:var(--muted);font-size:13px;">No ${currentFilter==='all'?'':currentFilter+' '}claims.</p>`; return; }
-  wrap.innerHTML = docs.map(c => `
+  if (q) docs = docs.filter(c =>
+    (c.userName||'').toLowerCase().includes(q) ||
+    (c.userEmail||'').toLowerCase().includes(q) ||
+    (c.contentTitle||'').toLowerCase().includes(q) ||
+    (c.claimedRole||'').toLowerCase().includes(q)
+  );
+
+  // Pending first
+  docs.sort((a,b) => (a.status==='pending'?-1:0) - (b.status==='pending'?-1:0));
+
+  if (!docs.length) { wrap.innerHTML = `<p class="empty-note">No ${currentFilter==='all'?'':currentFilter+' '}claims${q?' matching "'+q+'"':''}.</p>`; return; }
+
+  wrap.innerHTML = docs.map(c => {
+    const date = new Date(c.$createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    return `
     <div class="claim-card ${c.status === 'pending' ? 'pending' : ''}">
       <div class="claim-head">
         <div class="claim-who">${c.userName} <span>(${c.userEmail})</span></div>
-        ${c.status !== 'pending' ? `<span class="claim-badge ${c.status}">${c.status}</span>` : ''}
+        <span class="claim-badge ${c.status}">${c.status}</span>
       </div>
-      <div class="claim-what">Claims <strong>${c.claimedRole}</strong> on "${c.contentTitle}"</div>
+      <div class="claim-what">Claims role of <strong>${c.claimedRole}</strong> on "${c.contentTitle}"</div>
+      <div class="claim-date">Submitted: ${date}</div>
       <div class="claim-btns">
-        ${c.status === 'pending' ? `<button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button><button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">Reject</button>` : ''}
-        ${c.status === 'approved' ? `<button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">↩ Undo (Reject)</button>` : ''}
-        ${c.status === 'rejected' ? `<button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>` : ''}
+        ${c.status !== 'approved' ? `<button class="btn-approve" onclick="approveClaim('${c.$id}', this)">✓ Approve</button>` : ''}
+        ${c.status !== 'rejected' ? `<button class="btn-reject" onclick="rejectClaim('${c.$id}', this)">✕ Reject</button>` : ''}
+        ${c.status !== 'pending' ? `<button class="btn-reject" onclick="setPending('${c.$id}', this)">↩ Set Pending</button>` : ''}
         <button class="btn-delete-claim" onclick="deleteClaim('${c.$id}', this)">🗑 Delete</button>
       </div>
-    </div>`).join('');
-}
+    </div>`;
+  }).join('');
+};
 
 window.approveClaim = async (id, btn) => {
   btn.disabled = true; btn.textContent = '...';
@@ -132,16 +178,22 @@ window.approveClaim = async (id, btn) => {
 };
 
 window.rejectClaim = async (id, btn) => {
-  if (!confirm('Reject this claim? The verified badge will be removed.')) return;
+  if (!confirm('Reject this claim?')) return;
   btn.disabled = true; btn.textContent = '...';
   try { await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'rejected' }); await loadClaims(); }
-  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = 'Reject'; }
+  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = '✕ Reject'; }
+};
+
+window.setPending = async (id, btn) => {
+  btn.disabled = true; btn.textContent = '...';
+  try { await databases.updateDocument(DB_ID, CLAIMS_COLLECTION_ID, id, { status: 'pending' }); await loadClaims(); }
+  catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = '↩ Set Pending'; }
 };
 
 window.deleteClaim = async (id, btn) => {
-  if (!confirm('Permanently delete this claim? This cannot be undone.')) return;
+  if (!confirm('Permanently delete this claim?')) return;
   btn.disabled = true; btn.textContent = '...';
-  try { await databases.deleteDocument(DB_ID, CLAIMS_COLLECTION_ID, id); allClaims = allClaims.filter(c => c.$id !== id); renderClaims(); }
+  try { await databases.deleteDocument(DB_ID, CLAIMS_COLLECTION_ID, id); allClaims = allClaims.filter(c => c.$id !== id); await loadClaims(); }
   catch (err) { alert('Error: ' + err.message); btn.disabled = false; btn.textContent = '🗑 Delete'; }
 };
 
