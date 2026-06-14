@@ -15,6 +15,8 @@
     .stat-num { font-family: 'Teko', sans-serif; font-size: 40px; line-height: 1; color: var(--red); }
     .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 6px; }
     .stat-num.gold { color: var(--gold); }
+    .stat-num.blue { color: #60a5fa; }
+    .stat-num.green { color: #4ade80; }
     .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 16px; }
     .hub-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 26px; text-decoration: none; color: inherit; transition: all 0.2s; display: block; }
     .hub-card:hover { border-color: var(--red); transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
@@ -36,7 +38,7 @@
 <div id="page-wrap"><div class="loading"><div class="spinner"></div></div></div>
 
 <script type="module">
-import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
+import { databases, account, DB_ID, COLLECTION_ID, CLAIMS_COLLECTION_ID, LIKES_COLLECTION_ID, ADMIN_EMAIL, Query } from '../js/appwrite.js';
 
 let user = null;
 try {
@@ -59,15 +61,21 @@ if (user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
 
 document.getElementById('nav-right').innerHTML = `<span style="font-size:13px;color:var(--muted);">${user.name}</span>`;
 
-// Quick stats
-let totalContent = 0, totalPublished = 0, pendingClaims = 0;
+// Quick stats — fetch all in parallel
+let totalContent = 0, totalPublished = 0, pendingClaims = 0, totalViews = 0, totalLikes = 0;
 try {
-  const [allC, pubC, pendC] = await Promise.all([
+  const [allC, pubC, pendC, viewsC, likesC] = await Promise.all([
     databases.listDocuments(DB_ID, COLLECTION_ID, [Query.limit(1)]),
     databases.listDocuments(DB_ID, COLLECTION_ID, [Query.equal('status','published'), Query.limit(1)]),
-    databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.equal('status','pending'), Query.limit(1)])
+    databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [Query.equal('status','pending'), Query.limit(1)]),
+    databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('type','view'), Query.limit(1)]),
+    databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [Query.equal('type','like'), Query.limit(1)])
   ]);
-  totalContent = allC.total; totalPublished = pubC.total; pendingClaims = pendC.total;
+  totalContent = allC.total;
+  totalPublished = pubC.total;
+  pendingClaims = pendC.total;
+  totalViews = viewsC.total;
+  totalLikes = likesC.total;
 } catch(e) { console.error(e); }
 
 document.getElementById('page-wrap').innerHTML = `
@@ -78,6 +86,8 @@ document.getElementById('page-wrap').innerHTML = `
   <div class="stat-row">
     <div class="stat-card"><div class="stat-num">${totalContent}</div><div class="stat-label">Total Videos</div></div>
     <div class="stat-card"><div class="stat-num">${totalPublished}</div><div class="stat-label">Published</div></div>
+    <div class="stat-card"><div class="stat-num blue">${totalViews.toLocaleString()}</div><div class="stat-label">Total Views</div></div>
+    <div class="stat-card"><div class="stat-num green">${totalLikes.toLocaleString()}</div><div class="stat-label">Total Likes</div></div>
     <div class="stat-card"><div class="stat-num gold">${pendingClaims}</div><div class="stat-label">Pending Claims</div></div>
   </div>
 
@@ -85,7 +95,7 @@ document.getElementById('page-wrap').innerHTML = `
     <a href="admin-content.html" class="hub-card">
       <div class="hub-icon">🎬</div>
       <div class="hub-title">Add / Edit Videos</div>
-      <div class="hub-desc">Upload new content, edit details, manage genres, or delete videos from the gallery.</div>
+      <div class="hub-desc">Upload new content, edit details, manage genres, or delete videos. View per-video stats.</div>
     </a>
     <a href="admin-claims.html" class="hub-card">
       <div class="hub-icon">⭐</div>
