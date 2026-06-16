@@ -1,669 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GorkhaTV - Entertainment Platform</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f0f0f;
-            color: #f0f0f0;
-            line-height: 1.6;
-        }
-
-        /* HEADER */
-        header {
-            background: #0f0f0f;
-            border-bottom: 1px solid rgba(229, 9, 20, 0.2);
-            padding: 12px 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            font-size: 20px;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: #e50914;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .nav-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .nav-creator {
-            background: #e50914;
-            color: white;
-        }
-
-        .nav-creator:hover {
-            background: #c40812;
-            transform: translateY(-2px);
-        }
-
-        .nav-profile {
-            background: rgba(229, 9, 20, 0.2);
-            color: white;
-            border: 1px solid #e50914;
-        }
-
-        .nav-profile:hover {
-            background: rgba(229, 9, 20, 0.3);
-        }
-
-        /* SEARCH BAR */
-        .search-section {
-            padding: 16px;
-            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
-        }
-
-        .search-container {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .search-input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 12px 16px;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-        }
-
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.5);
-        }
-
-        .search-btn {
-            background: #e50914;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        /* HERO BANNER */
-        .hero-banner {
-            background: linear-gradient(135deg, rgba(229, 9, 20, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%),
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400"><rect fill="%230f0f0f" width="1200" height="400"/></svg>');
-            background-size: cover;
-            background-position: center;
-            padding: 40px 16px;
-            text-align: center;
-            margin: 0;
-        }
-
-        .hero-content h1 {
-            font-size: 32px;
-            font-weight: 900;
-            margin-bottom: 12px;
-            line-height: 1.2;
-        }
-
-        .hero-content h1 span {
-            color: #e50914;
-        }
-
-        .hero-content p {
-            font-size: 16px;
-            color: #999;
-            margin-bottom: 24px;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .hero-btn {
-            padding: 14px 28px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-        }
-
-        .hero-btn-primary {
-            background: #e50914;
-            color: white;
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .hero-btn-primary:hover {
-            background: #c40812;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.4);
-        }
-
-        .hero-btn-secondary {
-            background: rgba(229, 9, 20, 0.2);
-            color: white;
-            border: 2px solid #e50914;
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .hero-btn-secondary:hover {
-            background: rgba(229, 9, 20, 0.3);
-            transform: translateY(-3px);
-        }
-
-        /* FEATURED SECTION */
-        .featured-section {
-            padding: 32px 16px;
-            background: #0f0f0f;
-        }
-
-        .section-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .section-title::before {
-            content: '';
-            width: 4px;
-            height: 24px;
-            background: #e50914;
-            border-radius: 2px;
-        }
-
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        @media (min-width: 768px) {
-            .content-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .content-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(229, 9, 20, 0.3);
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .content-card:hover {
-            border-color: #e50914;
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(229, 9, 20, 0.2);
-        }
-
-        .content-card-image {
-            width: 100%;
-            height: 180px;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-        }
-
-        .content-card-info {
-            padding: 12px;
-        }
-
-        .content-card-category {
-            font-size: 12px;
-            color: #e50914;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .content-card-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            line-height: 1.3;
-        }
-
-        .content-card-meta {
-            font-size: 12px;
-            color: #999;
-        }
-
-        /* CREATOR CTA SECTION */
-        .creator-cta {
-            background: linear-gradient(135deg, rgba(229, 9, 20, 0.15) 0%, rgba(0, 0, 0, 0.8) 100%);
-            border: 2px solid #e50914;
-            border-radius: 12px;
-            padding: 32px 20px;
-            text-align: center;
-            margin: 32px 16px;
-        }
-
-        .creator-cta-icon {
-            font-size: 40px;
-            margin-bottom: 16px;
-        }
-
-        .creator-cta h2 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .creator-cta p {
-            font-size: 14px;
-            color: #999;
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .benefit-item {
-            background: rgba(229, 9, 20, 0.1);
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .benefit-item span {
-            font-size: 18px;
-            display: block;
-            margin-bottom: 4px;
-        }
-
-        .creator-cta-btn {
-            background: #e50914;
-            color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .creator-cta-btn:hover {
-            background: #c40812;
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(229, 9, 20, 0.4);
-        }
-
-        /* CATEGORIES */
-        .categories {
-            padding: 20px 16px;
-            overflow-x: auto;
-            background: #0f0f0f;
-            border-bottom: 1px solid rgba(229, 9, 20, 0.2);
-        }
-
-        .categories-scroll {
-            display: flex;
-            gap: 12px;
-            min-width: min-content;
-        }
-
-        .category-btn {
-            padding: 8px 16px;
-            border: 1px solid rgba(229, 9, 20, 0.3);
-            background: rgba(229, 9, 20, 0.1);
-            color: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
-            transition: all 0.3s ease;
-        }
-
-        .category-btn.active {
-            background: #e50914;
-            border-color: #e50914;
-        }
-
-        .category-btn:hover {
-            border-color: #e50914;
-            background: rgba(229, 9, 20, 0.2);
-        }
-
-        /* FOOTER */
-        footer {
-            background: #0a0a0a;
-            border-top: 1px solid rgba(229, 9, 20, 0.2);
-            padding: 32px 16px;
-            margin-top: 40px;
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        @media (min-width: 768px) {
-            .footer-content {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .footer-section h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #e50914;
-        }
-
-        .footer-section ul {
-            list-style: none;
-        }
-
-        .footer-section ul li {
-            margin-bottom: 8px;
-        }
-
-        .footer-section ul li a {
-            color: #999;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.3s ease;
-        }
-
-        .footer-section ul li a:hover {
-            color: #e50914;
-        }
-
-        .footer-bottom {
-            text-align: center;
-            padding-top: 24px;
-            border-top: 1px solid rgba(229, 9, 20, 0.2);
-            color: #666;
-            font-size: 13px;
-        }
-
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 480px) {
-            header {
-                padding: 10px 12px;
-            }
-
-            .logo {
-                font-size: 16px;
-            }
-
-            .nav-buttons {
-                gap: 8px;
-            }
-
-            .nav-btn {
-                padding: 6px 12px;
-                font-size: 12px;
-            }
-
-            .hero-content h1 {
-                font-size: 24px;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .hero-btn {
-                width: 100%;
-            }
-
-            .creator-cta {
-                margin: 24px 12px;
-                padding: 24px 16px;
-            }
-
-            .creator-cta h2 {
-                font-size: 20px;
-            }
-
-            .section-title {
-                font-size: 18px;
-            }
-        }
-
-        /* SMOOTH TRANSITIONS */
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        button {
-            font-family: inherit;
-        }
-    </style>
+  <link rel="icon" type="image/png" href="logo-circle.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GorkhaTV — Darjeeling in Every Frame</title>
+  <meta name="description" content="Watch movies, web series, music videos, documentaries, vlogs, standup comedy, podcasts and pranks from the Gorkha community.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#141414">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GorkhaTV">
+  <style>
+    /* Creator Dashboard Nav Link */
+    .nav-creator-link {
+      background: var(--red) !important;
+      color: white !important;
+      padding: 8px 14px !important;
+      border-radius: 4px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      transition: all 0.2s !important;
+    }
+
+    .nav-creator-link:hover {
+      opacity: 0.85 !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* Creator Banner - UPDATED */
+    .creator-banner {
+      background: linear-gradient(135deg, rgba(229,9,20,0.12) 0%, rgba(200,150,42,0.08) 100%);
+      border: 1px solid rgba(229,9,20,0.25);
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin: 48px 0;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
+
+    .creator-banner-title {
+      font-size: 28px;
+      font-family: 'Teko', sans-serif;
+      margin: 0 0 12px 0;
+      color: #f0f0f0;
+      font-weight: 700;
+    }
+
+    .creator-banner-subtitle {
+      color: #999;
+      font-size: 15px;
+      margin: 0 0 32px 0;
+    }
+
+    /* Benefits Grid */
+    .creator-benefits {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .benefit-card {
+      background: rgba(26, 26, 26, 0.6);
+      border: 1px solid rgba(230, 9, 20, 0.2);
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .benefit-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .benefit-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .benefit-desc {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    /* Timeline */
+    .creator-timeline {
+      background: rgba(26, 26, 26, 0.8);
+      border: 1px solid rgba(200, 150, 42, 0.25);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .timeline-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #c8962a;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .timeline-text {
+      font-size: 13px;
+      color: #f0f0f0;
+      line-height: 1.8;
+    }
+
+    .timeline-arrow {
+      margin: 0 12px;
+      color: #c8962a;
+      font-weight: bold;
+    }
+
+    /* Buttons */
+    .creator-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .creator-btn {
+      background: var(--red);
+      color: white;
+      padding: 12px 32px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .creator-btn:hover {
+      opacity: 0.85;
+      transform: translateY(-2px);
+    }
+
+    .creator-btn-secondary {
+      background: transparent;
+      color: #f0f0f0;
+      border: 1px solid rgba(240, 240, 240, 0.3);
+    }
+
+    .creator-btn-secondary:hover {
+      border-color: rgba(240, 240, 240, 0.6);
+      background: rgba(240, 240, 240, 0.05);
+    }
+
+    .creator-footer-text {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    @media (max-width: 700px) {
+      .creator-banner {
+        padding: 24px;
+        margin: 32px 16px;
+      }
+
+      .creator-banner-title {
+        font-size: 22px;
+      }
+
+      .creator-banner-subtitle {
+        font-size: 13px;
+      }
+
+      .creator-benefits {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .benefit-card {
+        padding: 12px;
+      }
+
+      .benefit-icon {
+        font-size: 20px;
+      }
+
+      .benefit-title {
+        font-size: 12px;
+      }
+
+      .timeline-text {
+        font-size: 12px;
+      }
+
+      .creator-btn {
+        padding: 10px 24px;
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- HEADER WITH CREATOR BUTTON -->
-    <header>
-        <div class="logo">
-            <div class="logo-icon">🎬</div>
-            <span>GorkhaTV</span>
-        </div>
-        <div class="nav-buttons">
-            <button class="nav-btn nav-creator" onclick="location.href='pages/creator-dashboard.html'">
-                🚀 Creator
-            </button>
-            <button class="nav-btn nav-profile" onclick="location.href='pages/artist.html'">
-                👤 Profile
-            </button>
-        </div>
-    </header>
 
-    <!-- SEARCH -->
-    <div class="search-section">
-        <div class="search-container">
-            <input type="text" class="search-input" placeholder="Search titles, cast...">
-            <button class="search-btn">🔍</button>
-        </div>
+<!-- NAV -->
+<nav>
+  <a href="/" class="logo-svg"><img src="logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+
+  <ul class="nav-links">
+    <li><a href="/" class="active">Home</a></li>
+    <li><a href="pages/browse.html?cat=movie">Movies</a></li>
+    <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
+    <li><a href="pages/browse.html?cat=music">Music</a></li>
+    <li><a href="pages/browse.html?cat=documentary">Docs</a></li>
+    <li><a href="pages/browse.html?cat=vlog">Vlogs</a></li>
+    <li><a href="pages/browse.html?cat=standup">Standup</a></li>
+    <li><a href="pages/browse.html?cat=podcast">Podcasts</a></li>
+    <li><a href="pages/browse.html?cat=prank">Pranks</a></li>
+    <li><a href="pages/artists.html">Artists</a></li>
+    <!-- Creator Dashboard Link -->
+    <li><a href="pages/creator-dashboard.html" class="nav-creator-link">🎬 Creator</a></li>
+  </ul>
+
+  <div class="search-wrap" style="margin-left:auto;">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input').value.trim(); window.location.href = v ? 'pages/search.html?q='+encodeURIComponent(v) : 'pages/search.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search titles, cast..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'pages/search.html?q='+encodeURIComponent(v):'pages/search.html';}">
+    </div>
+  </div>
+
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg" id="hero-bg"></div>
+  <div class="hero-gradient"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">
+      <span class="hero-tag" id="hero-tag">Featured</span>
+    </div>
+    <h1 class="hero-title" id="hero-title"></h1>
+    <div class="hero-meta" id="hero-meta"></div>
+    <p class="hero-desc" id="hero-desc"></p>
+    <div class="hero-actions">
+      <button class="btn-play" id="hero-play-btn">
+        <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg>
+        Play
+      </button>
+      <button class="btn-more" id="hero-more-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        More Info
+      </button>
+    </div>
+  </div>
+  <div class="hero-dots" id="hero-dots"></div>
+</section>
+
+<!-- CATEGORY PILLS -->
+<div class="cats-bar" id="cats-bar"></div>
+
+<!-- CREATOR CTA BANNER -->
+<div style="max-width:1400px;margin:0 auto;padding:0 24px;">
+  <div class="creator-banner">
+    <h2 class="creator-banner-title">🎬 Are You a Gorkha Creator?</h2>
+    <p class="creator-banner-subtitle">Submit your content. Get discovered by thousands. Build your verified portfolio.</p>
+
+    <!-- Three Benefits Grid -->
+    <div class="creator-benefits">
+      <div class="benefit-card">
+        <div class="benefit-icon">📺</div>
+        <div class="benefit-title">50K+ Viewers</div>
+        <div class="benefit-desc">Get featured to thousands</div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon">⭐</div>
+        <div class="benefit-title">Verified Portfolio</div>
+        <div class="benefit-desc">Professional creator profile</div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon">💰</div>
+        <div class="benefit-title">Payouts Coming</div>
+        <div class="benefit-desc">Revenue-based in 3-4 months</div>
+      </div>
     </div>
 
-    <!-- HERO BANNER -->
-    <div class="hero-banner">
-        <div class="hero-content">
-            <h1>GorkhaTV is<br><span>OFFICIALLY LIVE</span></h1>
-            <p>Entertainment Platform for Gorkha Creators & Culture</p>
-            <div class="hero-buttons">
-                <button class="hero-btn hero-btn-primary" onclick="location.href='pages/creator-dashboard.html'">
-                    🚀 Submit Your Video
-                </button>
-                <a href="https://github.com/limbunowan1234-cell/gorkha-tv/releases/download/v1.0.0/GorkhaTV.apk" class="hero-btn hero-btn-secondary" download>
-                    📱 Download App (954 KB)
-                </a>
-            </div>
-        </div>
+    <!-- Timeline Section -->
+    <div class="creator-timeline">
+      <div class="timeline-label">Creator Payment Timeline</div>
+      <div class="timeline-text">
+        <strong>NOW:</strong> Submit content & get exposure
+        <span class="timeline-arrow">→</span>
+        <strong>Month 2-3:</strong> Help us grow
+        <span class="timeline-arrow">→</span>
+        <strong>Month 4+:</strong> 💰 Payouts live
+      </div>
     </div>
 
-    <!-- CATEGORIES -->
-    <div class="categories">
-        <div class="categories-scroll">
-            <button class="category-btn active">All</button>
-            <button class="category-btn">Music Videos</button>
-            <button class="category-btn">Films</button>
-            <button class="category-btn">Web Series</button>
-            <button class="category-btn">Vlogs</button>
-            <button class="category-btn">Comedy</button>
-            <button class="category-btn">Podcasts</button>
-        </div>
+    <!-- Buttons -->
+    <div class="creator-buttons">
+      <a href="pages/creator-dashboard.html" class="creator-btn">
+        🚀 Start Submitting
+      </a>
+      
+      <a href="https://wa.me/917557051046" target="_blank" class="creator-btn creator-btn-secondary">
+        💬 Ask Questions
+      </a>
     </div>
 
-    <!-- FEATURED CONTENT -->
-    <div class="featured-section">
-        <h2 class="section-title">Featured Now</h2>
-        <div class="content-grid">
-            <div class="content-card">
-                <div class="content-card-image">🎬</div>
-                <div class="content-card-info">
-                    <div class="content-card-category">MUSIC</div>
-                    <div class="content-card-title">Latest Music Video</div>
-                    <div class="content-card-meta">2026 • Darjeeling</div>
-                </div>
-            </div>
-            <div class="content-card">
-                <div class="content-card-image">🎥</div>
-                <div class="content-card-info">
-                    <div class="content-card-category">FILM</div>
-                    <div class="content-card-title">Short Documentary</div>
-                    <div class="content-card-meta">2026 • Kalimpong</div>
-                </div>
-            </div>
-            <div class="content-card">
-                <div class="content-card-image">📺</div>
-                <div class="content-card-info">
-                    <div class="content-card-category">WEB SERIES</div>
-                    <div class="content-card-title">Original Series</div>
-                    <div class="content-card-meta">2026 • Darjeeling</div>
-                </div>
-            </div>
-            <div class="content-card">
-                <div class="content-card-image">🎙️</div>
-                <div class="content-card-info">
-                    <div class="content-card-category">PODCAST</div>
-                    <div class="content-card-title">Creator Stories</div>
-                    <div class="content-card-meta">2026 • Gorkha Community</div>
-                </div>
-            </div>
-        </div>
+    <div class="creator-footer-text">
+      Early creators who help us grow get priority for highest payouts
     </div>
+  </div>
+</div>
 
-    <!-- CREATOR CTA -->
-    <div class="creator-cta">
-        <div class="creator-cta-icon">🎬</div>
-        <h2>Are You a Gorkha Creator?</h2>
-        <p>Submit your content. Get discovered by thousands. Build your verified portfolio. Earn sustainable income.</p>
-        <div class="benefits-grid">
-            <div class="benefit-item">
-                <span>📺</span>
-                50K+ Viewers
-            </div>
-            <div class="benefit-item">
-                <span>⭐</span>
-                Verified Badge
-            </div>
-            <div class="benefit-item">
-                <span>💰</span>
-                Monthly Payouts
-            </div>
-            <div class="benefit-item">
-                <span>📢</span>
-                Promotion
-            </div>
-        </div>
-        <button class="creator-cta-btn" onclick="location.href='pages/creator-dashboard.html'">
-            🚀 START CREATING NOW
+<!-- FEATURED ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Featured</h2>
+    <a href="pages/browse.html?featured=true" class="see-all">See all →</a>
+  </div>
+  <div class="cards-scroll" id="featured-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- TOP 5 ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Most Liked This Week</h2>
+  </div>
+  <div class="cards-scroll" id="topn-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- TOP 10 IN DARJEELING (ranked by views, auto-hides when empty) -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">🏔 Top 10 in Darjeeling</h2>
+  </div>
+  <div class="cards-scroll" id="top-darjeeling-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- LATEST ROW -->
+<div class="row">
+  <div class="row-header">
+    <h2 class="row-title">Latest</h2>
+    <a href="pages/browse.html" class="see-all">See all →</a>
+  </div>
+  <div class="cards-scroll" id="latest-row">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- DYNAMIC GENRE / CATEGORY ROWS -->
+<div id="dynamic-rows"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-video" id="modal-video"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-play-btn" onclick="document.getElementById('modal-video').querySelector('iframe')?.contentWindow.postMessage('{\"event\":\"command\",\"func\":\"playVideo\",\"args\":\"\"}','*')">
+          <svg viewBox="0 0 24 24" fill="black"><path d="M8 5v14l11-7z"/></svg> Play
         </button>
+        <button class="modal-like-btn" id="modal-like-btn" onclick="modalLike()">🤍 Like</button>
+        <button class="modal-fav-btn" id="modal-fav-btn" onclick="modalFav()">+ My List</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+      <div id="modal-claim"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-about">
+      <a href="/" class="logo-svg">
+        <div class="logo-mark" style="width:30px;height:30px;">
+          <svg viewBox="0 0 24 24"><path d="M3 18L8.5 7L13 14L16 10L21 18H3Z" fill="white" opacity="0.95"/></svg>
+        </div>
+        <div class="logo-text">
+          <div class="logo-wordmark" style="font-size:22px;">Gorkha<em>TV</em></div>
+          <div class="logo-tagline">Darjeeling in Every Frame</div>
+        </div>
+      </a>
+      <p>The home of Gorkha entertainment. Watch movies, web series, music videos, documentaries, vlogs, standup comedy, podcasts and pranks from the hills of Darjeeling and beyond.</p>
+    </div>
+    
+    <div class="footer-col">
+      <h4>Browse</h4>
+      <ul>
+        <li><a href="pages/browse.html?cat=movie">Movies</a></li>
+        <li><a href="pages/browse.html?cat=webseries">Web Series</a></li>
+        <li><a href="pages/browse.html?cat=music">Music Videos</a></li>
+        <li><a href="pages/browse.html?cat=documentary">Documentaries</a></li>
+        <li><a href="pages/browse.html?cat=vlog">Vlogs</a></li>
+        <li><a href="pages/browse.html?cat=standup">Standup Comedy</a></li>
+        <li><a href="pages/browse.html?cat=podcast">Podcasts</a></li>
+        <li><a href="pages/browse.html?cat=prank">Pranks</a></li>
+        <li><a href="pages/artists.html">Artists</a></li>
+      </ul>
     </div>
 
-    <!-- FOOTER -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>Platform</h3>
-                <ul>
-                    <li><a href="#">Home</a></li>
-                    <li><a href="#">Browse Content</a></li>
-                    <li><a href="pages/creator-dashboard.html">Creator Dashboard</a></li>
-                    <li><a href="#">Artists</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>For Creators</h3>
-                <ul>
-                    <li><a href="pages/creator-dashboard.html">Submit Video</a></li>
-                    <li><a href="pages/creator-dashboard.html">Build Portfolio</a></li>
-                    <li><a href="#">Monetization</a></li>
-                    <li><a href="#">Creator Community</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
-                <h3>Download</h3>
-                <ul>
-                    <li><a href="https://github.com/limbunowan1234-cell/gorkha-tv/releases/download/v1.0.0/GorkhaTV.apk" download>📱 Android App (v1.0.0)</a></li>
-                    <li><a href="#">🍎 iOS App (Coming Soon)</a></li>
-                    <li><a href="https://gorkhatv.site">🌐 Web Platform</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 GorkhaTV. Where Local Brands Go Global. Built with ❤️ for Gorkha Creators.</p>
-        </div>
-    </footer>
+    <div class="footer-col">
+      <h4>For Creators</h4>
+      <ul>
+        <li><a href="pages/creator-dashboard.html">📊 Creator Dashboard</a></li>
+        <li><a href="pages/creator-dashboard.html?tab=submit">📹 Submit Video</a></li>
+        <li><a href="pages/creator-dashboard.html?tab=credits">⭐ Claim Credits</a></li>
+        <li><a href="https://wa.me/917557051046" target="_blank">💬 Contact Us</a></li>
+      </ul>
+    </div>
 
-    <script>
-        // Simple category filtering
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-    </script>
+    <div class="footer-col">
+      <h4>Download</h4>
+      <ul>
+        <li><a href="https://github.com/limbunowan1234-cell/gorkha-tv/releases/download/v1.0.0/GorkhaTV.apk" download>📱 Android App (v1.0.0)</a></li>
+        <li><a href="#">🍎 iOS App (Coming Soon)</a></li>
+        <li><a href="https://gorkhatv.site">🌐 Web Platform</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Get Featured</h4>
+      <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px;">
+        Submit your content or claim your credits:
+      </p>
+      <ul>
+        <li><a href="mailto:Nowanad@gmail.com">✉️ Nowanad@gmail.com</a></li>
+        <li><a href="tel:+917557051046">📞 7557051046</a></li>
+        <li><a href="https://wa.me/917557051046" target="_blank">💬 WhatsApp</a></li>
+        <li><a href="https://instagram.com/gorkhatv_site" target="_blank">📸 @gorkhatv_site</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Made with ❤️ for the Gorkha community</span>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js?v=2"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('[GorkhaTV] Service worker registered'))
+        .catch((err) => console.warn('[GorkhaTV] SW registration failed', err));
+    });
+  }
+</script>
 </body>
 </html>
