@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creator Dashboard — GorkhaTV</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#141414">
+  <style>
+    :root {
+      --red: #e50914;
+      --gold: #c8962a;
+      --text: #f0f0f0;
+      --muted: #999;
+      --dark: #0f0f0f;
+      --surface: #1a1a1a;
+      --surface2: #222;
+      --border: #333;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo-img { height: 32px; }
+    
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .user-avatar:hover { opacity: 0.85; }
+
+    .logout-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Main Layout */
+    .dashboard-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .dashboard-header {
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .dashboard-header h1 {
+      font-size: 32px;
+      font-family: 'Teko', sans-serif;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-header p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--red);
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--red);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.85;
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text);
+    }
+
+    /* Profile Section */
+    .profile-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .profile-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-photo-placeholder {
+      font-size: 40px;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .profile-info h2 {
+      font-size: 24px;
+      font-family: 'Teko', sans-serif;
+      margin-bottom: 4px;
+    }
+
+    .profile-info p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .profile-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200, 150, 42, 0.1);
+      border: 1px solid rgba(200, 150, 42, 0.25);
+      color: var(--gold);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+
+    /* Videos Grid */
+    .videos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .video-card:hover {
+      border-color: var(--red);
+      transform: translateY(-2px);
+    }
+
+    .video-thumbnail {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+
+    .video-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-info {
+      padding: 12px;
+    }
+
+    .video-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .video-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .video-status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .video-status.pending {
+      background: rgba(200, 150, 42, 0.2);
+      color: var(--gold);
+    }
+
+    .video-status.published {
+      background: rgba(229, 9, 20, 0.2);
+      color: var(--red);
+    }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--red);
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Photo Upload */
+    .photo-upload {
+      position: relative;
+    }
+
+    .photo-upload-input {
+      display: none;
+    }
+
+    .photo-upload-btn {
+      cursor: pointer;
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      border-radius: 4px;
+      padding: 32px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .photo-upload-btn:hover {
+      border-color: var(--red);
+      background: rgba(229, 9, 20, 0.05);
+    }
+
+    .photo-upload-btn p {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* Messages */
+    .message {
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .message.success {
+      background: rgba(76, 175, 80, 0.1);
+      color: #4caf50;
+      border: 1px solid rgba(76, 175, 80, 0.2);
+    }
+
+    .message.error {
+      background: rgba(229, 9, 20, 0.1);
+      color: var(--red);
+      border: 1px solid rgba(229, 9, 20, 0.2);
+    }
+
+    .message.loading {
+      background: rgba(200, 150, 42, 0.1);
+      color: var(--gold);
+      border: 1px solid rgba(200, 150, 42, 0.2);
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    /* Empty State */
+    .empty {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .dashboard-container {
+        padding: 16px;
+      }
+
+      .dashboard-header h1 {
+        font-size: 24px;
+      }
+
+      .profile-header {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .tabs {
+        margin-bottom: 24px;
+      }
+
+      .tab-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+      }
+
+      .videos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      .stat-card {
+        padding: 16px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <div class="nav-right">
+    <div class="user-avatar" id="user-avatar"></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Creator Dashboard</h1>
+    <p id="header-subtitle">Loading...</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('profile')">👤 Profile</button>
+    <button class="tab-btn" onclick="switchTab('submit')">📹 Submit Video</button>
+    <button class="tab-btn" onclick="switchTab('videos')">🎬 My Videos</button>
+    <button class="tab-btn" onclick="switchTab('stats')">📊 Stats</button>
+    <button class="tab-btn" onclick="switchTab('credits')">⭐ Claim Credits</button>
+  </div>
+
+  <!-- Profile Tab -->
+  <div id="profile" class="tab-content active">
+    <div id="profile-loading" class="loading"><div class="spinner"></div></div>
+    <div id="profile-content" style="display: none;">
+      <div class="profile-section">
+        <div class="profile-header">
+          <div class="profile-photo" id="profile-photo">
+            <div class="profile-photo-placeholder" id="profile-photo-placeholder">A</div>
+          </div>
+          <div class="profile-info">
+            <h2 id="profile-name">Artist Name</h2>
+            <p id="profile-slug">@artist-slug</p>
+            <p id="profile-profession">Profession</p>
+            <div id="profile-badges"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3 style="margin-bottom: 20px; font-size: 18px;">Edit Profile</h3>
+        <div id="profile-message"></div>
+        <form id="profile-form" onsubmit="updateProfile(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+              <label for="profession">Profession *</label>
+              <input type="text" id="profession" name="profession" placeholder="Actor, Musician, Filmmaker, etc.">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input type="text" id="location" name="location" placeholder="Darjeeling, Nepal">
+            </div>
+            <div class="form-group">
+              <label for="languages">Languages</label>
+              <input type="text" id="languages" name="languages" placeholder="Nepali, Hindi, English">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="genres">Genres/Specialization</label>
+            <input type="text" id="genres" name="genres" placeholder="Drama, Comedy, Music, etc.">
+          </div>
+
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea id="bio" name="bio" placeholder="Tell us about yourself..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="instagram">Instagram Handle</label>
+              <input type="text" id="instagram" name="instagram" placeholder="@yourhandle">
+            </div>
+            <div class="form-group">
+              <label for="youtube">YouTube URL</label>
+              <input type="url" id="youtube" name="youtube" placeholder="https://youtube.com/...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Profile Photo</label>
+            <div class="photo-upload">
+              <input type="file" id="photo-file" class="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+              <div class="photo-upload-btn" onclick="document.getElementById('photo-file').click()">
+                <p>📸 Click to upload or drag & drop</p>
+                <p style="font-size: 12px; margin-top: 4px;">PNG, JPG, GIF up to 5MB</p>
+              </div>
+              <div id="photo-upload-status" style="margin-top: 8px;"></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit Video Tab -->
+  <div id="submit" class="tab-content">
+    <div class="profile-section">
+      <h3 style="margin-bottom: 20px; font-size: 18px;">Submit Video for Review</h3>
+      <p style="color: var(--muted); margin-bottom: 20px; font-size: 14px;">
+        Upload your content to GorkhaTV. Our team will review and publish within 24-48 hours.
+      </p>
+
+      <div id="submit-message"></div>
+
+      <form id="submit-form" onsubmit="submitVideo(event)">
+        <div class="form-group">
+          <label for="video-title">Video Title *</label>
+          <input type="text" id="video-title" name="title" required placeholder="Enter video title">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="video-category">Category *</label>
+            <select id="video-category" name="category" required>
+              <option value="">Select category</option>
+              <option value="movie">Movie</option>
+              <option value="webseries">Web Series</option>
+              <option value="music">Music Video</option>
+              <option value="documentary">Documentary</option>
+              <option value="vlog">Vlog</option>
+              <option value="standup">Standup Comedy</option>
+              <option value="podcast">Podcast</option>
+              <option value="prank">Prank</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="video-language">Language</label>
+            <input type="text" id="video-language" name="language" placeholder="Nepali, Hindi, etc.">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="video-youtube-id">YouTube ID *</label>
+          <input type="text" id="video-youtube-id" name="youtube_id" required placeholder="e.g., dQw4w9WgXcQ">
+          <p style="font-size: 12px; color: var(--muted); margin-top: 6px;">
+            📌 Find in URL: youtube.com/watch?v=<strong>dQw4w9WgXcQ</strong>
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="video-description">Description</label>
+          <textarea id="video-description" name="description" placeholder="Tell us about your video..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="video-director">Director</label>
+            <input type="text" id="video-director" name="director" placeholder="Your name">
+          </div>
+
+          <div class="form-group">
+            <label for="video-cast">Cast</label>
+            <input type="text" id="video-cast" name="cast" placeholder="Actor names, comma separated">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="video-location">Location/Region</label>
+          <input type="text" id="video-location" name="location" placeholder="Darjeeling, Kalimpong, etc.">
+        </div>
+
+        <button type="submit" class="btn btn-primary">🚀 Submit Video</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- My Videos Tab -->
+  <div id="videos" class="tab-content">
+    <h3 style="margin-bottom: 20px; font-size: 18px;">My Videos</h3>
+    <div id="videos-loading" class="loading" style="display: none;"><div class="spinner"></div></div>
+    <div id="videos-content"></div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div id="stats" class="tab-content">
+    <h3 style="margin-bottom: 20px; font-size: 18px;">Performance</h3>
+    <div id="stats-grid" class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-views">0</div>
+        <div class="stat-label">Total Views</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-videos">0</div>
+        <div class="stat-label">Videos Published</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-likes">0</div>
+        <div class="stat-label">Total Likes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-verified">0</div>
+        <div class="stat-label">Verified Credits</div>
+      </div>
+    </div>
+    <p style="color: var(--muted); text-align: center; padding: 40px 0;">
+      📊 Stats update daily. Keep creating great content!
+    </p>
+  </div>
+
+  <!-- Claim Credits Tab -->
+  <div id="credits" class="tab-content">
+    <div class="profile-section">
+      <h3 style="margin-bottom: 16px; font-size: 18px;">⭐ Claim Credits</h3>
+      <p style="color: var(--muted); margin-bottom: 20px; font-size: 14px;">
+        See your work on GorkhaTV? Claim your credits to build your verified portfolio.
+      </p>
+
+      <div id="credits-message"></div>
+      <div id="credits-loading" class="loading" style="display: none;"><div class="spinner"></div></div>
+      <div id="credits-content"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, Query, ID } from '../js/appwrite.js';
+
+  let currentUser = null;
+  let currentArtist = null;
+  let artistId = null;
+
+  // Check Auth
+  async function checkAuth() {
+    try {
+      currentUser = await account.get();
+      document.getElementById('user-avatar').textContent = currentUser.name[0].toUpperCase();
+      loadArtistProfile();
+    } catch (err) {
+      window.location.href = '/';
+    }
+  }
+
+  // Load Artist Profile
+  async function loadArtistProfile() {
+    try {
+      const res = await databases.listDocuments(DB_ID, ARTISTS_COLLECTION_ID, [
+        Query.equal('userId', currentUser.$id),
+        Query.limit(1)
+      ]);
+
+      if (res.documents.length) {
+        currentArtist = res.documents[0];
+        artistId = currentArtist.$id;
+        populateProfileForm();
+        loadMyVideos();
+        loadStats();
+        loadCreditsToClaimTab();
+      } else {
+        // First time - create artist profile
+        createNewArtistProfile();
+      }
+    } catch (err) {
+      console.error(err);
+      showMessage('profile-message', 'Error loading profile', 'error');
+    }
+  }
+
+  // Create New Artist Profile
+  async function createNewArtistProfile() {
+    try {
+      const slug = currentUser.name.toLowerCase().replace(/\s+/g, '-');
+      const newArtist = await databases.createDocument(
+        DB_ID,
+        ARTISTS_COLLECTION_ID,
+        ID.unique(),
+        {
+          name: currentUser.name,
+          slug: slug,
+          userId: currentUser.$id,
+          profession: '',
+          bio: '',
+          location: '',
+          languages: '',
+          genres: '',
+          instagram: '',
+          youtube: '',
+          photoFiled: null,
+          verified: false,
+          createdAt: new Date().toISOString()
+        }
+      );
+
+      currentArtist = newArtist;
+      artistId = newArtist.$id;
+      populateProfileForm();
+      document.getElementById('header-subtitle').textContent = `Welcome, ${currentUser.name}! Complete your profile to get started.`;
+    } catch (err) {
+      console.error(err);
+      showMessage('profile-message', 'Error creating profile', 'error');
+    }
+  }
+
+  // Populate Profile Form
+  function populateProfileForm() {
+    document.getElementById('profile-loading').style.display = 'none';
+    document.getElementById('profile-content').style.display = 'block';
+    
+    document.getElementById('profile-name').textContent = currentArtist.name;
+    document.getElementById('profile-slug').textContent = `@${currentArtist.slug}`;
+    document.getElementById('profile-profession').textContent = currentArtist.profession || 'Complete your profile';
+    
+    if (currentArtist.photoFiled) {
+      const photoUrl = storage.getFileView(BUCKET_ID, currentArtist.photoFiled);
+      document.getElementById('profile-photo').innerHTML = `<img src="${photoUrl}" alt="${currentArtist.name}">`;
+    }
+
+    document.getElementById('name').value = currentArtist.name;
+    document.getElementById('profession').value = currentArtist.profession || '';
+    document.getElementById('location').value = currentArtist.location || '';
+    document.getElementById('languages').value = currentArtist.languages || '';
+    document.getElementById('genres').value = currentArtist.genres || '';
+    document.getElementById('bio').value = currentArtist.bio || '';
+    document.getElementById('instagram').value = currentArtist.instagram || '';
+    document.getElementById('youtube').value = currentArtist.youtube || '';
+
+    document.getElementById('header-subtitle').textContent = `Welcome, ${currentUser.name}! Public profile: gorkhatv.site/pages/artist.html?id=${currentArtist.slug}`;
+  }
+
+  // Update Profile
+  window.updateProfile = async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('profile-message');
+    msg.innerHTML = '<div class="message loading">💾 Saving...</div>';
+
+    try {
+      await databases.updateDocument(DB_ID, ARTISTS_COLLECTION_ID, artistId, {
+        name: document.getElementById('name').value,
+        profession: document.getElementById('profession').value,
+        location: document.getElementById('location').value,
+        languages: document.getElementById('languages').value,
+        genres: document.getElementById('genres').value,
+        bio: document.getElementById('bio').value,
+        instagram: document.getElementById('instagram').value,
+        youtube: document.getElementById('youtube').value
+      });
+
+      msg.innerHTML = '<div class="message success">✓ Profile updated successfully!</div>';
+      populateProfileForm();
+    } catch (err) {
+      console.error(err);
+      msg.innerHTML = '<div class="message error">✗ Error updating profile</div>';
+    }
+  };
+
+  // Photo Upload
+  window.handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage('photo-upload-status', 'File too large (max 5MB)', 'error');
+      return;
+    }
+
+    const statusEl = document.getElementById('photo-upload-status');
+    statusEl.innerHTML = '<div class="message loading">📸 Uploading...</div>';
+
+    try {
+      // Delete old photo if exists
+      if (currentArtist.photoFiled) {
+        try {
+          await storage.deleteFile(BUCKET_ID, currentArtist.photoFiled);
+        } catch {}
+      }
+
+      // Upload new photo
+      const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), file);
+      await databases.updateDocument(DB_ID, ARTISTS_COLLECTION_ID, artistId, {
+        photoFiled: uploaded.$id
+      });
+
+      const photoUrl = storage.getFileView(BUCKET_ID, uploaded.$id);
+      currentArtist.photoFiled = uploaded.$id;
+      document.getElementById('profile-photo').innerHTML = `<img src="${photoUrl}" alt="${currentArtist.name}">`;
+      statusEl.innerHTML = '<div class="message success">✓ Photo uploaded!</div>';
+    } catch (err) {
+      console.error(err);
+      statusEl.innerHTML = '<div class="message error">✗ Upload failed</div>';
+    }
+  };
+
+  // Submit Video
+  window.submitVideo = async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('submit-message');
+    msg.innerHTML = '<div class="message loading">📹 Submitting...</div>';
+
+    try {
+      await databases.createDocument(DB_ID, COLLECTION_ID, ID.unique(), {
+        title: document.getElementById('video-title').value,
+        description: document.getElementById('video-description').value,
+        category: document.getElementById('video-category').value,
+        youtube_id: document.getElementById('video-youtube-id').value,
+        language: document.getElementById('video-language').value,
+        director: document.getElementById('video-director').value,
+        cast: document.getElementById('video-cast').value,
+        location: document.getElementById('video-location').value,
+        status: 'pending',
+        submittedBy: currentUser.$id,
+        submittedByName: currentUser.name,
+        createdAt: new Date().toISOString()
+      });
+
+      msg.innerHTML = '<div class="message success">✓ Video submitted! Our team will review and publish within 24-48 hours. <a href="https://wa.me/917557051046" target="_blank" style="color: inherit; text-decoration: underline;">Message us for faster approval</a></div>';
+      document.getElementById('submit-form').reset();
+      loadMyVideos();
+    } catch (err) {
+      console.error(err);
+      msg.innerHTML = '<div class="message error">✗ Error submitting video</div>';
+    }
+  };
+
+  // Load My Videos
+  async function loadMyVideos() {
+    const container = document.getElementById('videos-content');
+    
+    try {
+      const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+        Query.equal('submittedBy', currentUser.$id),
+        Query.limit(100)
+      ]);
+
+      if (!res.documents.length) {
+        container.innerHTML = '<div class="empty"><div class="empty-icon">🎬</div><h3>No videos yet</h3><p>Submit your first video to get started!</p></div>';
+        return;
+      }
+
+      let html = '<div class="videos-grid">';
+      res.documents.forEach(doc => {
+        const statusClass = doc.status === 'published' ? 'published' : 'pending';
+        html += `
+          <div class="video-card">
+            <div class="video-thumbnail">
+              <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="">
+            </div>
+            <div class="video-info">
+              <div class="video-title">${doc.title}</div>
+              <div class="video-meta">${doc.category}</div>
+              <span class="video-status ${statusClass}">${doc.status}</span>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<div class="message error">✗ Error loading videos</div>';
+    }
+  }
+
+  // Load Stats
+  async function loadStats() {
+    try {
+      const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+        Query.equal('submittedBy', currentUser.$id),
+        Query.equal('status', 'published')
+      ]);
+
+      const totalVideos = res.documents.length;
+      let totalViews = 0, totalLikes = 0;
+
+      res.documents.forEach(doc => {
+        totalViews += doc.views || 0;
+        totalLikes += doc.likes || 0;
+      });
+
+      // Load verified credits count
+      const claimsRes = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
+        Query.equal('userId', currentUser.$id),
+        Query.equal('status', 'approved')
+      ]);
+
+      document.getElementById('stat-views').textContent = totalViews.toLocaleString();
+      document.getElementById('stat-videos').textContent = totalVideos;
+      document.getElementById('stat-likes').textContent = totalLikes.toLocaleString();
+      document.getElementById('stat-verified').textContent = claimsRes.documents.length;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Load Credits to Claim
+  async function loadCreditsToClaimTab() {
+    const container = document.getElementById('credits-content');
+    const loading = document.getElementById('credits-loading');
+    loading.style.display = 'flex';
+
+    try {
+      // Get all published content
+      const contentRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+        Query.equal('status', 'published'),
+        Query.limit(100)
+      ]);
+
+      const userName = currentUser.name.toLowerCase().trim();
+      const claimable = [];
+
+      // Find content where user's name appears but not yet claimed
+      contentRes.documents.forEach(doc => {
+        const claimed = (doc.claimedBy || []).includes(currentUser.$id);
+        if (!claimed) {
+          const roles = [];
+          const dir = (doc.director || '').toLowerCase();
+          if (dir && dir.split(',').some(d => d.trim() === userName)) roles.push('Director');
+          if (doc.cast && doc.cast.toLowerCase().split(',').some(c => c.trim() === userName)) roles.push('Cast');
+          
+          if (roles.length) {
+            claimable.push({ ...doc, roles });
+          }
+        }
+      });
+
+      loading.style.display = 'none';
+
+      if (!claimable.length) {
+        container.innerHTML = '<div class="empty"><div class="empty-icon">⭐</div><h3>No credits to claim</h3><p>Once you appear in content on GorkhaTV, you can claim your credits here.</p></div>';
+        return;
+      }
+
+      let html = '<div class="videos-grid">';
+      claimable.forEach(doc => {
+        html += `
+          <div class="video-card" onclick="claimCredit('${doc.$id}', '${doc.roles[0]}', '${doc.title.replace(/'/g, "\\'")}')">
+            <div class="video-thumbnail">
+              <img src="https://img.youtube.com/vi/${doc.youtube_id}/default.jpg" alt="">
+            </div>
+            <div class="video-info">
+              <div class="video-title">${doc.title}</div>
+              <div class="video-meta">${doc.roles.join(' · ')}</div>
+              <button class="btn btn-primary" style="width: 100%; margin-top: 8px; padding: 6px; font-size: 12px;">Claim Now</button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (err) {
+      console.error(err);
+      loading.style.display = 'none';
+      container.innerHTML = '<div class="message error">✗ Error loading credits</div>';
+    }
+  }
+
+  // Claim Credit
+  window.claimCredit = async (contentId, role, title) => {
+    const msg = document.getElementById('credits-message');
+    msg.innerHTML = '<div class="message loading">⭐ Claiming credit...</div>';
+
+    try {
+      await databases.createDocument(DB_ID, CLAIMS_COLLECTION_ID, ID.unique(), {
+        userId: currentUser.$id,
+        contentId: contentId,
+        claimedRole: role,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+
+      msg.innerHTML = `<div class="message success">✓ Claimed as <strong>${role}</strong> for "${title}"! Our team will verify and the credit badge will appear on your profile.</div>`;
+      setTimeout(() => loadCreditsToClaimTab(), 1000);
+    } catch (err) {
+      console.error(err);
+      msg.innerHTML = '<div class="message error">✗ Error claiming credit</div>';
+    }
+  };
+
+  // Tab Switching
+  window.switchTab = (tabName) => {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+
+    if (tabName === 'videos') loadMyVideos();
+    if (tabName === 'credits') loadCreditsToClaimTab();
+  };
+
+  // Logout
+  window.logout = async () => {
+    await account.deleteSession('current');
+    window.location.href = '/';
+  };
+
+  // Helper
+  function showMessage(elementId, text, type) {
+    document.getElementById(elementId).innerHTML = `<div class="message ${type}">${text}</div>`;
+  }
+
+  // Init
+  checkAuth();
+</script>
+
+</body>
+</html>
