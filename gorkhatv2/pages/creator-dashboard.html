@@ -79,7 +79,6 @@
       color: var(--red);
     }
 
-    /* Main Layout */
     .dashboard-container {
       max-width: 1000px;
       margin: 0 auto;
@@ -103,7 +102,6 @@
       font-size: 14px;
     }
 
-    /* Tabs */
     .tabs {
       display: flex;
       gap: 8px;
@@ -135,7 +133,6 @@
       color: var(--text);
     }
 
-    /* Tab Content */
     .tab-content {
       display: none;
     }
@@ -144,7 +141,6 @@
       display: block;
     }
 
-    /* Forms */
     .form-group {
       margin-bottom: 24px;
     }
@@ -195,7 +191,6 @@
       }
     }
 
-    /* Buttons */
     .btn {
       padding: 12px 24px;
       border: none;
@@ -226,7 +221,6 @@
       border-color: var(--text);
     }
 
-    /* Profile Section */
     .profile-section {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -293,7 +287,6 @@
       margin-top: 8px;
     }
 
-    /* Videos Grid */
     .videos-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -364,7 +357,6 @@
       color: var(--red);
     }
 
-    /* Stats */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -392,7 +384,6 @@
       color: var(--muted);
     }
 
-    /* Photo Upload */
     .photo-upload {
       position: relative;
     }
@@ -421,7 +412,6 @@
       font-size: 13px;
     }
 
-    /* Messages */
     .message {
       padding: 12px 16px;
       border-radius: 4px;
@@ -447,7 +437,6 @@
       border: 1px solid rgba(200, 150, 42, 0.2);
     }
 
-    /* Loading Spinner */
     .spinner {
       width: 40px;
       height: 40px;
@@ -467,7 +456,6 @@
       padding: 40px;
     }
 
-    /* Empty State */
     .empty {
       text-align: center;
       padding: 60px 24px;
@@ -485,7 +473,6 @@
       color: var(--text);
     }
 
-    /* Responsive */
     @media (max-width: 600px) {
       .dashboard-container {
         padding: 16px;
@@ -753,7 +740,7 @@
 </div>
 
 <script type="module">
-  import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, BUCKET_ID, Query, ID } from '../js/appwrite.js';
+  import { databases, storage, account, DB_ID, COLLECTION_ID, ARTISTS_COLLECTION_ID, CLAIMS_COLLECTION_ID, LIKES_COLLECTION_ID, BUCKET_ID, Query, ID } from '../js/appwrite.js';
 
   let currentUser = null;
   let currentArtist = null;
@@ -786,7 +773,6 @@
         loadStats();
         loadCreditsToClaimTab();
       } else {
-        // First time - create artist profile
         createNewArtistProfile();
       }
     } catch (err) {
@@ -896,14 +882,12 @@
     statusEl.innerHTML = '<div class="message loading">📸 Uploading...</div>';
 
     try {
-      // Delete old photo if exists
       if (currentArtist.photoFiled) {
         try {
           await storage.deleteFile(BUCKET_ID, currentArtist.photoFiled);
         } catch {}
       }
 
-      // Upload new photo
       const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), file);
       await databases.updateDocument(DB_ID, ARTISTS_COLLECTION_ID, artistId, {
         photoFiled: uploaded.$id
@@ -989,21 +973,40 @@
     }
   }
 
-  // Load Stats
+  // Load Stats (WITH LIKES COLLECTION)
   async function loadStats() {
     try {
-      const res = await databases.listDocuments(DB_ID, COLLECTION_ID, [
+      const contentRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
         Query.equal('submittedBy', currentUser.$id),
         Query.equal('status', 'published')
       ]);
 
-      const totalVideos = res.documents.length;
-      let totalViews = 0, totalLikes = 0;
+      const totalVideos = contentRes.documents.length;
+      let totalViews = 0;
 
-      res.documents.forEach(doc => {
-        totalViews += doc.views || 0;
-        totalLikes += doc.likes || 0;
-      });
+      // Get all content IDs
+      const contentIds = contentRes.documents.map(doc => doc.$id);
+
+      // Count likes from likes collection
+      let totalLikes = 0;
+      if (contentIds.length > 0) {
+        try {
+          const likesRes = await databases.listDocuments(DB_ID, LIKES_COLLECTION_ID, [
+            Query.limit(1000)
+          ]);
+          
+          // Filter likes for this creator's content
+          totalLikes = likesRes.documents.filter(like => 
+            contentIds.includes(like.contentId)
+          ).length;
+        } catch (err) {
+          console.warn('Could not load likes:', err);
+          totalLikes = 0;
+        }
+      }
+
+      // Count views from content
+      totalViews = contentRes.documents.reduce((sum, doc) => sum + (doc.views || 0), 0);
 
       // Load verified credits count
       const claimsRes = await databases.listDocuments(DB_ID, CLAIMS_COLLECTION_ID, [
@@ -1027,7 +1030,6 @@
     loading.style.display = 'flex';
 
     try {
-      // Get all published content
       const contentRes = await databases.listDocuments(DB_ID, COLLECTION_ID, [
         Query.equal('status', 'published'),
         Query.limit(100)
@@ -1036,7 +1038,6 @@
       const userName = currentUser.name.toLowerCase().trim();
       const claimable = [];
 
-      // Find content where user's name appears but not yet claimed
       contentRes.documents.forEach(doc => {
         const claimed = (doc.claimedBy || []).includes(currentUser.$id);
         if (!claimed) {
@@ -1090,7 +1091,10 @@
     try {
       await databases.createDocument(DB_ID, CLAIMS_COLLECTION_ID, ID.unique(), {
         userId: currentUser.$id,
+        userName: currentUser.name,
+        userEmail: currentUser.email,
         contentId: contentId,
+        contentTitle: title,
         claimedRole: role,
         status: 'pending',
         createdAt: new Date().toISOString()
