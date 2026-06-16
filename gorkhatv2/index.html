@@ -30,14 +30,14 @@
       transform: translateY(-1px) !important;
     }
 
-    /* Creator Banner - UPDATED */
+    /* Creator Banner - ULTRA COMPACT (2 LINES ONLY) */
     .creator-banner {
       background: linear-gradient(135deg, rgba(229,9,20,0.12) 0%, rgba(200,150,42,0.08) 100%);
       border: 1px solid rgba(229,9,20,0.25);
       border-radius: 8px;
-      padding: 40px;
+      padding: 16px 24px;
       text-align: center;
-      margin: 48px 0;
+      margin: 24px 0;
       max-width: 1400px;
       margin-left: auto;
       margin-right: auto;
@@ -45,100 +45,37 @@
     }
 
     .creator-banner-title {
-      font-size: 28px;
+      font-size: 18px;
       font-family: 'Teko', sans-serif;
-      margin: 0 0 12px 0;
+      margin: 0 0 6px 0;
       color: #f0f0f0;
       font-weight: 700;
     }
 
     .creator-banner-subtitle {
       color: #999;
-      font-size: 15px;
-      margin: 0 0 32px 0;
-    }
-
-    /* Benefits Grid */
-    .creator-benefits {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-
-    .benefit-card {
-      background: rgba(26, 26, 26, 0.6);
-      border: 1px solid rgba(230, 9, 20, 0.2);
-      border-radius: 6px;
-      padding: 16px;
-      text-align: center;
-    }
-
-    .benefit-icon {
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-
-    .benefit-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #f0f0f0;
-    }
-
-    .benefit-desc {
       font-size: 12px;
-      color: #999;
-      margin-top: 4px;
-    }
-
-    /* Timeline */
-    .creator-timeline {
-      background: rgba(26, 26, 26, 0.8);
-      border: 1px solid rgba(200, 150, 42, 0.25);
-      border-radius: 6px;
-      padding: 16px;
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .timeline-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: #c8962a;
-      text-transform: uppercase;
-      margin-bottom: 12px;
-    }
-
-    .timeline-text {
-      font-size: 13px;
-      color: #f0f0f0;
-      line-height: 1.8;
-    }
-
-    .timeline-arrow {
-      margin: 0 12px;
-      color: #c8962a;
-      font-weight: bold;
+      margin: 0 0 16px 0;
+      line-height: 1.3;
     }
 
     /* Buttons */
     .creator-buttons {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       justify-content: center;
       flex-wrap: wrap;
-      margin-bottom: 16px;
     }
 
     .creator-btn {
       background: var(--red);
       color: white;
-      padding: 12px 32px;
+      padding: 8px 20px;
       border-radius: 4px;
       border: none;
       cursor: pointer;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 12px;
       text-decoration: none;
       display: inline-block;
       transition: all 0.2s;
@@ -147,7 +84,7 @@
 
     .creator-btn:hover {
       opacity: 0.85;
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
 
     .creator-btn-secondary {
@@ -161,52 +98,36 @@
       background: rgba(240, 240, 240, 0.05);
     }
 
+    /* Hide elements not needed */
+    .creator-benefits {
+      display: none;
+    }
+
     .creator-footer-text {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 11px;
-      color: #666;
+      display: none;
     }
 
     @media (max-width: 700px) {
       .creator-banner {
-        padding: 24px;
-        margin: 32px 16px;
+        padding: 12px 16px;
+        margin: 16px 12px;
       }
 
       .creator-banner-title {
-        font-size: 22px;
+        font-size: 16px;
+        margin-bottom: 4px;
       }
 
       .creator-banner-subtitle {
-        font-size: 13px;
-      }
-
-      .creator-benefits {
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
-        margin-bottom: 24px;
-      }
-
-      .benefit-card {
-        padding: 12px;
-      }
-
-      .benefit-icon {
-        font-size: 20px;
-      }
-
-      .benefit-title {
-        font-size: 12px;
-      }
-
-      .timeline-text {
-        font-size: 12px;
+        font-size: 11px;
+        margin-bottom: 12px;
       }
 
       .creator-btn {
-        padding: 10px 24px;
-        font-size: 13px;
+        padding: 6px 14px;
+        font-size: 11px;
+        flex: 1;
+        min-width: 90px;
       }
     }
   </style>
@@ -270,44 +191,11 @@
 <!-- CATEGORY PILLS -->
 <div class="cats-bar" id="cats-bar"></div>
 
-<!-- CREATOR CTA BANNER -->
+<!-- COMPACT CREATOR CTA BANNER -->
 <div style="max-width:1400px;margin:0 auto;padding:0 24px;">
   <div class="creator-banner">
     <h2 class="creator-banner-title">🎬 Are You a Gorkha Creator?</h2>
     <p class="creator-banner-subtitle">Submit your content. Get discovered by thousands. Build your verified portfolio.</p>
-
-    <!-- Three Benefits Grid -->
-    <div class="creator-benefits">
-      <div class="benefit-card">
-        <div class="benefit-icon">📺</div>
-        <div class="benefit-title">50K+ Viewers</div>
-        <div class="benefit-desc">Get featured to thousands</div>
-      </div>
-
-      <div class="benefit-card">
-        <div class="benefit-icon">⭐</div>
-        <div class="benefit-title">Verified Portfolio</div>
-        <div class="benefit-desc">Professional creator profile</div>
-      </div>
-
-      <div class="benefit-card">
-        <div class="benefit-icon">💰</div>
-        <div class="benefit-title">Payouts Coming</div>
-        <div class="benefit-desc">Revenue-based in 3-4 months</div>
-      </div>
-    </div>
-
-    <!-- Timeline Section -->
-    <div class="creator-timeline">
-      <div class="timeline-label">Creator Payment Timeline</div>
-      <div class="timeline-text">
-        <strong>NOW:</strong> Submit content & get exposure
-        <span class="timeline-arrow">→</span>
-        <strong>Month 2-3:</strong> Help us grow
-        <span class="timeline-arrow">→</span>
-        <strong>Month 4+:</strong> 💰 Payouts live
-      </div>
-    </div>
 
     <!-- Buttons -->
     <div class="creator-buttons">
@@ -318,10 +206,6 @@
       <a href="https://wa.me/917557051046" target="_blank" class="creator-btn creator-btn-secondary">
         💬 Ask Questions
       </a>
-    </div>
-
-    <div class="creator-footer-text">
-      Early creators who help us grow get priority for highest payouts
     </div>
   </div>
 </div>
@@ -347,7 +231,7 @@
   </div>
 </div>
 
-<!-- TOP 10 IN DARJEELING (ranked by views, auto-hides when empty) -->
+<!-- TOP 10 IN DARJEELING -->
 <div class="row">
   <div class="row-header">
     <h2 class="row-title">🏔 Top 10 in Darjeeling</h2>
@@ -390,6 +274,56 @@
       <div class="modal-meta" id="modal-meta"></div>
       <p class="modal-desc" id="modal-desc"></p>
       <div id="modal-claim"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BENEFITS & TIMELINE SECTION -->
+<div style="background: linear-gradient(135deg, rgba(229,9,20,0.12) 0%, rgba(200,150,42,0.08) 100%); border-top: 1px solid rgba(229,9,20,0.25); border-bottom: 1px solid rgba(229,9,20,0.25); padding: 40px 24px;">
+  <div style="max-width:1400px; margin: 0 auto;">
+    <h3 style="text-align: center; font-size: 24px; font-family: 'Teko', sans-serif; color: #f0f0f0; margin-bottom: 32px;">Why Join GorkhaTV Creators?</h3>
+    
+    <!-- Benefits Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px;">
+      <div style="background: rgba(26, 26, 26, 0.6); border: 1px solid rgba(230, 9, 20, 0.2); border-radius: 6px; padding: 20px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 12px;">📺</div>
+        <div style="font-size: 14px; font-weight: 700; color: #f0f0f0; margin-bottom: 6px;">50K+ Viewers</div>
+        <div style="font-size: 12px; color: #999;">Get featured to thousands of users</div>
+      </div>
+
+      <div style="background: rgba(26, 26, 26, 0.6); border: 1px solid rgba(230, 9, 20, 0.2); border-radius: 6px; padding: 20px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 12px;">⭐</div>
+        <div style="font-size: 14px; font-weight: 700; color: #f0f0f0; margin-bottom: 6px;">Verified Portfolio</div>
+        <div style="font-size: 12px; color: #999;">Professional creator profile & credibility</div>
+      </div>
+
+      <div style="background: rgba(26, 26, 26, 0.6); border: 1px solid rgba(230, 9, 20, 0.2); border-radius: 6px; padding: 20px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 12px;">💰</div>
+        <div style="font-size: 14px; font-weight: 700; color: #f0f0f0; margin-bottom: 6px;">Monthly Payouts</div>
+        <div style="font-size: 12px; color: #999;">Revenue-based income starting Month 4+</div>
+      </div>
+
+      <div style="background: rgba(26, 26, 26, 0.6); border: 1px solid rgba(230, 9, 20, 0.2); border-radius: 6px; padding: 20px; text-align: center;">
+        <div style="font-size: 28px; margin-bottom: 12px;">📢</div>
+        <div style="font-size: 14px; font-weight: 700; color: #f0f0f0; margin-bottom: 6px;">Promotion</div>
+        <div style="font-size: 12px; color: #999;">Featured on home & category pages</div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div style="background: rgba(26, 26, 26, 0.8); border: 1px solid rgba(200, 150, 42, 0.25); border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 12px; font-weight: 700; color: #c8962a; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 1px;">Creator Payment Timeline</div>
+      <div style="font-size: 14px; color: #f0f0f0; line-height: 2;">
+        <strong>NOW:</strong> Submit content & get exposure
+        <span style="margin: 0 16px; color: #c8962a; font-weight: bold;">→</span>
+        <strong>Month 2-3:</strong> Help us grow
+        <span style="margin: 0 16px; color: #c8962a; font-weight: bold;">→</span>
+        <strong>Month 4+:</strong> 💰 Monthly Payouts Live
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <p style="font-size: 12px; color: #999;">Early creators who help us grow get priority for the highest payouts</p>
     </div>
   </div>
 </div>
