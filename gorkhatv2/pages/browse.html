@@ -29,13 +29,55 @@
     .ep-info { min-width:0; }
     .ep-title { font-size:14px; font-weight:600; margin-bottom:3px; }
     .ep-sub { font-size:12px; color:var(--muted); }
-    @media(max-width:600px){ .browse-header,.browse-grid{padding-left:16px;padding-right:16px;} }
+
+    /* Creator Nav Button - NEW */
+    .nav-creator-link {
+      background: var(--red) !important;
+      color: white !important;
+      padding: 8px 14px !important;
+      border-radius: 4px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      transition: all 0.2s !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+
+    .nav-creator-link:hover {
+      opacity: 0.85 !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4) !important;
+    }
+
+    @media(max-width:768px) {
+      .nav-creator-link {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+      }
+    }
+
+    @media(max-width:600px){ 
+      .browse-header,.browse-grid{padding-left:16px;padding-right:16px;}
+      
+      /* Hide nav links on mobile, show search instead */
+      .nav-links {
+        display: none;
+      }
+      
+      .search-wrap {
+        flex: 1;
+        min-width: 0;
+        margin-left: auto;
+      }
+    }
   </style>
 </head>
 <body>
 
 <nav>
   <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
     <li><a href="browse.html?cat=movie">Movies</a></li>
@@ -46,7 +88,18 @@
     <li><a href="browse.html?cat=standup">Standup</a></li>
     <li><a href="browse.html?cat=podcast">Podcasts</a></li>
     <li><a href="browse.html?cat=prank">Pranks</a></li>
+    <li><a href="pages/artists.html">Artists</a></li>
+    <!-- Creator Dashboard Link -->
+    <li><a href="pages/creator-dashboard.html" class="nav-creator-link">🎬 Creator</a></li>
   </ul>
+
+  <div class="search-wrap" style="margin-left:auto;">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input-browse').value.trim(); window.location.href = v ? 'browse.html?q='+encodeURIComponent(v) : 'browse.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input-browse" placeholder="Search titles, cast..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'browse.html?q='+encodeURIComponent(v):'browse.html';}">
+    </div>
+  </div>
+
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
@@ -88,6 +141,7 @@ import { databases, account, DB_ID, COLLECTION_ID, LIKES_COLLECTION_ID, ID, Quer
 const params = new URLSearchParams(window.location.search);
 const cat = params.get('cat');
 const featured = params.get('featured');
+const searchQuery = params.get('q');
 const labels = { movie:'Movies', webseries:'Web Series', music:'Music Videos', documentary:'Documentaries', vlog:'Vlogs', standup:'Standup Comedy', podcast:'Podcasts', prank:'Pranks' };
 
 let currentUser = null;
@@ -116,11 +170,19 @@ if (currentUser) {
 }
 
 // Title
-document.getElementById('browse-title').textContent = cat ? labels[cat] || cat : featured ? 'Featured' : 'All Content';
-document.getElementById('browse-sub').textContent = cat ? `All ${labels[cat]||cat} on GorkhaTV` : 'Explore everything on GorkhaTV';
+if (searchQuery) {
+  document.getElementById('browse-title').textContent = `Search: "${searchQuery}"`;
+  document.getElementById('browse-sub').textContent = 'Search results on GorkhaTV';
+} else {
+  document.getElementById('browse-title').textContent = cat ? labels[cat] || cat : featured ? 'Featured' : 'All Content';
+  document.getElementById('browse-sub').textContent = cat ? `All ${labels[cat]||cat} on GorkhaTV` : 'Explore everything on GorkhaTV';
+}
 
 // Active nav
-document.querySelectorAll('.nav-links a').forEach(a => { if (cat && a.href.includes(`cat=${cat}`)) a.classList.add('active'); });
+document.querySelectorAll('.nav-links a').forEach(a => { 
+  if (cat && a.href.includes(`cat=${cat}`)) a.classList.add('active');
+  if (!cat && !featured && !searchQuery && a.href === '/') a.classList.add('active');
+});
 
 // Category pills
 const cats = ['all','movie','webseries','music','documentary','vlog','standup','podcast','prank'];
@@ -137,6 +199,10 @@ async function load() {
   const queries = [Query.equal('status','published'), Query.orderDesc('publishedAt'), Query.limit(100)];
   if (cat) queries.push(Query.equal('category', cat));
   if (featured) queries.push(Query.equal('featured', true));
+  if (searchQuery) {
+    // Search in title and description
+    queries.push(Query.search('title', searchQuery));
+  }
 
   try {
     const res = await databases.listDocuments(DB_ID, COLLECTION_ID, queries);
