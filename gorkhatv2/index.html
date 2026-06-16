@@ -13,6 +13,83 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GorkhaTV">
+  <style>
+    /* Creator Dashboard Nav Link */
+    .nav-creator-link {
+      background: var(--red) !important;
+      color: white !important;
+      padding: 8px 14px !important;
+      border-radius: 4px !important;
+      font-weight: 700 !important;
+      font-size: 13px !important;
+      transition: all 0.2s !important;
+    }
+
+    .nav-creator-link:hover {
+      opacity: 0.85 !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* Creator Banner */
+    .creator-banner {
+      background: linear-gradient(135deg, rgba(229,9,20,0.15) 0%, rgba(200,150,42,0.1) 100%);
+      border: 1px solid rgba(229,9,20,0.3);
+      border-radius: 8px;
+      padding: 32px;
+      text-align: center;
+      margin: 48px 0;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 700px) {
+      .creator-banner {
+        padding: 20px;
+        margin: 32px 16px;
+      }
+
+      .creator-banner h3 {
+        font-size: 20px !important;
+      }
+
+      .creator-banner p {
+        font-size: 13px !important;
+      }
+    }
+
+    .creator-banner h3 {
+      font-size: 24px;
+      font-family: 'Teko', sans-serif;
+      margin-bottom: 10px;
+    }
+
+    .creator-banner p {
+      color: var(--muted);
+      margin-bottom: 20px;
+      font-size: 15px;
+    }
+
+    .creator-banner-btn {
+      background: var(--red);
+      color: white;
+      padding: 12px 32px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+
+    .creator-banner-btn:hover {
+      opacity: 0.85;
+      transform: translateY(-2px);
+    }
+  </style>
 </head>
 <body>
 
@@ -31,6 +108,8 @@
     <li><a href="pages/browse.html?cat=podcast">Podcasts</a></li>
     <li><a href="pages/browse.html?cat=prank">Pranks</a></li>
     <li><a href="pages/artists.html">Artists</a></li>
+    <!-- Creator Dashboard Link -->
+    <li><a href="pages/creator-dashboard.html" class="nav-creator-link">🎬 Creator</a></li>
   </ul>
 
   <div class="search-wrap" style="margin-left:auto;">
@@ -70,6 +149,13 @@
 
 <!-- CATEGORY PILLS -->
 <div class="cats-bar" id="cats-bar"></div>
+
+<!-- CREATOR CTA BANNER -->
+<div class="creator-banner">
+  <h3>🎬 Are You a Creator?</h3>
+  <p>Submit your videos, build your portfolio, and get discovered by thousands</p>
+  <a href="pages/creator-dashboard.html" class="creator-banner-btn">🚀 Creator Dashboard</a>
+</div>
 
 <!-- FEATURED ROW -->
 <div class="row">
@@ -154,6 +240,7 @@
       </a>
       <p>The home of Gorkha entertainment. Watch movies, web series, music videos, documentaries, vlogs, standup comedy, podcasts and pranks from the hills of Darjeeling and beyond.</p>
     </div>
+    
     <div class="footer-col">
       <h4>Browse</h4>
       <ul>
@@ -168,10 +255,21 @@
         <li><a href="pages/artists.html">Artists</a></li>
       </ul>
     </div>
+
     <div class="footer-col">
-      <h4>Submit & Verify</h4>
+      <h4>For Creators</h4>
+      <ul>
+        <li><a href="pages/creator-dashboard.html">📊 Creator Dashboard</a></li>
+        <li><a href="pages/creator-dashboard.html?tab=submit">📹 Submit Video</a></li>
+        <li><a href="pages/creator-dashboard.html?tab=credits">⭐ Claim Credits</a></li>
+        <li><a href="https://wa.me/917557051046" target="_blank">💬 Contact Us</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Get Featured</h4>
       <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px;">
-        Want your video featured, or to verify your credits as an artist? Reach out:
+        Submit your content or claim your credits:
       </p>
       <ul>
         <li><a href="mailto:Nowanad@gmail.com">✉️ Nowanad@gmail.com</a></li>
@@ -181,6 +279,7 @@
       </ul>
     </div>
   </div>
+
   <div class="footer-bottom">
     <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
     <span>Made with ❤️ for the Gorkha community</span>
