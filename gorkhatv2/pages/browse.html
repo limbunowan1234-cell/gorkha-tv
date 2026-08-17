@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse | GorkhaTV</title>
+  <meta name="description" content="Browse Darjeeling-region videos by category and location on GorkhaTV.">
+  <link rel="canonical" href="https://gorkhatv.site/pages/browse.html">
+  <meta property="og:title" content="Browse | GorkhaTV">
+  <meta property="og:description" content="Browse Darjeeling-region videos by category and location on GorkhaTV.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .browse-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
+    .browse-title { font-family: 'Teko', sans-serif; font-size: 28px; font-weight: 600; margin-bottom: 16px; }
+    .browse-toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .browse-toolbar select {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 14px; border-radius: 4px; font-size: 13px; font-family: 'Inter', sans-serif;
+    }
+    .browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; }
+    .browse-pagination { margin-top: 24px; text-align: center; color: var(--muted); font-size: 13px; display: flex; gap: 14px; justify-content: center; align-items: center; }
+    .browse-pagination button {
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: 'Inter', sans-serif;
+    }
+    .browse-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    @media (max-width: 900px) { .browse-wrap { padding: 16px 20px 40px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html" class="active">Browse</a></li>
+  </ul>
+  <div class="search-wrap" style="margin-left:auto;">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input').value.trim(); window.location.href = v ? 'search.html?q='+encodeURIComponent(v) : 'search.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search videos, creators..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'search.html?q='+encodeURIComponent(v):'search.html';}">
+    </div>
+  </div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="browse-wrap">
+  <h1 class="browse-title" id="browse-title">Browse</h1>
+  <div class="browse-toolbar">
+    <select id="category-select"><option value="">All categories</option></select>
+    <select id="location-select"><option value="">All locations</option></select>
+    <select id="sort-select">
+      <option value="latest">Latest</option>
+      <option value="trending">Trending</option>
+      <option value="popular">Most viewed</option>
+    </select>
+  </div>
+  <div class="browse-grid" id="browse-grid"><div class="loading"><div class="spinner"></div></div></div>
+  <div class="browse-pagination" id="browse-pagination"></div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="../js/browse.js"></script>
+</body>
+</html>

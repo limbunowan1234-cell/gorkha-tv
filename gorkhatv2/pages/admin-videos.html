@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Videos — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html" class="active">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Videos</h1>
+
+    <div class="admin-toolbar">
+      <input type="text" id="search-input" placeholder="Search title or channel…">
+      <select id="category-filter"><option value="">All categories</option></select>
+      <button class="btn btn-secondary btn-sm" id="toggle-add-form">+ Add Video by URL</button>
+      <button class="btn btn-secondary btn-sm" id="sync-now-btn">🔄 Sync Now</button>
+      <span class="text-muted" id="sync-status"></span>
+    </div>
+
+    <div class="admin-form-card" id="add-form-card">
+      <h3>Add Video by URL</h3>
+      <p class="text-muted" style="margin-bottom:14px;">Bypasses relevance scoring and publishes immediately — use for a video you've already vetted by hand.</p>
+      <form id="add-video-form">
+        <div class="field">
+          <label for="add-video-url">YouTube URL or Video ID</label>
+          <input type="text" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="add-video-category">Category</label>
+            <select id="add-video-category"><option value="">— none —</option></select>
+          </div>
+          <div class="field">
+            <label for="add-video-location">Location</label>
+            <select id="add-video-location"><option value="">— none —</option></select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add &amp; Publish</button>
+        <div class="field-error" id="add-video-error"></div>
+      </form>
+    </div>
+
+    <div class="admin-tabs" id="status-tabs">
+      <div class="admin-tab" data-status="">All</div>
+      <div class="admin-tab" data-status="pending_review">Pending Review</div>
+      <div class="admin-tab" data-status="published">Published</div>
+      <div class="admin-tab" data-status="rejected">Rejected</div>
+      <div class="admin-tab" data-status="removed">Removed</div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Video</th><th>Channel</th><th>Category</th><th>Location</th><th>Score</th><th>Status</th><th>Published</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="videos-tbody">
+          <tr><td colspan="8" class="admin-loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="admin-pagination" id="pagination"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
+  const LIMIT = 25;
+
+  let state = {
+    status: new URLSearchParams(location.search).get('status') || '',
+    category: '',
+    q: '',
+    page: 1,
+  };
+
+  function statusBadge(status) {
+    return `<span class="badge badge-${status}">${status.replace('_', ' ')}</span>`;
+  }
+
+  function renderRow(v) {
+    const thumb = v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/default.jpg`;
+    return `
+      <tr data-id="${v.id}">
+        <td>
+          <div class="row-with-thumb">
+            <div class="cell-thumb"><img src="${escapeHtml(thumb)}" loading="lazy" alt=""></div>
+            <div class="cell-title" title="${escapeHtml(v.title)}">${escapeHtml(v.title)}</div>
+          </div>
+        </td>
+        <td>${escapeHtml(v.channel_name || '')}</td>
+        <td>${escapeHtml(v.category || '—')}</td>
+        <td>${escapeHtml(v.location || '—')}</td>
+        <td>${v.relevance_score ?? '—'}</td>
+        <td>${statusBadge(v.status)}${v.featured ? ' <span class="badge badge-featured">Featured</span>' : ''}</td>
+        <td>${v.published_at ? new Date(v.published_at).toLocaleDateString() : '—'}</td>
+        <td>
+          <div class="row-actions">
+            ${v.status !== 'published' ? `<button class="btn btn-success btn-sm" data-action="approve">Approve</button>` : ''}
+            ${v.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" data-action="reject">Reject</button>` : ''}
+            <button class="btn btn-secondary btn-sm" data-action="feature">${v.featured ? 'Unfeature' : 'Feature'}</button>
+            <button class="btn btn-secondary btn-sm" data-action="trending">${v.trending ? 'Untrend' : 'Trend'}</button>
+            <button class="btn btn-danger btn-sm" data-action="delete">Remove</button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  async function loadVideos() {
+    const tbody = document.getElementById('videos-tbody');
+    tbody.innerHTML = `<tr><td colspan="8" class="admin-loading">Loading…</td></tr>`;
+    try {
+      const params = new URLSearchParams();
+      if (state.status) params.set('status', state.status);
+      if (state.category) params.set('category', state.category);
+      if (state.q) params.set('q', state.q);
+      params.set('page', state.page);
+      params.set('limit', LIMIT);
+
+      const data = await adminFetch(`/videos?${params.toString()}`);
+      if (!data.videos.length) {
+        tbody.innerHTML = `<tr><td colspan="8" class="admin-empty">No videos match this filter.</td></tr>`;
+      } else {
+        tbody.innerHTML = data.videos.map(renderRow).join('');
+      }
+
+      const totalPages = Math.max(1, Math.ceil(data.total / LIMIT));
+      document.getElementById('pagination').innerHTML =
+        totalPages > 1 ? `Page ${state.page} of ${totalPages} (${data.total} total)` : `${data.total} video${data.total === 1 ? '' : 's'}`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" class="admin-empty">Couldn't load videos: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function handleRowAction(id, action) {
+    try {
+      if (action === 'approve') await adminFetch(`/videos/${id}/approve`, { method: 'POST' });
+      else if (action === 'reject') await adminFetch(`/videos/${id}/reject`, { method: 'POST' });
+      else if (action === 'delete') {
+        if (!confirm('Remove this video from the site? It stays in the database but stops being shown.')) return;
+        await adminFetch(`/videos/${id}`, { method: 'DELETE' });
+      } else if (action === 'feature' || action === 'trending') {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        const isOn = row.querySelector(`[data-action="${action}"]`).textContent.startsWith('Un');
+        const field = action === 'feature' ? 'featured' : 'trending';
+        await adminFetch(`/videos/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: !isOn }) });
+      }
+      toast('Updated.');
+      loadVideos();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  async function populateFilterOptions() {
+    try {
+      const { categories } = await adminFetch('/categories');
+      const catOptions = categories.filter((c) => c.active).map((c) => `<option value="${c.slug}">${escapeHtml(c.label)}</option>`).join('');
+      document.getElementById('category-filter').insertAdjacentHTML('beforeend', catOptions);
+      document.getElementById('add-video-category').insertAdjacentHTML('beforeend', catOptions);
+      const locOptions = LOCATIONS.map((l) => `<option value="${l}">${l}</option>`).join('');
+      document.getElementById('add-video-location').insertAdjacentHTML('beforeend', locOptions);
+    } catch {
+      /* filters are optional — page still works without them */
+    }
+  }
+
+  function setupInteractions() {
+    document.getElementById('status-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.admin-tab');
+      if (!tab) return;
+      document.querySelectorAll('.admin-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.status = tab.dataset.status;
+      state.page = 1;
+      loadVideos();
+    });
+    const activeTab = document.querySelector(`.admin-tab[data-status="${state.status}"]`);
+    if (activeTab) activeTab.classList.add('active');
+    else document.querySelector('.admin-tab[data-status=""]').classList.add('active');
+
+    document.getElementById('category-filter').addEventListener('change', (e) => {
+      state.category = e.target.value;
+      state.page = 1;
+      loadVideos();
+    });
+
+    let searchTimer;
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        state.q = e.target.value.trim();
+        state.page = 1;
+        loadVideos();
+      }, 350);
+    });
+
+    document.getElementById('videos-tbody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.closest('tr').dataset.id;
+      handleRowAction(id, btn.dataset.action);
+    });
+
+    document.getElementById('toggle-add-form').addEventListener('click', () => {
+      document.getElementById('add-form-card').classList.toggle('open');
+    });
+
+    document.getElementById('add-video-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('add-video-error');
+      errEl.textContent = '';
+      const videoUrlOrId = document.getElementById('add-video-url').value.trim();
+      const category = document.getElementById('add-video-category').value || undefined;
+      const location = document.getElementById('add-video-location').value || undefined;
+      try {
+        await adminFetch('/videos', { method: 'POST', body: JSON.stringify({ videoUrlOrId, category, location }) });
+        toast('Video added and published.');
+        e.target.reset();
+        document.getElementById('add-form-card').classList.remove('open');
+        loadVideos();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    });
+
+    document.getElementById('sync-now-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('sync-now-btn');
+      const statusEl = document.getElementById('sync-status');
+      btn.disabled = true;
+      statusEl.textContent = 'Syncing… this can take a moment.';
+      try {
+        const result = await adminFetch('/sync/run', { method: 'POST', body: JSON.stringify({ type: 'channel_poll' }) });
+        statusEl.textContent = `Done: ${result.stats.channelsChecked} channels checked, ${result.stats.videosFound} videos found (${result.stats.videosPublished} published, ${result.stats.videosQueuedReview} queued).`;
+        loadVideos();
+      } catch (err) {
+        statusEl.textContent = `Sync failed: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
+  async function init() {
+    setupInteractions();
+    await populateFilterOptions();
+    await loadVideos();
+  }
+
+  initAdminPage(init);
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Watch — GorkhaTV</title>
+  <meta name="description" content="Watch on GorkhaTV — a Darjeeling-region YouTube discovery platform.">
+  <link rel="icon" type="image/png" href="/logo-circle.png">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
+
+  <style>
+    .watch-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
+    .watch-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start; }
+    .watch-player { aspect-ratio: 16/9; background: #000; border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
+    .watch-player iframe { width: 100%; height: 100%; border: none; }
+    .watch-title { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 600; margin-bottom: 10px; line-height: 1.1; }
+    .watch-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+    .watch-meta .dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
+    .watch-channel { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .watch-channel img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--surface2); }
+    .watch-channel-name { font-weight: 600; font-size: 14px; }
+    .watch-channel-sub { font-size: 12px; color: var(--muted); }
+    .watch-actions { margin-left: auto; display: flex; gap: 10px; }
+    .btn-yt { background: var(--red); color: #fff; border: none; padding: 9px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .watch-desc { font-size: 14px; color: rgba(240,240,240,0.75); line-height: 1.75; white-space: pre-wrap; }
+    .watch-side-title { font-family: 'Teko', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 14px; }
+    .related-list { display: flex; flex-direction: column; gap: 10px; }
+    .related-item { display: flex; gap: 10px; cursor: pointer; padding: 6px; border-radius: 6px; transition: background 0.15s; }
+    .related-item:hover { background: var(--surface2); }
+    .related-thumb { width: 140px; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--surface2); }
+    .related-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .related-title { font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .related-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    @media (max-width: 900px) {
+      .watch-wrap { padding: 16px 20px 40px; }
+      .watch-grid { grid-template-columns: 1fr; }
+      .watch-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="/logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/pages/browse.html">Browse</a></li>
+  </ul>
+  <div class="search-wrap" style="margin-left:auto;">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input').value.trim(); window.location.href = v ? '/pages/search.html?q='+encodeURIComponent(v) : '/pages/search.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search videos, creators..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'/pages/search.html?q='+encodeURIComponent(v):'/pages/search.html';}">
+    </div>
+  </div>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="watch-wrap">
+  <div class="watch-grid">
+    <div>
+      <div class="watch-player" id="watch-player"></div>
+      <h1 class="watch-title" id="watch-title">Loading…</h1>
+      <div class="watch-meta" id="watch-meta"></div>
+
+      <div class="watch-channel" id="watch-channel" style="display:none;">
+        <img id="watch-channel-img" src="" alt="">
+        <div>
+          <div class="watch-channel-name" id="watch-channel-name"></div>
+          <div class="watch-channel-sub" id="watch-channel-sub"></div>
+        </div>
+        <div class="watch-actions">
+          <button class="modal-fav-btn" id="watch-fav-btn">+ My List</button>
+          <a class="btn-yt" id="watch-yt-link" href="#" target="_blank" rel="noopener">▶ Watch on YouTube</a>
+        </div>
+      </div>
+
+      <p class="watch-desc" id="watch-desc"></p>
+    </div>
+
+    <div>
+      <div class="watch-side-title">More like this</div>
+      <div class="related-list" id="related-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="/js/watch.js"></script>
+</body>
+</html>

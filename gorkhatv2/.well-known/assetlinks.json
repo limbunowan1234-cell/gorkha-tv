@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "site.gorkhatv.twa",
+        "sha256_cert_fingerprints": ["8A:E6:E1:D9:99:BB:B6:6B:97:CB:7D:7C:2D:EF:8A:0E:EB:95:E4:6F:5E:59:37:5F:34:CD:9C:1B:68:3F:07:63"]
+      }
+    }]

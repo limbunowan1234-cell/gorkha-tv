@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Favourites | GorkhaTV</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .fav-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
+    .fav-title { font-family: 'Teko', sans-serif; font-size: 28px; font-weight: 600; margin-bottom: 20px; }
+    .fav-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; }
+    @media (max-width: 900px) { .fav-wrap { padding: 16px 20px 40px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="fav-wrap">
+  <h1 class="fav-title">🔖 My Favourites</h1>
+  <div class="fav-grid" id="fav-grid"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="../js/my-favourites.js"></script>
+</body>
+</html>

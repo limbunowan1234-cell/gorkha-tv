@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Creators — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html" class="active">Creators</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Creators / Channels</h1>
+
+    <div class="admin-toolbar">
+      <button class="btn btn-secondary btn-sm" id="toggle-add-form">+ Add Channel</button>
+    </div>
+
+    <div class="admin-form-card" id="add-form-card">
+      <h3>Add Channel</h3>
+      <p class="text-muted" style="margin-bottom:14px;">Resolves the channel on YouTube and approves it for automatic monitoring immediately.</p>
+      <form id="add-channel-form">
+        <div class="field">
+          <label for="add-channel-url">Channel URL, @handle, or ID</label>
+          <input type="text" id="add-channel-url" placeholder="https://www.youtube.com/@handle" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="add-channel-category">Category</label>
+            <select id="add-channel-category"><option value="">— none —</option></select>
+          </div>
+          <div class="field">
+            <label for="add-channel-location">Location</label>
+            <select id="add-channel-location"><option value="">— none —</option></select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add &amp; Approve</button>
+        <div class="field-error" id="add-channel-error"></div>
+      </form>
+    </div>
+
+    <div class="admin-tabs" id="status-tabs">
+      <div class="admin-tab" data-status="">All</div>
+      <div class="admin-tab" data-status="pending">Pending</div>
+      <div class="admin-tab" data-status="approved">Approved</div>
+      <div class="admin-tab" data-status="rejected">Rejected</div>
+      <div class="admin-tab" data-status="suspended">Suspended</div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Channel</th><th>Location</th><th>Category</th><th>Status</th><th>Monitoring</th><th>Last checked</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="creators-tbody">
+          <tr><td colspan="7" class="admin-loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
+  let state = { status: new URLSearchParams(location.search).get('status') || '' };
+
+  function statusBadge(status) {
+    return `<span class="badge badge-${status}">${status}</span>`;
+  }
+
+  function renderRow(c) {
+    return `
+      <tr data-id="${c.id}">
+        <td>
+          <div class="cell-title" title="${escapeHtml(c.channel_name)}">${escapeHtml(c.channel_name)}</div>
+          <div class="text-muted">${escapeHtml(c.channel_handle || c.channel_url || '')}</div>
+        </td>
+        <td>${escapeHtml(c.location || '—')}</td>
+        <td>${escapeHtml(c.category || '—')}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td>${c.monitoring_enabled ? '✅' : '—'}</td>
+        <td>${c.last_checked_at ? new Date(c.last_checked_at).toLocaleString() : 'never'}</td>
+        <td>
+          <div class="row-actions">
+            ${c.status !== 'approved' ? `<button class="btn btn-success btn-sm" data-action="approve">Approve</button>` : ''}
+            ${c.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" data-action="reject">Reject</button>` : ''}
+            ${c.status === 'approved' ? `<button class="btn btn-secondary btn-sm" data-action="suspend">Suspend</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  async function loadCreators() {
+    const tbody = document.getElementById('creators-tbody');
+    tbody.innerHTML = `<tr><td colspan="7" class="admin-loading">Loading…</td></tr>`;
+    try {
+      const params = state.status ? `?status=${encodeURIComponent(state.status)}` : '';
+      const data = await adminFetch(`/creators${params}`);
+      tbody.innerHTML = data.channels.length
+        ? data.channels.map(renderRow).join('')
+        : `<tr><td colspan="7" class="admin-empty">No channels match this filter.</td></tr>`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="7" class="admin-empty">Couldn't load channels: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function handleRowAction(id, action) {
+    if (action === 'suspend' && !confirm('Suspend monitoring for this channel? Its existing videos stay up.')) return;
+    try {
+      await adminFetch(`/creators/${id}/${action}`, { method: 'POST' });
+      toast('Updated.');
+      loadCreators();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  async function populateFilterOptions() {
+    try {
+      const { categories } = await adminFetch('/categories');
+      const catOptions = categories.filter((c) => c.active).map((c) => `<option value="${c.slug}">${escapeHtml(c.label)}</option>`).join('');
+      document.getElementById('add-channel-category').insertAdjacentHTML('beforeend', catOptions);
+      const locOptions = LOCATIONS.map((l) => `<option value="${l}">${l}</option>`).join('');
+      document.getElementById('add-channel-location').insertAdjacentHTML('beforeend', locOptions);
+    } catch {
+      /* optional */
+    }
+  }
+
+  function setupInteractions() {
+    document.getElementById('status-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.admin-tab');
+      if (!tab) return;
+      document.querySelectorAll('.admin-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.status = tab.dataset.status;
+      loadCreators();
+    });
+    const activeTab = document.querySelector(`.admin-tab[data-status="${state.status}"]`);
+    if (activeTab) activeTab.classList.add('active');
+    else document.querySelector('.admin-tab[data-status=""]').classList.add('active');
+
+    document.getElementById('creators-tbody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      handleRowAction(btn.closest('tr').dataset.id, btn.dataset.action);
+    });
+
+    document.getElementById('toggle-add-form').addEventListener('click', () => {
+      document.getElementById('add-form-card').classList.toggle('open');
+    });
+
+    document.getElementById('add-channel-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('add-channel-error');
+      errEl.textContent = '';
+      const channelUrl = document.getElementById('add-channel-url').value.trim();
+      const category = document.getElementById('add-channel-category').value || undefined;
+      const location = document.getElementById('add-channel-location').value || undefined;
+      try {
+        await adminFetch('/creators', { method: 'POST', body: JSON.stringify({ channelUrl, category, location }) });
+        toast('Channel added and approved.');
+        e.target.reset();
+        document.getElementById('add-form-card').classList.remove('open');
+        loadCreators();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    });
+  }
+
+  async function init() {
+    setupInteractions();
+    await populateFilterOptions();
+    await loadCreators();
+  }
+
+  initAdminPage(init);
+</script>
+</body>
+</html>

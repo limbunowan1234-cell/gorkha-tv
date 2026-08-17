@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Categories — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-categories.html" class="active">Categories</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Categories</h1>
+
+    <div class="admin-toolbar">
+      <button class="btn btn-secondary btn-sm" id="toggle-add-form">+ Add Category</button>
+    </div>
+
+    <div class="admin-form-card" id="add-form-card">
+      <h3>Add Category</h3>
+      <form id="add-category-form">
+        <div class="field-row">
+          <div class="field"><label for="add-cat-slug">Slug</label><input type="text" id="add-cat-slug" placeholder="e.g. comedy" required></div>
+          <div class="field"><label for="add-cat-label">Label</label><input type="text" id="add-cat-label" placeholder="e.g. Comedy" required></div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add</button>
+        <div class="field-error" id="add-cat-error"></div>
+      </form>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Slug</th><th>Label</th><th>Sort order</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="categories-tbody">
+          <tr><td colspan="5" class="admin-loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  function renderRow(c) {
+    return `
+      <tr data-slug="${escapeHtml(c.slug)}">
+        <td><code>${escapeHtml(c.slug)}</code></td>
+        <td><input type="text" class="label-input" value="${escapeHtml(c.label)}" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:13px;width:160px;"></td>
+        <td><input type="number" class="sort-input" value="${c.sort_order}" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:13px;width:70px;"></td>
+        <td>${c.active ? '<span class="badge badge-published">active</span>' : '<span class="badge badge-removed">inactive</span>'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-secondary btn-sm" data-action="save">Save</button>
+            <button class="btn btn-danger btn-sm" data-action="${c.active ? 'deactivate' : 'activate'}">${c.active ? 'Deactivate' : 'Activate'}</button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  async function loadCategories() {
+    const tbody = document.getElementById('categories-tbody');
+    tbody.innerHTML = `<tr><td colspan="5" class="admin-loading">Loading…</td></tr>`;
+    try {
+      const { categories } = await adminFetch('/categories');
+      tbody.innerHTML = categories.map(renderRow).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" class="admin-empty">Couldn't load categories: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function handleRowAction(row, action) {
+    const slug = row.dataset.slug;
+    try {
+      if (action === 'save') {
+        const label = row.querySelector('.label-input').value.trim();
+        const sortOrder = row.querySelector('.sort-input').value;
+        await adminFetch(`/categories/${encodeURIComponent(slug)}`, { method: 'PATCH', body: JSON.stringify({ label, sortOrder }) });
+      } else {
+        await adminFetch(`/categories/${encodeURIComponent(slug)}`, {
+          method: action === 'deactivate' ? 'DELETE' : 'PATCH',
+          body: action === 'activate' ? JSON.stringify({ active: true }) : undefined,
+        });
+      }
+      toast('Saved.');
+      loadCategories();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  function setupInteractions() {
+    document.getElementById('categories-tbody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      handleRowAction(btn.closest('tr'), btn.dataset.action);
+    });
+
+    document.getElementById('toggle-add-form').addEventListener('click', () => {
+      document.getElementById('add-form-card').classList.toggle('open');
+    });
+
+    document.getElementById('add-category-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('add-cat-error');
+      errEl.textContent = '';
+      const slug = document.getElementById('add-cat-slug').value.trim().toLowerCase();
+      const label = document.getElementById('add-cat-label').value.trim();
+      try {
+        await adminFetch('/categories', { method: 'POST', body: JSON.stringify({ slug, label }) });
+        toast('Category added.');
+        e.target.reset();
+        document.getElementById('add-form-card').classList.remove('open');
+        loadCategories();
+      } catch (err) {
+        errEl.textContent = err.message;
+      }
+    });
+  }
+
+  setupInteractions();
+  initAdminPage(loadCategories);
+</script>
+</body>
+</html>

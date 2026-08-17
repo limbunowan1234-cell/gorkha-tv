@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin — GorkhaTV</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html" class="active">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Dashboard</h1>
+
+    <div class="stat-grid" id="stat-grid">
+      <div class="admin-loading">Loading stats…</div>
+    </div>
+
+    <div class="hub-grid">
+      <a class="hub-card" href="admin-videos.html?status=pending_review">
+        <div class="icon">🎬</div>
+        <h3>Videos</h3>
+        <p>Approve, reject, feature, or mark trending. Review the auto-discovered queue.</p>
+      </a>
+      <a class="hub-card" href="admin-creators.html?status=pending">
+        <div class="icon">📡</div>
+        <h3>Creators</h3>
+        <p>Approve channel submissions, add channels directly, suspend monitoring.</p>
+      </a>
+      <a class="hub-card" href="admin-categories.html">
+        <div class="icon">🗂️</div>
+        <h3>Categories</h3>
+        <p>Manage the category list videos and channels can be tagged with.</p>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, escapeHtml } from '../js/admin-common.js';
+
+  async function loadStats() {
+    const grid = document.getElementById('stat-grid');
+    try {
+      const [published, pendingVideos, pendingChannels, approvedChannels, quota] = await Promise.all([
+        adminFetch('/videos?status=published&limit=1'),
+        adminFetch('/videos?status=pending_review&limit=1'),
+        adminFetch('/creators?status=pending'),
+        adminFetch('/creators?status=approved'),
+        adminFetch('/sync/quota'),
+      ]);
+
+      const stats = [
+        { n: published.total, l: 'Published videos' },
+        { n: pendingVideos.total, l: 'Videos awaiting review' },
+        { n: pendingChannels.channels.length, l: 'Channels awaiting review' },
+        { n: approvedChannels.channels.length, l: 'Approved channels' },
+        { n: `${quota.unitsUsed} / ${quota.dailySoftCap}`, l: 'YouTube API units used today' },
+      ];
+
+      grid.innerHTML = stats
+        .map((s) => `<div class="stat-card"><div class="n">${escapeHtml(String(s.n))}</div><div class="l">${escapeHtml(s.l)}</div></div>`)
+        .join('');
+    } catch (err) {
+      grid.innerHTML = `<div class="admin-empty">Couldn't load stats: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  initAdminPage(loadStats);
+</script>
+</body>
+</html>

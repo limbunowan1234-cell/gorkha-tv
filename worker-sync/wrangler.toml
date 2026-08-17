@@ -1,0 +1,18 @@
+name = "gorkhatv-sync"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# Cron schedule (UTC): channel poll every 6 hours, keyword discovery once daily.
+[triggers]
+crons = ["0 */6 * * *", "30 2 * * *"]
+
+# Must point at the SAME D1 database as the Pages project (see root wrangler.toml)
+# so the site reads exactly what this worker writes.
+[[d1_databases]]
+binding = "DB"
+database_name = "gorkhatv"
+database_id = "1fe926bd-ca0e-4c7a-92d1-1e1114b9ece8"
+
+# Secrets (YOUTUBE_API_KEY) are NOT set here — use:
+#   wrangler secret put YOUTUBE_API_KEY --config worker-sync/wrangler.toml
+# For local dev, put them in worker-sync/.dev.vars (gitignored) instead.

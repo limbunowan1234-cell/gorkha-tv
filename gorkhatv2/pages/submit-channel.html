@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Your Channel | GorkhaTV</title>
+  <meta name="description" content="Submit your YouTube channel to be discovered on GorkhaTV — a Darjeeling-region YouTube discovery platform.">
+  <link rel="canonical" href="https://gorkhatv.site/pages/submit-channel.html">
+  <meta property="og:title" content="Submit Your Channel | GorkhaTV">
+  <meta property="og:description" content="Submit your YouTube channel to be discovered on GorkhaTV — a Darjeeling-region YouTube discovery platform.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .submit-wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 60px; }
+    .submit-title { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 600; margin-bottom: 6px; }
+    .submit-sub { color: var(--muted); font-size: 14px; margin-bottom: 28px; line-height: 1.6; }
+    .submit-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; }
+    .submit-success { text-align: center; padding: 40px 24px; }
+    .submit-success .icon { font-size: 48px; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="submit-wrap">
+  <h1 class="submit-title">🎬 Submit Your YouTube Channel</h1>
+  <p class="submit-sub">
+    Tell us about your channel and an admin will review it. Once approved, GorkhaTV automatically discovers
+    your new uploads — your videos always stay on YouTube, we only index the public metadata.
+  </p>
+
+  <div class="submit-card" id="submit-card">
+    <form id="submit-form">
+      <div class="field">
+        <label for="channel-url">YouTube Channel URL *</label>
+        <input type="text" id="channel-url" placeholder="https://www.youtube.com/@yourchannel" required>
+      </div>
+      <div class="field">
+        <label for="channel-name">Channel Name *</label>
+        <input type="text" id="channel-name" placeholder="Your channel's name" required>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="channel-category">Primary Category</label>
+          <select id="channel-category"><option value="">— select —</option></select>
+        </div>
+        <div class="field">
+          <label for="channel-location">Location</label>
+          <select id="channel-location"><option value="">— select —</option></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="contact-name">Your Name</label>
+          <input type="text" id="contact-name" placeholder="Optional">
+        </div>
+        <div class="field">
+          <label for="contact-email">Contact Email</label>
+          <input type="email" id="contact-email" placeholder="So we can reach you if needed">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;padding:11px;">Submit for Review</button>
+      <div class="field-error" id="submit-error"></div>
+    </form>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="../js/submit-channel.js"></script>
+</body>
+</html>

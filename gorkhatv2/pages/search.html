@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search | GorkhaTV</title>
+  <meta name="robots" content="noindex, follow">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .search-wrap-page { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
+    .search-hero { margin-bottom: 24px; }
+    .search-hero input {
+      width: 100%; max-width: 560px; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 12px 16px; border-radius: 6px; font-size: 15px; font-family: 'Inter', sans-serif;
+    }
+    .search-hero input:focus { outline: none; border-color: var(--red); }
+    .search-section-title { font-family: 'Teko', sans-serif; font-size: 22px; font-weight: 500; margin: 24px 0 12px; display: flex; align-items: center; gap: 10px; }
+    .search-section-title .count { font-size: 13px; color: var(--muted); font-family: 'Inter', sans-serif; font-weight: 400; }
+    .search-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 14px; }
+    .creator-mini-row { display: flex; gap: 12px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+    .creator-mini { flex-shrink: 0; width: 130px; text-align: center; cursor: pointer; }
+    .creator-mini img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--surface2); margin: 0 auto 8px; }
+    .creator-mini .name { font-size: 12px; font-weight: 600; }
+    @media (max-width: 900px) { .search-wrap-page { padding: 16px 20px 40px; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="search-wrap-page">
+  <div class="search-hero">
+    <input type="text" id="search-input" placeholder="Search videos, creators, categories, locations…" autofocus>
+  </div>
+
+  <div id="search-results">
+    <div class="empty"><div class="empty-icon">🔍</div><h3>Search GorkhaTV</h3><p>Try "Darjeeling food", a creator name, or a category.</p></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="../js/search.js"></script>
+</body>
+</html>

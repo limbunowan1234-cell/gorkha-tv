@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /pages/browse.html
+Allow: /pages/search.html
+Allow: /watch/
+Allow: /creator/
+Allow: /category/
+Allow: /location/
+
+Disallow: /pages/admin.html
+Disallow: /pages/admin-videos.html
+Disallow: /pages/admin-creators.html
+Disallow: /pages/admin-categories.html
+Disallow: /pages/my-favourites.html
+
+Sitemap: https://gorkhatv.site/sitemap.xml

@@ -1,0 +1,15 @@
+# Cloudflare Pages project config, used by `wrangler pages dev` for local
+# development. Production bindings/secrets are configured in the Cloudflare
+# Pages dashboard (Settings → Functions / Environment variables) — this file
+# only drives local dev, it does not deploy anything by itself.
+
+name = "gorkhatv"
+pages_build_output_dir = "gorkhatv2"
+compatibility_date = "2024-09-01"
+
+# Same D1 database as worker-sync/wrangler.toml — the site must read exactly
+# what the sync worker writes.
+[[d1_databases]]
+binding = "DB"
+database_name = "gorkhatv"
+database_id = "1fe926bd-ca0e-4c7a-92d1-1e1114b9ece8"
