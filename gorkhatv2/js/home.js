@@ -14,6 +14,7 @@ function initApp() {
   initCategoryPills();
   initSearch();
   initAuthNav();
+  initHeroSwipe();
 }
 
 if (document.readyState === 'loading') {
@@ -91,6 +92,32 @@ function startHeroTimer() {
     heroIndex = (heroIndex + 1) % heroItems.length;
     renderHero();
   }, 7000);
+}
+
+// Swipe left/right to move through the hero — dots/timer alone aren't
+// enough on touch devices where there's no hover/click affordance for "next".
+function initHeroSwipe() {
+  const hero = document.querySelector('.hero');
+  if (!hero) return;
+  let startX = 0;
+  let startY = 0;
+
+  hero.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+
+  hero.addEventListener('touchend', (e) => {
+    if (heroItems.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy)) return; // too short, or more vertical than horizontal — not a swipe
+
+    heroIndex = dx < 0 ? (heroIndex + 1) % heroItems.length : (heroIndex - 1 + heroItems.length) % heroItems.length;
+    renderHero();
+    clearInterval(heroTimer);
+    startHeroTimer();
+  }, { passive: true });
 }
 
 function renderRowCards(id, items, opts = {}) {

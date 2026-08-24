@@ -198,15 +198,23 @@ nav {
 .see-all { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; transition: color 0.2s; }
 .see-all:hover { color: var(--red); }
 
-.cards-scroll { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; }
+.cards-scroll {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity;
+}
 .cards-scroll::-webkit-scrollbar { display: none; }
 
 /* ── CARD ── */
+/* No fixed width on .card itself — grid-based pages (browse/search/favourites/
+   creator .*-grid) need it to stretch to their own track width. The fixed
+   width only applies inside .cards-scroll's horizontal flex rows. */
 .card {
-  flex-shrink: 0; width: 196px; border-radius: 4px; overflow: hidden;
+  flex-shrink: 0; border-radius: 4px; overflow: hidden;
   cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
   position: relative; background: var(--surface);
+  scroll-snap-align: start;
 }
+.cards-scroll .card { width: 196px; }
 .card:hover { transform: scale(1.07); box-shadow: 0 20px 40px rgba(0,0,0,0.7); z-index: 10; }
 
 .card-thumb { aspect-ratio: 16/9; position: relative; overflow: hidden; background: var(--surface2); }

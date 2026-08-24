@@ -11,7 +11,10 @@ function textIncludesAny(haystack, needles) {
   return needles.some((n) => lower.includes(n));
 }
 
-function matchLocation(text) {
+// Exported for reuse outside scoring too — e.g. inferring a channel's own
+// location/category from its name/description for the sync fallback (see
+// shared/sync.js), or one-off backfills against already-stored text.
+export function matchLocation(text) {
   for (const [location, keywords] of Object.entries(LOCATION_KEYWORDS)) {
     if (textIncludesAny(text, keywords)) return location;
   }
@@ -19,7 +22,7 @@ function matchLocation(text) {
   return null;
 }
 
-function matchCategory(text) {
+export function matchCategory(text) {
   for (const [slug, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     if (textIncludesAny(text, keywords)) return slug;
   }
