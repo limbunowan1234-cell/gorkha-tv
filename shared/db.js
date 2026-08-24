@@ -144,8 +144,8 @@ export async function insertVideo(db, video) {
         (id, youtube_video_id, youtube_channel_id, title, description, thumbnail_url,
          channel_name, channel_handle, published_at, category, location, tags,
          duration_seconds, view_count, like_count, relevance_score, status, featured,
-         trending, source, discovered_at, approved_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?)`
+         trending, source, content_type, discovered_at, approved_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -166,6 +166,7 @@ export async function insertVideo(db, video) {
       video.relevanceScore ?? null,
       video.status,
       video.source,
+      video.contentType || null,
       ts,
       video.status === 'published' ? ts : null,
       ts,
@@ -195,6 +196,10 @@ export async function updateVideoStatus(db, id, status, extra = {}) {
   if ('location' in extra) {
     fields.push('location = ?');
     values.push(extra.location);
+  }
+  if ('contentType' in extra) {
+    fields.push('content_type = ?');
+    values.push(extra.contentType);
   }
   values.push(id);
   await db.prepare(`UPDATE videos SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();

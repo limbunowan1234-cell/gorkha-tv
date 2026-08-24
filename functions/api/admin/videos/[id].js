@@ -26,6 +26,12 @@ export async function onRequestPatch(context) {
   if (body.trending !== undefined) extra.trending = !!body.trending;
   if (body.category !== undefined) extra.category = body.category;
   if (body.location !== undefined) extra.location = body.location;
+  if (body.contentType !== undefined) {
+    if (body.contentType !== null && !['short', 'video'].includes(body.contentType)) {
+      return errorResponse("contentType must be 'short', 'video', or null.", 400);
+    }
+    extra.contentType = body.contentType;
+  }
 
   await updateVideoStatus(env.DB, params.id, body.status || video.status, extra);
   return json({ ok: true });

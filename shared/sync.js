@@ -7,6 +7,7 @@
 import * as db from './db.js';
 import * as yt from './youtube.js';
 import { classifyVideo } from './relevance.js';
+import { classifyContentType } from './shortsClassifier.js';
 import { QUOTA, LOCATIONS } from './constants.js';
 
 export async function runChannelPollSync(env) {
@@ -76,6 +77,18 @@ export async function runChannelPollSync(env) {
 
             const { score, location, category, status } = classifyVideo(v, { source: 'channel_poll', channelApproved: true });
 
+            // Best-effort: classifyContentType costs an extra fetch() subrequest for
+            // anything short enough to plausibly be a Short, so it's skipped once the
+            // run is close to Cloudflare's per-invocation subrequest cap — a video left
+            // unclassified here (content_type NULL) just waits for a later admin backfill
+            // rather than blocking the sync itself.
+            let contentType = null;
+            if (subrequestsUsed < QUOTA.maxSubrequestsPerRun) {
+              const result = await classifyContentType(v.youtubeVideoId, v.durationSeconds);
+              contentType = result.contentType;
+              if (result.usedFetch) subrequestsUsed += 1;
+            }
+
             await db.insertVideo(env.DB, {
               youtubeVideoId: v.youtubeVideoId,
               youtubeChannelId: channel.youtube_channel_id,
@@ -94,6 +107,7 @@ export async function runChannelPollSync(env) {
               relevanceScore: score,
               status,
               source: 'channel_poll',
+              contentType,
             });
 
             if (status === 'published') stats.videosPublished += 1;
@@ -146,6 +160,7 @@ export async function runKeywordDiscoverySync(env) {
     let budget = QUOTA.dailySoftCapUnits - quota.units_used;
     let searchCallsLeft = QUOTA.maxSearchCallsPerDay - quota.search_calls_used;
     const publishedAfter = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    let subrequestsUsed = 0; // this path has no other subrequest-cap tracking — see classifyContentType's usedFetch comment in runChannelPollSync
 
     for (const location of LOCATIONS) {
       if (searchCallsLeft <= 0 || budget < 100) break;
@@ -175,6 +190,13 @@ export async function runKeywordDiscoverySync(env) {
           stats.videosFound += 1;
           const { score, location: matchedLocation, category, status } = classifyVideo(v, { source: 'keyword_search', channelApproved: false });
 
+          let contentType = null;
+          if (subrequestsUsed < QUOTA.maxSubrequestsPerRun) {
+            const result = await classifyContentType(v.youtubeVideoId, v.durationSeconds);
+            contentType = result.contentType;
+            if (result.usedFetch) subrequestsUsed += 1;
+          }
+
           await db.insertVideo(env.DB, {
             youtubeVideoId: v.youtubeVideoId,
             youtubeChannelId: v.channelId,
@@ -193,6 +215,7 @@ export async function runKeywordDiscoverySync(env) {
             relevanceScore: score,
             status,
             source: 'keyword_search',
+            contentType,
           });
 
           if (status === 'published') stats.videosPublished += 1;
@@ -227,6 +250,8 @@ export async function addVideoManually(env, youtubeVideoIdOrUrl, overrides = {})
   const video = data[0];
   if (!video) throw new Error('Video not found on YouTube (deleted, private, or invalid ID).');
 
+  const { contentType } = await classifyContentType(video.youtubeVideoId, video.durationSeconds);
+
   await db.insertVideo(env.DB, {
     youtubeVideoId: video.youtubeVideoId,
     youtubeChannelId: video.channelId,
@@ -245,6 +270,7 @@ export async function addVideoManually(env, youtubeVideoIdOrUrl, overrides = {})
     relevanceScore: null,
     status: 'published',
     source: 'manual',
+    contentType,
   });
 
   return video;
