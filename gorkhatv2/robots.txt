@@ -12,5 +12,6 @@ Disallow: /pages/admin-videos.html
 Disallow: /pages/admin-creators.html
 Disallow: /pages/admin-categories.html
 Disallow: /pages/my-favourites.html
+Disallow: /pages/edit-profile.html
 
 Sitemap: https://gorkhatv.site/sitemap.xml

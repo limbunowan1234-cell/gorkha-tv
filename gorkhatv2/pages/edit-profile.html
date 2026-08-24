@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile | GorkhaTV</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .profile-wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 60px; }
+    .profile-title { font-family: 'Teko', sans-serif; font-size: 30px; font-weight: 600; margin-bottom: 4px; }
+    .profile-sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+    .profile-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+    .profile-card h3 { font-family: 'Teko', sans-serif; font-size: 20px; margin-bottom: 16px; }
+    .channel-item { border: 1px solid var(--border); border-radius: 6px; padding: 16px; margin-bottom: 14px; }
+    .channel-item:last-child { margin-bottom: 0; }
+    .channel-item-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .channel-item-header img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--surface2); }
+    .channel-item-name { font-weight: 700; font-size: 14px; }
+    .save-msg { font-size: 12px; color: #4ade80; margin-top: 8px; min-height: 16px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html">Browse</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="profile-wrap">
+  <h1 class="profile-title">Edit Profile</h1>
+  <p class="profile-sub">Manage how your name appears on GorkhaTV, and any channels you've submitted.</p>
+
+  <div id="signin-gate" class="empty" style="display:none;">
+    <div class="empty-icon">🔒</div>
+    <h3>Sign in to edit your profile</h3>
+    <p>Use the sign-in button in the top-right.</p>
+  </div>
+
+  <div id="profile-content" style="display:none;">
+    <div class="profile-card">
+      <h3>My Profile</h3>
+      <form id="profile-form">
+        <div class="field">
+          <label for="display-name">Display Name</label>
+          <input type="text" id="display-name" placeholder="Defaults to your Google name" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="bio">Bio</label>
+          <textarea id="bio" rows="3" maxlength="280" placeholder="Optional short bio"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Profile</button>
+        <div class="save-msg" id="profile-save-msg"></div>
+      </form>
+    </div>
+
+    <div class="profile-card">
+      <h3>My Channels</h3>
+      <div id="channels-list"><div class="admin-loading">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<script type="module" src="../js/edit-profile.js"></script>
+</body>
+</html>

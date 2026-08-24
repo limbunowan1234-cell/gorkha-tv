@@ -7,8 +7,6 @@
 /pages/artist.html             /                          301
 /pages/video.html              /                          301
 /pages/creator-dashboard.html  /pages/submit-channel.html 301
-/pages/edit-profile.html       /                          301
 /pages/my-credits.html         /                          301
 /pages/auth-callback.html      /                          301
 /pages/admin-content.html      /pages/admin-videos.html   301
-/pages/admin-claims.html       /pages/admin.html          301

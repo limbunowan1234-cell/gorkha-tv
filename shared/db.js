@@ -297,6 +297,54 @@ export async function deleteSession(db, sessionId) {
   await db.prepare(`DELETE FROM sessions WHERE id = ?`).bind(sessionId).run();
 }
 
+// display_name/bio are viewer-set and intentionally untouched by
+// upsertUserByGoogleSub — only this function writes them.
+export async function updateUserProfile(db, userId, { displayName, bio }) {
+  await db
+    .prepare(`UPDATE users SET display_name = ?, bio = ? WHERE id = ?`)
+    .bind(displayName ?? null, bio ?? null, userId)
+    .run();
+}
+
+// ── Channel ownership (a viewer who was signed in when they submitted a
+// channel can self-edit its descriptive fields afterward) ──
+
+export async function getChannelsByOwner(db, userId) {
+  const { results } = await db
+    .prepare(
+      `SELECT id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, description, location, category, status, monitoring_enabled
+       FROM channels WHERE submitted_by_user_id = ? ORDER BY created_at DESC`
+    )
+    .bind(userId)
+    .all();
+  return results;
+}
+
+const OWNER_EDITABLE_CHANNEL_FIELDS = { description: 'description', location: 'location', category: 'category' };
+
+// Ownership-checked update — only succeeds (returns true) if the channel is
+// actually owned by userId. Deliberately restricted to descriptive fields
+// only: status/featured/verified/monitoring_enabled stay admin-only, so a
+// creator editing their own listing can never self-approve or self-feature.
+export async function updateOwnedChannelFields(db, channelId, userId, fields) {
+  const channel = await db.prepare(`SELECT id FROM channels WHERE id = ? AND submitted_by_user_id = ?`).bind(channelId, userId).first();
+  if (!channel) return false;
+
+  const setClauses = ['updated_at = ?'];
+  const values = [new Date().toISOString()];
+  for (const [key, column] of Object.entries(OWNER_EDITABLE_CHANNEL_FIELDS)) {
+    if (key in fields) {
+      setClauses.push(`${column} = ?`);
+      values.push(fields[key]);
+    }
+  }
+  if (setClauses.length === 1) return true; // nothing to update, but ownership check passed
+
+  values.push(channelId);
+  await db.prepare(`UPDATE channels SET ${setClauses.join(', ')} WHERE id = ?`).bind(...values).run();
+  return true;
+}
+
 // ── Favourites ──
 
 export async function addFavourite(db, userId, videoId) {
@@ -349,6 +397,70 @@ export async function checkRateLimit(db, key, maxAttempts) {
 
   await db.prepare(`UPDATE rate_limits SET count = count + 1 WHERE key = ?`).bind(key).run();
   return { allowed: true };
+}
+
+// ── Channel ownership claims (manual admin approval only) ──
+
+export async function createChannelClaim(db, channelId, userId, message) {
+  const id = newId();
+  await db
+    .prepare(`INSERT INTO channel_claims (id, channel_id, user_id, message, status, created_at) VALUES (?, ?, ?, ?, 'pending', ?)`)
+    .bind(id, channelId, userId, message || null, nowIso())
+    .run();
+  return id;
+}
+
+export async function hasPendingClaim(db, channelId, userId) {
+  const row = await db
+    .prepare(`SELECT id FROM channel_claims WHERE channel_id = ? AND user_id = ? AND status = 'pending'`)
+    .bind(channelId, userId)
+    .first();
+  return !!row;
+}
+
+export async function listChannelClaims(db, status) {
+  const where = status ? `WHERE cc.status = ?` : '';
+  const binds = status ? [status] : [];
+  const { results } = await db
+    .prepare(
+      `SELECT cc.id, cc.channel_id, cc.user_id, cc.message, cc.status, cc.created_at, cc.reviewed_at,
+              c.channel_name, c.channel_url, c.youtube_channel_id, c.submitted_by_user_id,
+              u.name AS claimant_name, u.email AS claimant_email
+       FROM channel_claims cc
+       JOIN channels c ON c.id = cc.channel_id
+       JOIN users u ON u.id = cc.user_id
+       ${where}
+       ORDER BY cc.created_at DESC`
+    )
+    .bind(...binds)
+    .all();
+  return results;
+}
+
+export async function getChannelClaim(db, claimId) {
+  return db.prepare(`SELECT * FROM channel_claims WHERE id = ?`).bind(claimId).first();
+}
+
+// Approving a claim attaches the claimant as the channel's owner and
+// auto-rejects any other pending claims on the same channel (only one owner
+// makes sense). Does nothing to the channel's approval/monitoring status —
+// ownership is orthogonal to whether GorkhaTV publishes its videos.
+export async function approveChannelClaim(db, claimId) {
+  const claim = await db.prepare(`SELECT * FROM channel_claims WHERE id = ?`).bind(claimId).first();
+  if (!claim || claim.status !== 'pending') return false;
+
+  const ts = nowIso();
+  await db.prepare(`UPDATE channels SET submitted_by_user_id = ?, updated_at = ? WHERE id = ?`).bind(claim.user_id, ts, claim.channel_id).run();
+  await db.prepare(`UPDATE channel_claims SET status = 'approved', reviewed_at = ? WHERE id = ?`).bind(ts, claimId).run();
+  await db
+    .prepare(`UPDATE channel_claims SET status = 'rejected', reviewed_at = ? WHERE channel_id = ? AND status = 'pending' AND id != ?`)
+    .bind(ts, claim.channel_id, claimId)
+    .run();
+  return true;
+}
+
+export async function rejectChannelClaim(db, claimId) {
+  await db.prepare(`UPDATE channel_claims SET status = 'rejected', reviewed_at = ? WHERE id = ? AND status = 'pending'`).bind(nowIso(), claimId).run();
 }
 
 export async function addQuotaUsage(db, units, isSearchCall = false) {

@@ -1,5 +1,7 @@
 import { json, errorResponse, readJsonBody } from '../../../shared/http.js';
-import { insertChannelSubmission, checkRateLimit } from '../../../shared/db.js';
+import { insertChannelSubmission, checkRateLimit, getSessionUser } from '../../../shared/db.js';
+import { parseCookies } from '../../../shared/auth.js';
+import { VIEWER_SESSION_COOKIE } from '../../../shared/constants.js';
 
 const YOUTUBE_URL_PATTERN = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i;
 const MAX_SUBMISSIONS_PER_WINDOW = 5;
@@ -32,6 +34,12 @@ export async function onRequestPost(context) {
     return errorResponse('Please provide a valid contact email.', 400);
   }
 
+  // If the submitter is signed in, record them as the owner — this is what
+  // later lets them self-edit the channel's descriptive fields via
+  // /api/my/channels. Anonymous submissions remain fully supported.
+  const cookies = parseCookies(request.headers.get('Cookie'));
+  const viewer = await getSessionUser(env.DB, cookies[VIEWER_SESSION_COOKIE]);
+
   try {
     const id = await insertChannelSubmission(env.DB, {
       channelName,
@@ -40,6 +48,7 @@ export async function onRequestPost(context) {
       category: body?.category || null,
       contactName: body?.contactName || null,
       contactEmail: body?.contactEmail || null,
+      submittedByUserId: viewer?.id || null,
     });
     return json({ ok: true, id });
   } catch (err) {

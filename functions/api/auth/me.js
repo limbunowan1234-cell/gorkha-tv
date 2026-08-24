@@ -10,5 +10,15 @@ export async function onRequestGet(context) {
 
   if (!user) return errorResponse('Not signed in.', 401);
 
-  return json({ user: { id: user.id, name: user.name, email: user.email, avatarUrl: user.avatar_url } });
+  return json({
+    user: {
+      id: user.id,
+      name: user.display_name || user.name,
+      googleName: user.name,
+      email: user.email,
+      avatarUrl: user.avatar_url,
+      displayName: user.display_name,
+      bio: user.bio,
+    },
+  });
 }

@@ -33,6 +33,7 @@
       <li><a href="admin.html">Dashboard</a></li>
       <li><a href="admin-videos.html" class="active">Videos</a></li>
       <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-claims.html">Claims</a></li>
       <li><a href="admin-categories.html">Categories</a></li>
     </ul>
     <div class="admin-topbar-right">
@@ -103,6 +104,17 @@
 
   const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
   const LIMIT = 25;
+  let categoriesData = [];
+
+  function categoryOptionsHTML(current) {
+    return (
+      `<option value="">— none —</option>` +
+      categoriesData.map((c) => `<option value="${c.slug}" ${c.slug === current ? 'selected' : ''}>${escapeHtml(c.label)}</option>`).join('')
+    );
+  }
+  function locationOptionsHTML(current) {
+    return `<option value="">— none —</option>` + LOCATIONS.map((l) => `<option value="${l}" ${l === current ? 'selected' : ''}>${l}</option>`).join('');
+  }
 
   let state = {
     status: new URLSearchParams(location.search).get('status') || '',
@@ -126,8 +138,8 @@
           </div>
         </td>
         <td>${escapeHtml(v.channel_name || '')}</td>
-        <td>${escapeHtml(v.category || '—')}</td>
-        <td>${escapeHtml(v.location || '—')}</td>
+        <td><select class="inline-select" data-field="category" title="Change category">${categoryOptionsHTML(v.category)}</select></td>
+        <td><select class="inline-select" data-field="location" title="Change location">${locationOptionsHTML(v.location)}</select></td>
         <td>${v.relevance_score ?? '—'}</td>
         <td>${statusBadge(v.status)}${v.featured ? ' <span class="badge badge-featured">Featured</span>' : ''}</td>
         <td>${v.published_at ? new Date(v.published_at).toLocaleDateString() : '—'}</td>
@@ -192,7 +204,8 @@
   async function populateFilterOptions() {
     try {
       const { categories } = await adminFetch('/categories');
-      const catOptions = categories.filter((c) => c.active).map((c) => `<option value="${c.slug}">${escapeHtml(c.label)}</option>`).join('');
+      categoriesData = categories.filter((c) => c.active);
+      const catOptions = categoriesData.map((c) => `<option value="${c.slug}">${escapeHtml(c.label)}</option>`).join('');
       document.getElementById('category-filter').insertAdjacentHTML('beforeend', catOptions);
       document.getElementById('add-video-category').insertAdjacentHTML('beforeend', catOptions);
       const locOptions = LOCATIONS.map((l) => `<option value="${l}">${l}</option>`).join('');
@@ -237,6 +250,25 @@
       if (!btn) return;
       const id = btn.closest('tr').dataset.id;
       handleRowAction(id, btn.dataset.action);
+    });
+
+    // Inline category/location fix — saves instantly on change, no reload,
+    // so fixing a batch of mismatched videos is just click-pick-click-pick.
+    document.getElementById('videos-tbody').addEventListener('change', async (e) => {
+      const select = e.target.closest('.inline-select');
+      if (!select) return;
+      const id = select.closest('tr').dataset.id;
+      const field = select.dataset.field;
+      const value = select.value || null;
+      select.disabled = true;
+      try {
+        await adminFetch(`/videos/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
+        toast(`${field === 'category' ? 'Category' : 'Location'} updated.`);
+      } catch (err) {
+        toast(err.message);
+      } finally {
+        select.disabled = false;
+      }
     });
 
     document.getElementById('toggle-add-form').addEventListener('click', () => {

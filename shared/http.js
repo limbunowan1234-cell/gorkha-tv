@@ -16,7 +16,11 @@ export function cacheableJson(data, seconds = 60) {
 }
 
 export function errorResponse(message, status = 400) {
-  return json({ error: message }, { status });
+  // Always no-store: an error response (401/403/404/429/503...) must never
+  // be served from a shared/browser cache to a different user later — don't
+  // rely solely on the _headers file for this, since its merge behavior onto
+  // Function-generated error responses varies by environment.
+  return json({ error: message }, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
 // Strips the default title/description/canonical/OG/Twitter tags a static

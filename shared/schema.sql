@@ -93,6 +93,8 @@ CREATE TABLE IF NOT EXISTS users (
   email          TEXT,
   name           TEXT,
   avatar_url     TEXT,
+  display_name   TEXT,   -- viewer-set override of Google's `name`; NULL = use Google's
+  bio            TEXT,
   created_at     TEXT NOT NULL,
   last_login_at  TEXT
 );
@@ -111,6 +113,21 @@ CREATE TABLE IF NOT EXISTS favourites (
   created_at  TEXT NOT NULL,
   PRIMARY KEY (user_id, video_id)
 );
+
+-- Lets a signed-in viewer request ownership of a channel that already exists
+-- on the platform but has no owner (e.g. one an admin added directly).
+-- Approval is always a manual admin decision, never automatic.
+CREATE TABLE IF NOT EXISTS channel_claims (
+  id          TEXT PRIMARY KEY,
+  channel_id  TEXT NOT NULL,
+  user_id     TEXT NOT NULL,
+  message     TEXT,
+  status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  created_at  TEXT NOT NULL,
+  reviewed_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_channel_claims_status ON channel_claims(status);
+CREATE INDEX IF NOT EXISTS idx_channel_claims_channel ON channel_claims(channel_id);
 
 -- ── Sync observability ──
 CREATE TABLE IF NOT EXISTS sync_runs (

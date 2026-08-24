@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Channel Claims — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-claims.html" class="active">Claims</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Channel Claims</h1>
+    <p class="text-muted" style="margin-bottom:18px;">Someone is asking to be linked as the owner of a channel already on GorkhaTV. Approving lets them self-edit that channel's category, location, and description going forward — it does not change its approval or monitoring status.</p>
+
+    <div class="admin-tabs" id="status-tabs">
+      <div class="admin-tab" data-status="pending">Pending</div>
+      <div class="admin-tab" data-status="approved">Approved</div>
+      <div class="admin-tab" data-status="rejected">Rejected</div>
+      <div class="admin-tab" data-status="">All</div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Channel</th><th>Claimant</th><th>Message</th><th>Status</th><th>Requested</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="claims-tbody">
+          <tr><td colspan="6" class="admin-loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  let state = { status: 'pending' };
+
+  function statusBadge(status) {
+    return `<span class="badge badge-${status}">${status}</span>`;
+  }
+
+  function renderRow(c) {
+    return `
+      <tr data-id="${c.id}">
+        <td>
+          <div class="cell-title" title="${escapeHtml(c.channel_name)}">${escapeHtml(c.channel_name)}</div>
+          <a href="${escapeHtml(c.channel_url || '#')}" target="_blank" rel="noopener" class="text-muted">${escapeHtml(c.channel_url || '')}</a>
+        </td>
+        <td>
+          <div>${escapeHtml(c.claimant_name || '')}</div>
+          <div class="text-muted">${escapeHtml(c.claimant_email || '')}</div>
+        </td>
+        <td class="cell-title" title="${escapeHtml(c.message || '')}">${escapeHtml(c.message || '—')}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td>${new Date(c.created_at).toLocaleDateString()}</td>
+        <td>
+          <div class="row-actions">
+            ${c.status === 'pending' ? `<button class="btn btn-success btn-sm" data-action="approve">Approve</button><button class="btn btn-danger btn-sm" data-action="reject">Reject</button>` : ''}
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  async function loadClaims() {
+    const tbody = document.getElementById('claims-tbody');
+    tbody.innerHTML = `<tr><td colspan="6" class="admin-loading">Loading…</td></tr>`;
+    try {
+      const params = state.status ? `?status=${encodeURIComponent(state.status)}` : '';
+      const { claims } = await adminFetch(`/claims${params}`);
+      tbody.innerHTML = claims.length
+        ? claims.map(renderRow).join('')
+        : `<tr><td colspan="6" class="admin-empty">No claims match this filter.</td></tr>`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="admin-empty">Couldn't load claims: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  async function handleAction(id, action) {
+    if (action === 'approve' && !confirm('Approve this claim? The claimant will be able to self-edit this channel\'s category, location, and description.')) return;
+    try {
+      await adminFetch(`/claims/${id}/${action}`, { method: 'POST' });
+      toast('Updated.');
+      loadClaims();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  function setupInteractions() {
+    document.getElementById('status-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.admin-tab');
+      if (!tab) return;
+      document.querySelectorAll('.admin-tab').forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      state.status = tab.dataset.status;
+      loadClaims();
+    });
+    document.querySelector(`.admin-tab[data-status="${state.status}"]`)?.classList.add('active');
+
+    document.getElementById('claims-tbody').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      handleAction(btn.closest('tr').dataset.id, btn.dataset.action);
+    });
+  }
+
+  async function init() {
+    setupInteractions();
+    await loadClaims();
+  }
+
+  initAdminPage(init);
+</script>
+</body>
+</html>
