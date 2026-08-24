@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS videos (
   source                   TEXT CHECK (source IN ('channel_poll','keyword_search','manual')),
   ai_confidence_score        REAL,   -- reserved, unused in v1 (future AI classification step)
   ai_labels                  TEXT,   -- reserved, unused in v1 (JSON)
+  content_type               TEXT CHECK (content_type IN ('short','video')),   -- classified via YouTube's own /shorts/ redirect signal, see shared/migrations/005
   discovered_at              TEXT,
   approved_at                 TEXT,
   created_at                TEXT NOT NULL,
@@ -65,6 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_videos_location ON videos(location);
 CREATE INDEX IF NOT EXISTS idx_videos_channel ON videos(youtube_channel_id);
 CREATE INDEX IF NOT EXISTS idx_videos_featured ON videos(featured);
 CREATE INDEX IF NOT EXISTS idx_videos_trending ON videos(trending);
+CREATE INDEX IF NOT EXISTS idx_videos_content_type ON videos(content_type, published_at DESC);
 
 -- ── Categories ──
 CREATE TABLE IF NOT EXISTS categories (
