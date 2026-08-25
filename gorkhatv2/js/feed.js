@@ -1,20 +1,29 @@
-import { apiFetch, ytThumb, creatorUrl, escapeHtml, showToast } from './api.js';
+// Instagram-Home-style continuously-scrollable feed of Shorts — a second
+// browsing mode for the exact same content/data as templates/shorts.html
+// (same /api/shorts personalized ranking, same /api/shorts/event signal),
+// just laid out as normal-scroll cards instead of a full-screen swipe.
+// Player lifecycle (preload-next-1/destroy-2-away) and dwell-tracking mirror
+// shorts.js's structure deliberately — see Phase G plan notes on why this
+// isn't extracted into one shared module with shorts.js: the DOM/CSS shape
+// (compact card vs. full-bleed slide) differs enough that forcing it would
+// add more indirection than it saves for a second instance.
+import { apiFetch, ytThumb, creatorUrl, formatCount, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 import { initCommentsDrawer, openComments } from './commentsDrawer.js';
 
-const feedEl = document.getElementById('shorts-feed');
+const feedEl = document.getElementById('feed-wrap');
 
-const items = [];       // video metadata, index-aligned with slideEls
-const slideEls = [];    // rendered <div class="shorts-slide">
+const items = [];
+const cardEls = [];
 const players = new Map(); // index -> YT.Player
 let currentIndex = -1;
-let isMuted = true;      // starts muted (autoplay policy); once the viewer unmutes once, stays unmuted for the session
+let isMuted = true;
 let nextCursor = null;
 let loadingMore = false;
 let exhausted = false;
-let favouriteIds = new Set(); // internal video ids the signed-in viewer already saved
+let favouriteIds = new Set();
 let observer = null;
-let activatedAt = null; // Date.now() when the current slide became active — dwell time is measured from here
+let activatedAt = null;
 
 init();
 
@@ -23,20 +32,11 @@ async function init() {
   initCommentsDrawer();
   loadFavouriteState();
 
-  const deepLinkId = getShortIdFromPath();
   try {
-    if (deepLinkId) {
-      const { video } = await apiFetch(`/videos/${encodeURIComponent(deepLinkId)}`);
-      appendItems([video]);
-      const more = await apiFetch(`/shorts?exclude=${encodeURIComponent(deepLinkId)}&limit=10`);
-      appendItems(more.shorts);
-      nextCursor = more.nextCursor;
-    } else {
-      const { shorts, nextCursor: nc } = await apiFetch('/shorts?limit=10');
-      appendItems(shorts);
-      nextCursor = nc;
-    }
-  } catch (err) {
+    const { shorts, nextCursor: nc } = await apiFetch('/shorts?limit=10');
+    appendItems(shorts);
+    nextCursor = nc;
+  } catch {
     renderEmpty();
     return;
   }
@@ -46,14 +46,8 @@ async function init() {
     return;
   }
 
-  feedEl.querySelector('.shorts-loading')?.remove();
+  feedEl.querySelector('.feed-loading')?.remove();
   setupObserver();
-  setActive(0);
-}
-
-function getShortIdFromPath() {
-  const match = window.location.pathname.match(/\/shorts\/([^/?#]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
 }
 
 async function loadFavouriteState() {
@@ -62,64 +56,58 @@ async function loadFavouriteState() {
     const { favourites } = await apiFetch('/favourites');
     favouriteIds = new Set(favourites.map((f) => f.id));
   } catch {
-    /* favourite state is a nice-to-have on this feed too */
+    /* nice-to-have */
   }
 }
 
 function renderEmpty() {
-  feedEl.innerHTML = `<div class="shorts-empty"><div style="font-size:32px;">🎬</div><div>No Shorts yet — check back soon.</div></div>`;
+  feedEl.innerHTML = `<div class="feed-empty"><div style="font-size:32px;">🎬</div><div>No Shorts yet — check back soon.</div></div>`;
 }
 
 function appendItems(newItems) {
   for (const item of newItems) {
     const index = items.length;
     items.push(item);
-    const el = renderSlide(item, index);
-    slideEls.push(el);
+    const el = renderCard(item, index);
+    cardEls.push(el);
     feedEl.appendChild(el);
-    if (observer) observer.observe(el);
+    if (observer) observer.observe(el.querySelector('.feed-media-wrap'));
   }
 }
 
-function renderSlide(item, index) {
+function renderCard(item, index) {
   const el = document.createElement('div');
-  el.className = 'shorts-slide';
+  el.className = 'feed-card';
   el.dataset.index = String(index);
 
   const poster = ytThumb(item);
   const isLiked = favouriteIds.has(item.id);
 
   el.innerHTML = `
-    <div class="shorts-poster" style="background-image:url('${escapeHtml(poster)}')"></div>
-    <div class="shorts-player-frame" id="yt-player-${index}"></div>
-    <div class="shorts-tap-catcher" data-action="tap-catcher"></div>
-    <div class="shorts-mute-flash" data-mute-flash>🔇</div>
-    <div class="shorts-scrim"></div>
-    <div class="shorts-info">
-      <div class="shorts-creator" data-action="open-creator">
-        <span>📺 ${escapeHtml(item.channel_name || 'Unknown creator')}</span>
-      </div>
-      <div class="shorts-title">${escapeHtml(item.title || '')}</div>
-      ${item.location ? `<div class="shorts-meta"><span>${escapeHtml(item.location)}</span></div>` : ''}
-    </div>
-    <div class="shorts-actions">
+    <div class="feed-card-header" data-action="open-creator">
+      <div class="feed-card-avatar" style="display:flex;align-items:center;justify-content:center;font-size:16px;">📺</div>
       <div>
-        <button class="shorts-action-btn ${isLiked ? 'liked' : ''}" data-action="like">${isLiked ? '❤️' : '🤍'}</button>
-        <div class="shorts-action-label">Save</div>
-      </div>
-      <div>
-        <button class="shorts-action-btn" data-action="comments">💬</button>
-        <div class="shorts-action-label">Comments</div>
-      </div>
-      <div>
-        <button class="shorts-action-btn" data-action="share">↗</button>
-        <div class="shorts-action-label">Share</div>
-      </div>
-      <div>
-        <a class="shorts-action-btn" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.youtube_video_id)}" target="_blank" rel="noopener" style="text-decoration:none;">▶</a>
-        <div class="shorts-action-label">YouTube</div>
+        <div class="feed-card-creator">${escapeHtml(item.channel_name || 'Unknown creator')}</div>
+        ${item.location ? `<div class="feed-card-location">📍 ${escapeHtml(item.location)}</div>` : ''}
       </div>
     </div>
+    <div class="feed-media-wrap" data-index="${index}">
+      <div class="feed-poster" style="background-image:url('${escapeHtml(poster)}')"></div>
+      <div class="feed-player-frame" id="feed-player-${index}"></div>
+      <div class="feed-tap-catcher" data-action="tap-catcher"></div>
+      <div class="feed-mute-flash" data-mute-flash>🔇</div>
+    </div>
+    <div class="feed-actions-row">
+      <button class="feed-action-btn ${isLiked ? 'liked' : ''}" data-action="like">
+        <span data-like-icon>${isLiked ? '❤️' : '🤍'}</span>
+        <span class="feed-action-count" data-like-count>${item.like_count ? formatCount(item.like_count) : ''}</span>
+      </button>
+      <button class="feed-action-btn" data-action="comments">💬</button>
+      <button class="feed-action-btn" data-action="share">↗</button>
+      <a class="feed-action-btn feed-save-btn" href="https://www.youtube.com/watch?v=${encodeURIComponent(item.youtube_video_id)}" target="_blank" rel="noopener">▶</a>
+    </div>
+    <div class="feed-caption"><span class="creator">${escapeHtml(item.channel_name || '')}</span>${escapeHtml(item.title || '')}</div>
+    ${item.location || item.published_at ? `<div class="feed-meta">${[item.location, item.published_at ? new Date(item.published_at).toLocaleDateString() : null].filter(Boolean).join(' · ')}</div>` : ''}
   `;
 
   el.querySelector('[data-action="tap-catcher"]').addEventListener('click', (e) => handleTapCatcherTap(e, el, item));
@@ -133,55 +121,48 @@ function renderSlide(item, index) {
   return el;
 }
 
-// Single tap = mute toggle, double tap = like (Instagram/TikTok convention).
-// A single tap's action is held for TAP_DELAY_MS to see whether a second tap
-// follows — the standard, only-reliable-across-browsers way to disambiguate
-// the two on a touchscreen, at the cost of a small (~250ms) delay before a
-// genuine single tap toggles mute.
 const TAP_DELAY_MS = 250;
-const tapState = new WeakMap(); // slide el -> { count, timer }
+const tapState = new WeakMap();
 
-function handleTapCatcherTap(e, slideEl, item) {
-  const state = tapState.get(slideEl) || { count: 0, timer: null };
+function handleTapCatcherTap(e, cardEl, item) {
+  const mediaWrap = cardEl.querySelector('.feed-media-wrap');
+  const state = tapState.get(cardEl) || { count: 0, timer: null };
   state.count += 1;
 
   if (state.count === 1) {
     state.timer = setTimeout(() => {
-      toggleMute(slideEl);
+      toggleMute(cardEl);
       state.count = 0;
     }, TAP_DELAY_MS);
   } else {
     clearTimeout(state.timer);
     state.count = 0;
-    likeWithHeartBurst(item, slideEl, e);
+    likeWithHeartBurst(item, cardEl, mediaWrap, e);
   }
-  tapState.set(slideEl, state);
+  tapState.set(cardEl, state);
 }
 
-async function likeWithHeartBurst(item, slideEl, e) {
-  const rect = slideEl.getBoundingClientRect();
-  spawnHeartBurst(slideEl, e.clientX - rect.left, e.clientY - rect.top);
+async function likeWithHeartBurst(item, cardEl, mediaWrap, e) {
+  const rect = mediaWrap.getBoundingClientRect();
+  spawnHeartBurst(mediaWrap, e.clientX - rect.left, e.clientY - rect.top);
 
-  // Double-tap always likes — it never un-likes an already-saved Short, same
-  // as Instagram: tapping twice on something you've already liked just
-  // replays the animation.
   if (favouriteIds.has(item.id)) return;
-  const btn = slideEl.querySelector('[data-action="like"]');
+  const btn = cardEl.querySelector('[data-action="like"]');
   await toggleLike(item, btn);
 }
 
-function spawnHeartBurst(slideEl, x, y) {
+function spawnHeartBurst(mediaWrap, x, y) {
   const el = document.createElement('div');
-  el.className = 'shorts-heart-burst burst';
+  el.className = 'feed-heart-burst burst';
   el.textContent = '❤️';
   el.style.left = `${x}px`;
   el.style.top = `${y}px`;
-  slideEl.appendChild(el);
+  mediaWrap.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
 }
 
-function toggleMute(slideEl) {
-  const index = Number(slideEl.dataset.index);
+function toggleMute(cardEl) {
+  const index = Number(cardEl.dataset.index);
   const player = players.get(index);
   if (!player) return;
   isMuted = !isMuted;
@@ -189,10 +170,9 @@ function toggleMute(slideEl) {
     if (isMuted) player.mute();
     else player.unMute();
   } catch {
-    return; // player object exists but isn't ready yet — ignore this tap
+    return;
   }
-
-  const flash = slideEl.querySelector('[data-mute-flash]');
+  const flash = cardEl.querySelector('[data-mute-flash]');
   flash.textContent = isMuted ? '🔇' : '🔊';
   flash.classList.add('show');
   clearTimeout(flash._timer);
@@ -205,11 +185,12 @@ async function toggleLike(item, btn) {
     return;
   }
   const isLiked = favouriteIds.has(item.id);
+  const icon = btn.querySelector('[data-like-icon]');
   try {
     if (isLiked) {
       await fetch(`/api/favourites/${encodeURIComponent(item.id)}`, { method: 'DELETE', credentials: 'include' });
       favouriteIds.delete(item.id);
-      btn.textContent = '🤍';
+      icon.textContent = '🤍';
       btn.classList.remove('liked');
       showToast('Removed from favourites');
     } else {
@@ -220,7 +201,7 @@ async function toggleLike(item, btn) {
         body: JSON.stringify({ videoId: item.id }),
       });
       favouriteIds.add(item.id);
-      btn.textContent = '❤️';
+      icon.textContent = '❤️';
       btn.classList.add('liked');
       showToast('Added to favourites 🔖');
       postShortsEvent(item, 'liked');
@@ -230,11 +211,6 @@ async function toggleLike(item, btn) {
   }
 }
 
-// Personalization signal (see functions/api/shorts/event.js and
-// shared/constants.js's SHORTS_AFFINITY_WEIGHTS) — fire-and-forget, never
-// awaited, never blocks playback. sendBeacon is preferred because it's
-// specifically designed to survive the exact moment this usually fires: the
-// viewer already scrolling to the next slide or navigating away.
 function postShortsEvent(item, eventType) {
   const payload = JSON.stringify({
     youtubeVideoId: item.youtube_video_id,
@@ -249,39 +225,32 @@ function postShortsEvent(item, eventType) {
   }
 }
 
-// Classifies how the viewer treated the slide they just left: a quick bail
-// (<3s) counts against that category/creator, a near-complete watch (>=80%
-// of the video's own duration, or a flat 8s floor when duration is unknown)
-// counts in favor. Anything in between is a neutral partial watch — not
-// strong enough signal either way, so no event fires.
 function recordDwellEvent(index) {
   if (index < 0 || activatedAt == null) return;
   const item = items[index];
   if (!item) return;
-
   const dwellSeconds = (Date.now() - activatedAt) / 1000;
   const duration = item.duration_seconds;
   const watchedFullThreshold = duration ? duration * 0.8 : 8;
-
   if (dwellSeconds < 3) postShortsEvent(item, 'skipped');
   else if (dwellSeconds >= watchedFullThreshold) postShortsEvent(item, 'watched_full');
 }
 
-// Flushes the currently-active slide's dwell event on tab close/navigation —
-// setActive() only records the *previous* slide when the *next* one becomes
-// active, so without this the very last slide a viewer watched before
-// leaving would never get scored.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') recordDwellEvent(currentIndex);
 });
 
 async function shareItem(item) {
+  // Shares the canonical per-video URL (the full-screen Shorts page, which
+  // has real SSR meta tags) rather than a feed-specific link — the Feed page
+  // has no per-item route of its own, and one canonical URL per video is
+  // correct regardless of which browsing UI a viewer found it through.
   const url = `${window.location.origin}/shorts/${item.youtube_video_id}`;
   if (navigator.share) {
     try {
       await navigator.share({ title: item.title, url });
     } catch {
-      /* user cancelled the share sheet — not an error */
+      /* cancelled — not an error */
     }
     return;
   }
@@ -293,8 +262,6 @@ async function shareItem(item) {
   }
 }
 
-// Loaded lazily (not a static <script> tag) so it doesn't block the page,
-// and so we control exactly when player creation is allowed to start.
 let ytApiPromise = null;
 function loadYouTubeApi() {
   if (ytApiPromise) return ytApiPromise;
@@ -315,11 +282,9 @@ async function ensurePlayer(index) {
   if (index < 0 || index >= items.length) return;
   if (players.has(index)) return;
   const YT = await loadYouTubeApi();
-  // Guard against a fast-scrolling viewer racing past this slide before the
-  // async API load resolved, and against double-creation from overlapping calls.
   if (players.has(index) || index >= items.length) return;
   const item = items[index];
-  const player = new YT.Player(`yt-player-${index}`, {
+  const player = new YT.Player(`feed-player-${index}`, {
     videoId: item.youtube_video_id,
     playerVars: {
       autoplay: 1,
@@ -329,7 +294,7 @@ async function ensurePlayer(index) {
       fs: 0,
       playsinline: 1,
       loop: 1,
-      playlist: item.youtube_video_id, // required by the API for loop:1 to work on a single video
+      playlist: item.youtube_video_id,
     },
     events: {
       onReady: (e) => {
@@ -363,21 +328,14 @@ function setActive(index) {
   activatedAt = Date.now();
 
   ensurePlayer(index).then(() => {
-    // Only the still-current slide should actually start playing — guards
-    // against a stale ensurePlayer() resolving after the viewer has already
-    // scrolled further. Also guards against calling playVideo() on a brand
-    // new Player object whose methods aren't attached yet — the YT IFrame
-    // API only fully wires up the instance once onReady fires, which is
-    // where a *new* player's autoplay actually starts; this call only needs
-    // to cover the revisit case (a player created earlier, already ready).
     if (index !== currentIndex) return;
     try {
       players.get(index)?.playVideo();
     } catch {
-      /* not ready yet — the onReady handler will start it once it fires */
+      /* onReady will start it once it fires */
     }
   });
-  ensurePlayer(index + 1); // preload exactly one video ahead, per the memory/perf budget
+  ensurePlayer(index + 1);
 
   for (const [i, player] of players.entries()) {
     if (i !== index) {
@@ -411,20 +369,25 @@ async function fetchMore() {
       if (!nc) exhausted = true;
     }
   } catch {
-    /* transient — the viewer just won't get more until the next scroll-triggered retry */
+    /* transient — retried on the next scroll-triggered check */
   } finally {
     loadingMore = false;
   }
 }
 
 function appendEndMarker() {
-  if (feedEl.querySelector('.shorts-end')) return;
+  if (feedEl.querySelector('.feed-end')) return;
   const el = document.createElement('div');
-  el.className = 'shorts-end';
-  el.innerHTML = `<div style="font-size:28px;">🏔️</div><div>You're all caught up</div><a href="/pages/browse.html" style="color:var(--red);font-weight:600;">Browse more videos →</a>`;
+  el.className = 'feed-end';
+  el.innerHTML = `<div style="font-size:28px;">🏔️</div><div>You're all caught up</div>`;
   feedEl.appendChild(el);
 }
 
+// Unlike shorts.js's snap-locked single-active-slide model, several cards
+// can be partially visible at once here — same "whichever crosses the
+// visibility threshold with the highest ratio wins" rule from shorts.js
+// still picks exactly one active card, it just now runs against normal
+// scroll instead of scroll-snap positions.
 function setupObserver() {
   observer = new IntersectionObserver(
     (entries) => {
@@ -437,8 +400,6 @@ function setupObserver() {
       if (best && best.intersectionRatio > 0.5) {
         setActive(Number(best.target.dataset.index));
       } else {
-        // Nothing crossed the active threshold this tick (e.g. mid-scroll) —
-        // still pause anything that dropped fully out of view.
         for (const entry of entries) {
           if (!entry.isIntersecting) {
             const idx = Number(entry.target.dataset.index);
@@ -454,17 +415,7 @@ function setupObserver() {
         }
       }
     },
-    { root: feedEl, threshold: [0, 0.25, 0.5, 0.6, 0.75, 1] }
+    { threshold: [0, 0.25, 0.5, 0.6, 0.75, 1] }
   );
-  slideEls.forEach((el) => observer.observe(el));
+  cardEls.forEach((el) => observer.observe(el.querySelector('.feed-media-wrap')));
 }
-
-// Desktop keyboard nav — touch swipe is handled natively by CSS scroll-snap
-// on .shorts-feed, which already gives correct paging + momentum on mobile
-// without a hand-rolled touch handler fighting the browser's own scrolling.
-window.addEventListener('keydown', (e) => {
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
-  e.preventDefault();
-  const target = e.key === 'ArrowDown' ? currentIndex + 1 : currentIndex - 1;
-  slideEls[target]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-});

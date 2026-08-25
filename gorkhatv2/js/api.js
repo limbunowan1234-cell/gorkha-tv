@@ -33,6 +33,15 @@ export function locationUrl(loc) {
   return `/location/${encodeURIComponent(loc)}`;
 }
 
+// Bare abbreviated number (12.3K, 1.2M) — no unit suffix, for contexts like
+// a like-count badge where "views"/"likes" is implied by an adjacent icon.
+export function formatCount(n) {
+  if (!n) return '0';
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(n);
+}
+
 export function formatViews(n) {
   if (!n) return '';
   if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M views`;
