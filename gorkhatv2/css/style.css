@@ -119,7 +119,12 @@ nav {
 .mobile-nav {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-  background: rgba(8,8,8,0.98); backdrop-filter: blur(12px);
+  /* No backdrop-filter here deliberately — combined with position:fixed it's
+     a well-known iOS Safari bug that can silently fail to paint the element
+     at all (confirmed missing on a real iPhone even though it rendered fine
+     in every Chrome-based test). Background is already near-opaque, so the
+     visual difference without the blur is negligible. */
+  background: #0a0a0a;
   border-top: 1px solid rgba(255,255,255,0.08);
 }
 .mobile-nav-inner {
