@@ -533,6 +533,18 @@ export async function setCachedComments(db, youtubeVideoId, commentsJson, status
     .run();
 }
 
+// ── On-site view tracking (drives the homepage Trending row) ──
+
+export async function recordVideoView(db, youtubeVideoId) {
+  await db
+    .prepare(
+      `INSERT INTO video_view_daily (youtube_video_id, view_date, view_count) VALUES (?, ?, 1)
+       ON CONFLICT(youtube_video_id, view_date) DO UPDATE SET view_count = view_count + 1`
+    )
+    .bind(youtubeVideoId, todayKey())
+    .run();
+}
+
 export async function addQuotaUsage(db, units, isSearchCall = false) {
   const date = todayKey();
   await db

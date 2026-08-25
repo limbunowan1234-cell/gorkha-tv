@@ -14,6 +14,10 @@ const NOT_SHORT = "(content_type IS NULL OR content_type != 'short')";
 // currently-synced videos, since like counts aren't always public on YouTube).
 const ENGAGEMENT_EXPR = '(view_count + COALESCE(like_count, 0) * 10)';
 
+// Trending window — recent GorkhaTV activity, not all-time, so a video that
+// was popular months ago doesn't stay "trending" forever.
+const TRENDING_WINDOW_DAYS = 7;
+
 // One aggregated payload for the whole homepage — hero picks, trending,
 // latest, one Top 10 row per location, one Top 10 row per category (except
 // News, which stays latest-by-date since it's time-sensitive by nature),
@@ -23,10 +27,34 @@ const ENGAGEMENT_EXPR = '(view_count + COALESCE(like_count, 0) * 10)';
 export async function onRequestGet(context) {
   const { env } = context;
 
+  const windowStart = new Date(Date.now() - TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+  const windowStartDate = windowStart.toISOString().slice(0, 10); // matches video_view_daily's YYYY-MM-DD bucketing
+  const windowStartIso = windowStart.toISOString(); // matches favourites.created_at's full timestamp
+
   try {
     const [heroRes, trendingRes, latestRes, byLocationRes, byCategoryRes, newsRes, creatorsRes] = await Promise.all([
       env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND featured = 1 ORDER BY published_at DESC LIMIT 5`).all(),
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND trending = 1 ORDER BY ${ENGAGEMENT_EXPR} DESC LIMIT 12`).all(),
+      // Real GorkhaTV engagement, not YouTube's public stats or an admin
+      // flag — recent on-site views (video_view_daily) plus recent Saves,
+      // weighted the same way as everywhere else (a save is worth 10 views).
+      // yvid avoids colliding with VIDEO_COLUMNS' own youtube_video_id.
+      env.DB.prepare(
+        `SELECT ${VIDEO_COLUMNS}, (COALESCE(rv.views, 0) + COALESCE(rs.saves, 0) * 10) AS trend_score
+         FROM videos v
+         LEFT JOIN (
+           SELECT youtube_video_id AS yvid, SUM(view_count) AS views
+           FROM video_view_daily WHERE view_date >= ? GROUP BY youtube_video_id
+         ) rv ON rv.yvid = v.youtube_video_id
+         LEFT JOIN (
+           SELECT video_id, COUNT(*) AS saves
+           FROM favourites WHERE created_at >= ? GROUP BY video_id
+         ) rs ON rs.video_id = v.id
+         WHERE v.status = 'published' AND ${NOT_SHORT}
+           AND (COALESCE(rv.views, 0) + COALESCE(rs.saves, 0)) > 0
+         ORDER BY trend_score DESC LIMIT 12`
+      )
+        .bind(windowStartDate, windowStartIso)
+        .all(),
       // News is excluded here — it syncs far more frequently than any other
       // category, so an undifferentiated "Latest" row ends up wall-to-wall
       // News and crowds out everything else. News still gets its own row

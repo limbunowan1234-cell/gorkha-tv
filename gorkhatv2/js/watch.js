@@ -17,9 +17,18 @@ async function init() {
     renderVideo(video);
     initFavouriteButton(video);
     loadRelated(id);
+    recordView(id);
   } catch (err) {
     renderNotFound();
   }
+}
+
+// Real on-site view signal for the homepage Trending row (functions/api/home.js)
+// — fired only once the watch page has actually rendered in a real browser,
+// not from the SSR route, so bots/crawlers/link previews don't inflate it.
+// Fire-and-forget: never blocks the page, never surfaces an error to the viewer.
+function recordView(id) {
+  fetch(`/api/videos/${encodeURIComponent(id)}/view`, { method: 'POST' }).catch(() => {});
 }
 
 function renderVideo(v) {
