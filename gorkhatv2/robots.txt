@@ -2,7 +2,9 @@ User-agent: *
 Allow: /
 Allow: /pages/browse.html
 Allow: /pages/search.html
+Allow: /pages/feed.html
 Allow: /watch/
+Allow: /shorts
 Allow: /creator/
 Allow: /category/
 Allow: /location/
@@ -11,6 +13,7 @@ Disallow: /pages/admin.html
 Disallow: /pages/admin-videos.html
 Disallow: /pages/admin-creators.html
 Disallow: /pages/admin-categories.html
+Disallow: /pages/admin-claims.html
 Disallow: /pages/my-favourites.html
 Disallow: /pages/edit-profile.html
 

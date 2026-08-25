@@ -2,6 +2,8 @@
 // (/shorts/:id deep links) — serves templates/shorts.html, injecting
 // per-video OG/Twitter tags server-side when a specific id is in the path,
 // same pattern as functions/watch/[id].js.
+import { stripDefaultSeoTags } from './http.js';
+
 export async function renderShortsPage(env, url, id) {
   const assetUrl = new URL('/templates/shorts.html', url.origin);
   const res = await env.ASSETS.fetch(assetUrl.toString());
@@ -41,8 +43,12 @@ export async function renderShortsPage(env, url, id) {
     <meta name="twitter:image" content="${thumbnail}">
     `;
 
-    html = html.replace(/<title>.*?<\/title>/i, '');
-    html = html.replace(/<meta name="description"[^>]*>/i, '');
+    // templates/shorts.html now carries its own static canonical/OG/Twitter
+    // tags for the bare /shorts case — strip all of them (not just
+    // title/description) before injecting the per-video versions, or a
+    // deep-linked /shorts/:id page ends up with two conflicting canonical
+    // tags and duplicate og:title/og:image.
+    html = stripDefaultSeoTags(html);
     html = html.replace(/<head>/i, `<head>${metaTags}`);
 
     return new Response(html, {

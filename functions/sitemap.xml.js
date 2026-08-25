@@ -13,18 +13,26 @@ export async function onRequestGet(context) {
   const urls = [
     { loc: `${origin}/`, changefreq: 'hourly', priority: '1.0' },
     { loc: `${origin}/pages/browse.html`, changefreq: 'daily', priority: '0.8' },
+    { loc: `${origin}/shorts`, changefreq: 'hourly', priority: '0.9' },
+    { loc: `${origin}/pages/feed.html`, changefreq: 'hourly', priority: '0.8' },
     { loc: `${origin}/pages/search.html`, changefreq: 'weekly', priority: '0.4' },
     { loc: `${origin}/pages/submit-channel.html`, changefreq: 'monthly', priority: '0.5' },
   ];
 
   try {
     const [{ results: videos }, { results: creators }, { results: categories }] = await Promise.all([
-      env.DB.prepare(`SELECT youtube_video_id, updated_at FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 2000`).all(),
+      env.DB.prepare(`SELECT youtube_video_id, content_type, updated_at FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 2000`).all(),
       env.DB.prepare(`SELECT youtube_channel_id, updated_at FROM channels WHERE status = 'approved' LIMIT 500`).all(),
       env.DB.prepare(`SELECT slug FROM categories WHERE active = 1`).all(),
     ]);
 
-    for (const v of videos) urls.push({ loc: `${origin}/watch/${v.youtube_video_id}`, lastmod: v.updated_at, changefreq: 'weekly', priority: '0.7' });
+    // Shorts have their own canonical URL (/shorts/:id, the full-screen swipe
+    // page with its own SSR meta) — pointing them at /watch/:id instead would
+    // both be the wrong canonical and duplicate content across two URLs.
+    for (const v of videos) {
+      const loc = v.content_type === 'short' ? `${origin}/shorts/${v.youtube_video_id}` : `${origin}/watch/${v.youtube_video_id}`;
+      urls.push({ loc, lastmod: v.updated_at, changefreq: 'weekly', priority: '0.7' });
+    }
     for (const c of creators) urls.push({ loc: `${origin}/creator/${c.youtube_channel_id}`, lastmod: c.updated_at, changefreq: 'weekly', priority: '0.6' });
     for (const c of categories) urls.push({ loc: `${origin}/category/${c.slug}`, changefreq: 'daily', priority: '0.6' });
     for (const loc of LOCATIONS) urls.push({ loc: `${origin}/location/${encodeURIComponent(loc)}`, changefreq: 'daily', priority: '0.6' });
