@@ -81,3 +81,30 @@ export const ADMIN_SESSION_COOKIE = 'gtv_admin_session';
 export const VIEWER_SESSION_COOKIE = 'gtv_session';
 export const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 export const VIEWER_SESSION_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+// Anonymous per-browser identifier for Shorts personalization signal when the
+// viewer isn't signed in — not an auth cookie, just a stable key for
+// shorts_affinity rows so watch/like behavior can still bias the feed.
+export const ANON_SESSION_COOKIE = 'gtv_anon';
+export const ANON_SESSION_TTL_SECONDS = 60 * 60 * 24 * 365; // 1 year
+
+// Points added to shorts_affinity.score per behavior signal (shared/sync.js-
+// style: named constants here, not magic numbers at the call site, so the
+// weighting is tunable without touching logic).
+export const SHORTS_AFFINITY_WEIGHTS = {
+  watched_full: 2,
+  liked: 5,
+  skipped: -1,
+};
+
+// Combines into the /api/shorts ranking formula (functions/api/shorts.js) —
+// each term normalized to 0-1 within the current candidate pool before these
+// weights are applied. A viewer with no affinity history yet (score 0 on
+// every dimension) reduces this to recency+engagement only, which doubles as
+// the "reasonable default mix" a brand-new viewer should see.
+export const SHORTS_RANKING_WEIGHTS = {
+  recency: 0.3,
+  engagement: 0.3,
+  categoryAffinity: 0.25,
+  channelAffinity: 0.15,
+};

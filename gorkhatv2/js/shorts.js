@@ -13,6 +13,7 @@ let loadingMore = false;
 let exhausted = false;
 let favouriteIds = new Set(); // internal video ids the signed-in viewer already saved
 let observer = null;
+let activatedAt = null; // Date.now() when the current slide became active — dwell time is measured from here
 
 init();
 
@@ -168,11 +169,57 @@ async function toggleLike(item, btn) {
       btn.textContent = '❤️';
       btn.classList.add('liked');
       showToast('Added to favourites 🔖');
+      postShortsEvent(item, 'liked');
     }
   } catch {
     showToast('Something went wrong — please try again.');
   }
 }
+
+// Personalization signal (see functions/api/shorts/event.js and
+// shared/constants.js's SHORTS_AFFINITY_WEIGHTS) — fire-and-forget, never
+// awaited, never blocks playback. sendBeacon is preferred because it's
+// specifically designed to survive the exact moment this usually fires: the
+// viewer already scrolling to the next slide or navigating away.
+function postShortsEvent(item, eventType) {
+  const payload = JSON.stringify({
+    youtubeVideoId: item.youtube_video_id,
+    category: item.category,
+    channelId: item.youtube_channel_id,
+    eventType,
+  });
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon('/api/shorts/event', new Blob([payload], { type: 'application/json' }));
+  } else {
+    fetch('/api/shorts/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+  }
+}
+
+// Classifies how the viewer treated the slide they just left: a quick bail
+// (<3s) counts against that category/creator, a near-complete watch (>=80%
+// of the video's own duration, or a flat 8s floor when duration is unknown)
+// counts in favor. Anything in between is a neutral partial watch — not
+// strong enough signal either way, so no event fires.
+function recordDwellEvent(index) {
+  if (index < 0 || activatedAt == null) return;
+  const item = items[index];
+  if (!item) return;
+
+  const dwellSeconds = (Date.now() - activatedAt) / 1000;
+  const duration = item.duration_seconds;
+  const watchedFullThreshold = duration ? duration * 0.8 : 8;
+
+  if (dwellSeconds < 3) postShortsEvent(item, 'skipped');
+  else if (dwellSeconds >= watchedFullThreshold) postShortsEvent(item, 'watched_full');
+}
+
+// Flushes the currently-active slide's dwell event on tab close/navigation —
+// setActive() only records the *previous* slide when the *next* one becomes
+// active, so without this the very last slide a viewer watched before
+// leaving would never get scored.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') recordDwellEvent(currentIndex);
+});
 
 async function shareItem(item) {
   const url = `${window.location.origin}/shorts/${item.youtube_video_id}`;
@@ -257,7 +304,9 @@ function destroyFarPlayers(centerIndex) {
 
 function setActive(index) {
   if (index === currentIndex || index < 0 || index >= items.length) return;
+  recordDwellEvent(currentIndex);
   currentIndex = index;
+  activatedAt = Date.now();
 
   ensurePlayer(index).then(() => {
     // Only the still-current slide should actually start playing — guards

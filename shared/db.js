@@ -3,7 +3,8 @@
 // Pages Functions, the standalone sync Worker, and any future backend that
 // hands us a D1-compatible binding.
 
-import { randomToken } from './auth.js';
+import { randomToken, parseCookies, buildSetCookie } from './auth.js';
+import { VIEWER_SESSION_COOKIE, ANON_SESSION_COOKIE, ANON_SESSION_TTL_SECONDS } from './constants.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -466,6 +467,51 @@ export async function approveChannelClaim(db, claimId) {
 
 export async function rejectChannelClaim(db, claimId) {
   await db.prepare(`UPDATE channel_claims SET status = 'rejected', reviewed_at = ? WHERE id = ? AND status = 'pending'`).bind(nowIso(), claimId).run();
+}
+
+// ── Shorts feed personalization (v1 weighted scoring, see shared/constants.js) ──
+
+// Resolves a stable key for shorts_affinity rows: the signed-in viewer's real
+// user id when there's a valid session, otherwise a long-lived anonymous
+// cookie token (created on first use) — personalization works without
+// requiring sign-in, matching the plan's "per-session if no auth yet" ask.
+// Returns { sessionKey, setCookieHeader } — setCookieHeader is non-null only
+// when a fresh anon token was just minted and the caller needs to send it.
+export async function resolveShortsSessionKey(db, request) {
+  const cookies = parseCookies(request.headers.get('Cookie'));
+
+  const user = await getSessionUser(db, cookies[VIEWER_SESSION_COOKIE]);
+  if (user) return { sessionKey: user.id, setCookieHeader: null };
+
+  if (cookies[ANON_SESSION_COOKIE]) return { sessionKey: cookies[ANON_SESSION_COOKIE], setCookieHeader: null };
+
+  const token = randomToken();
+  return { sessionKey: token, setCookieHeader: buildSetCookie(ANON_SESSION_COOKIE, token, { maxAgeSeconds: ANON_SESSION_TTL_SECONDS }) };
+}
+
+export async function bumpShortsAffinity(db, sessionKey, dimension, value, delta) {
+  if (!sessionKey || !value) return;
+  await db
+    .prepare(
+      `INSERT INTO shorts_affinity (session_key, dimension, value, score, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(session_key, dimension, value) DO UPDATE SET
+         score = score + excluded.score,
+         updated_at = excluded.updated_at`
+    )
+    .bind(sessionKey, dimension, value, delta, nowIso())
+    .run();
+}
+
+// Returns { category: Map(slug -> score), channel: Map(youtube_channel_id -> score) }
+// for one viewer — used by functions/api/shorts.js to score a candidate pool.
+export async function getShortsAffinity(db, sessionKey) {
+  const empty = { category: new Map(), channel: new Map() };
+  if (!sessionKey) return empty;
+  const { results } = await db.prepare(`SELECT dimension, value, score FROM shorts_affinity WHERE session_key = ?`).bind(sessionKey).all();
+  for (const row of results) {
+    (row.dimension === 'category' ? empty.category : empty.channel).set(row.value, row.score);
+  }
+  return empty;
 }
 
 export async function addQuotaUsage(db, units, isSearchCall = false) {

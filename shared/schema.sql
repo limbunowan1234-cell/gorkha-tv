@@ -164,6 +164,18 @@ CREATE TABLE IF NOT EXISTS quota_usage (
   search_calls_used  INTEGER DEFAULT 0
 );
 
+-- Per-viewer weighted signal for biasing the Shorts feed order (v1: simple
+-- aggregate counters, not a raw event log or ML model).
+CREATE TABLE IF NOT EXISTS shorts_affinity (
+  session_key   TEXT NOT NULL,   -- signed-in viewer's users.id, or the anonymous gtv_anon cookie token
+  dimension     TEXT NOT NULL CHECK (dimension IN ('category','channel')),
+  value         TEXT NOT NULL,   -- category slug OR youtube_channel_id
+  score         INTEGER NOT NULL DEFAULT 0,
+  updated_at    TEXT NOT NULL,
+  PRIMARY KEY (session_key, dimension, value)
+);
+CREATE INDEX IF NOT EXISTS idx_shorts_affinity_session ON shorts_affinity(session_key);
+
 -- Minimal generic rate limiter for unauthenticated write endpoints
 -- (admin login attempts, public channel submissions) — secondary
 -- defense-in-depth alongside Cloudflare's own edge-level protections.
