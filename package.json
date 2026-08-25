@@ -6,6 +6,8 @@
   "description": "GorkhaTV — Darjeeling-region YouTube discovery platform. Static frontend (gorkhatv2/) + Cloudflare Pages Functions (functions/) + D1. This package.json exists only to pin dev tooling (wrangler) — the deployed site itself has no build step.",
   "scripts": {
     "dev": "wrangler pages dev",
+    "predeploy": "node scripts/bump-sw-cache.mjs",
+    "deploy": "wrangler pages deploy gorkhatv2 --project-name=gorkha-tv --branch=main",
     "d1:migrate:local": "wrangler d1 execute gorkhatv --local --file=shared/schema.sql",
     "d1:migrate:remote": "wrangler d1 execute gorkhatv --remote --file=shared/schema.sql",
     "worker:dev": "wrangler dev --config worker-sync/wrangler.toml --test-scheduled",
