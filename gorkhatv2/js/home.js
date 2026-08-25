@@ -1,4 +1,4 @@
-import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, creatorCardHTML } from './api.js';
+import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, creatorCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️' };
@@ -145,7 +145,10 @@ function renderLocationRows(byLocation) {
   }));
   wrap.innerHTML = rows.map((row, i) => rowHTML(`loc-row-${i}`, row)).join('');
   rows.forEach((row, i) => {
-    document.getElementById(`loc-row-${i}`).innerHTML = row.items.map(videoCardHTML).join('');
+    // Netflix-style numbered treatment — these rows are genuinely ranked
+    // (see functions/api/home.js), so the giant rank number is honest, not
+    // just decorative.
+    document.getElementById(`loc-row-${i}`).innerHTML = row.items.map((v, idx) => numberedCardHTML(v, idx + 1)).join('');
   });
 }
 
@@ -162,11 +165,14 @@ function renderCategoryRows(byCategory) {
         title: slug === 'news' ? `${CATEGORY_EMOJI[slug] || ''} ${label}` : `${CATEGORY_EMOJI[slug] || ''} Top 10 ${label}`,
         link: categoryUrl(slug),
         items,
+        numbered: slug !== 'news',
       };
     });
   wrap.innerHTML = rows.map((row, i) => rowHTML(`cat-row-${i}`, row)).join('');
   rows.forEach((row, i) => {
-    document.getElementById(`cat-row-${i}`).innerHTML = row.items.map(videoCardHTML).join('');
+    document.getElementById(`cat-row-${i}`).innerHTML = row.numbered
+      ? row.items.map((v, idx) => numberedCardHTML(v, idx + 1)).join('')
+      : row.items.map(videoCardHTML).join('');
   });
 }
 

@@ -72,6 +72,21 @@ export function videoCardHTML(v) {
     </div>`;
 }
 
+// Netflix-style "Top 10" numbered row — .num-card/.num-big/.num-card-img
+// already existed in style.css from the original design shell but were
+// never wired up to real rendering until now. Used for the genuinely-ranked
+// rows (see functions/api/home.js's Top 10 rework) — rank is 1-indexed.
+export function numberedCardHTML(v, rank) {
+  const thumb = ytThumb(v);
+  return `
+    <div class="num-card" onclick="window.location.href='${watchUrl(v)}'">
+      <div class="num-big">${rank}</div>
+      <div class="num-card-img">
+        <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
+      </div>
+    </div>`;
+}
+
 export function creatorCardHTML(c) {
   const thumb = c.thumbnail_url || '';
   return `
