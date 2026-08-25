@@ -27,7 +27,11 @@ export async function onRequestGet(context) {
     const [heroRes, trendingRes, latestRes, byLocationRes, byCategoryRes, newsRes, creatorsRes] = await Promise.all([
       env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND featured = 1 ORDER BY published_at DESC LIMIT 5`).all(),
       env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND trending = 1 ORDER BY ${ENGAGEMENT_EXPR} DESC LIMIT 12`).all(),
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} ORDER BY published_at DESC LIMIT 12`).all(),
+      // News is excluded here — it syncs far more frequently than any other
+      // category, so an undifferentiated "Latest" row ends up wall-to-wall
+      // News and crowds out everything else. News still gets its own row
+      // (see byCategory.news below), just not double-counted into this one.
+      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND (category IS NULL OR category != 'news') ORDER BY published_at DESC LIMIT 12`).all(),
       env.DB.prepare(
         `SELECT * FROM (
            SELECT ${VIDEO_COLUMNS}, ROW_NUMBER() OVER (PARTITION BY location ORDER BY ${ENGAGEMENT_EXPR} DESC) AS rn
