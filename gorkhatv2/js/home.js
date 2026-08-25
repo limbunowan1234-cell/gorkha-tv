@@ -139,7 +139,7 @@ function renderLocationRows(byLocation) {
   const wrap = document.getElementById('location-rows');
   if (!wrap) return;
   const rows = LOCATIONS.filter((loc) => (byLocation[loc] || []).length).map((loc) => ({
-    title: `${LOCATION_EMOJI[loc] || ''} ${loc}`,
+    title: `${LOCATION_EMOJI[loc] || ''} Top 10 ${loc}`,
     link: `/location/${encodeURIComponent(loc)}`,
     items: byLocation[loc],
   }));
@@ -154,11 +154,16 @@ function renderCategoryRows(byCategory) {
   if (!wrap) return;
   const rows = Object.entries(byCategory)
     .filter(([, items]) => items.length)
-    .map(([slug, items]) => ({
-      title: `${CATEGORY_EMOJI[slug] || ''} ${slug.charAt(0).toUpperCase() + slug.slice(1)}`,
-      link: categoryUrl(slug),
-      items,
-    }));
+    .map(([slug, items]) => {
+      const label = slug.charAt(0).toUpperCase() + slug.slice(1);
+      return {
+        // News stays a plain latest-by-date row (time-sensitive), not a "Top 10" —
+        // every other category row is now genuinely engagement-ranked, see functions/api/home.js.
+        title: slug === 'news' ? `${CATEGORY_EMOJI[slug] || ''} ${label}` : `${CATEGORY_EMOJI[slug] || ''} Top 10 ${label}`,
+        link: categoryUrl(slug),
+        items,
+      };
+    });
   wrap.innerHTML = rows.map((row, i) => rowHTML(`cat-row-${i}`, row)).join('');
   rows.forEach((row, i) => {
     document.getElementById(`cat-row-${i}`).innerHTML = row.items.map(videoCardHTML).join('');

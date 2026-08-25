@@ -14,7 +14,11 @@ export async function onRequestGet(context) {
     if (!creator) return errorResponse('Creator not found.', 404);
 
     const { results: videos } = await env.DB
-      .prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE youtube_channel_id = ? AND status = 'published' ORDER BY published_at DESC LIMIT 48`)
+      .prepare(
+        `SELECT ${VIDEO_COLUMNS} FROM videos
+         WHERE youtube_channel_id = ? AND status = 'published' AND (content_type IS NULL OR content_type != 'short')
+         ORDER BY published_at DESC LIMIT 48`
+      )
       .bind(params.id)
       .all();
 

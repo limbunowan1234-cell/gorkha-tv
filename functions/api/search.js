@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
       env.DB
         .prepare(
           `SELECT ${VIDEO_COLUMNS} FROM videos
-           WHERE status = 'published' AND (title LIKE ? OR description LIKE ? OR channel_name LIKE ? OR category LIKE ? OR location LIKE ? OR tags LIKE ?)
+           WHERE status = 'published' AND (content_type IS NULL OR content_type != 'short') AND (title LIKE ? OR description LIKE ? OR channel_name LIKE ? OR category LIKE ? OR location LIKE ? OR tags LIKE ?)
            ORDER BY published_at DESC LIMIT 30`
         )
         .bind(like, like, like, like, like, like)

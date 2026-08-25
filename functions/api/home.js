@@ -3,29 +3,48 @@ import { json, cacheableJson } from '../../shared/http.js';
 const VIDEO_COLUMNS =
   'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count, featured, trending';
 
+// Landscape rows only — Shorts live exclusively on /shorts, never mixed in here.
+// content_type IS NULL is kept on the "show" side deliberately: a brand-new video
+// that hasn't been classified yet is unknown, not confirmed-Short, and shouldn't
+// vanish from the homepage while that classification is pending.
+const NOT_SHORT = "(content_type IS NULL OR content_type != 'short')";
+
+// Likes are a stronger signal than a passive view, weighted accordingly; falls
+// back to view-count-only ranking automatically when like_count is NULL (most
+// currently-synced videos, since like counts aren't always public on YouTube).
+const ENGAGEMENT_EXPR = '(view_count + COALESCE(like_count, 0) * 10)';
+
 // One aggregated payload for the whole homepage — hero picks, trending,
-// latest, one row per location, one row per category, featured creators —
-// so the frontend makes a single request instead of ~19 separate ones.
-// Reads D1 only; never touches the YouTube API (see shared/sync.js for that).
+// latest, one Top 10 row per location, one Top 10 row per category (except
+// News, which stays latest-by-date since it's time-sensitive by nature),
+// featured creators — so the frontend makes a single request instead of
+// ~19 separate ones. Reads D1 only; never touches the YouTube API (see
+// shared/sync.js for that).
 export async function onRequestGet(context) {
   const { env } = context;
 
   try {
-    const [heroRes, trendingRes, latestRes, byLocationRes, byCategoryRes, creatorsRes] = await Promise.all([
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND featured = 1 ORDER BY published_at DESC LIMIT 5`).all(),
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND trending = 1 ORDER BY published_at DESC LIMIT 12`).all(),
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 12`).all(),
+    const [heroRes, trendingRes, latestRes, byLocationRes, byCategoryRes, newsRes, creatorsRes] = await Promise.all([
+      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND featured = 1 ORDER BY published_at DESC LIMIT 5`).all(),
+      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND trending = 1 ORDER BY ${ENGAGEMENT_EXPR} DESC LIMIT 12`).all(),
+      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} ORDER BY published_at DESC LIMIT 12`).all(),
       env.DB.prepare(
         `SELECT * FROM (
-           SELECT ${VIDEO_COLUMNS}, ROW_NUMBER() OVER (PARTITION BY location ORDER BY published_at DESC) AS rn
-           FROM videos WHERE status = 'published' AND location IS NOT NULL
-         ) WHERE rn <= 12`
+           SELECT ${VIDEO_COLUMNS}, ROW_NUMBER() OVER (PARTITION BY location ORDER BY ${ENGAGEMENT_EXPR} DESC) AS rn
+           FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND location IS NOT NULL
+         ) WHERE rn <= 10`
       ).all(),
       env.DB.prepare(
         `SELECT * FROM (
-           SELECT ${VIDEO_COLUMNS}, ROW_NUMBER() OVER (PARTITION BY category ORDER BY published_at DESC) AS rn
-           FROM videos WHERE status = 'published' AND category IS NOT NULL
-         ) WHERE rn <= 12`
+           SELECT ${VIDEO_COLUMNS}, ROW_NUMBER() OVER (PARTITION BY category ORDER BY ${ENGAGEMENT_EXPR} DESC) AS rn
+           FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND category IS NOT NULL AND category != 'news'
+         ) WHERE rn <= 10`
+      ).all(),
+      // News is deliberately excluded from engagement ranking above and kept
+      // latest-by-date — a "Top 10" of news would surface stale-but-popular
+      // stories over what's actually breaking.
+      env.DB.prepare(
+        `SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND category = 'news' ORDER BY published_at DESC LIMIT 10`
       ).all(),
       env.DB
         .prepare(
@@ -48,6 +67,7 @@ export async function onRequestGet(context) {
     for (const row of byCategoryRes.results) {
       (byCategory[row.category] ||= []).push(row);
     }
+    if (newsRes.results.length) byCategory.news = newsRes.results;
 
     return cacheableJson({
       hero,

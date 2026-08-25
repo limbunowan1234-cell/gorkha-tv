@@ -20,7 +20,7 @@ export async function onRequestGet(context) {
   const limit = Math.min(48, Math.max(1, Number(url.searchParams.get('limit')) || 24));
   const offset = (page - 1) * limit;
 
-  const clauses = ["status = 'published'"];
+  const clauses = ["status = 'published'", "(content_type IS NULL OR content_type != 'short')"];
   const binds = [];
   if (category) {
     clauses.push('category = ?');
