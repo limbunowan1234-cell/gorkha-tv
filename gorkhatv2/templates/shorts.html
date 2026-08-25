@@ -17,6 +17,14 @@
       scroll-snap-type: y mandatory;
       -webkit-overflow-scrolling: touch;
       background: #000;
+      /* touch-action tells the browser up front that vertical panning here
+         belongs to page scroll — without it, a swipe that starts on top of
+         the (cross-origin, separately-scrollable) YouTube iframe can be
+         ambiguous and feel laggy before the browser commits to scrolling.
+         overscroll-behavior-y stops that vertical scroll from also rubber-
+         banding the outer page, which is what "not smooth" mostly looks like. */
+      touch-action: pan-y;
+      overscroll-behavior-y: contain;
     }
     @supports (height: 100dvh) {
       .shorts-feed { height: calc(100dvh - 64px); }
@@ -64,7 +72,14 @@
     }
     .shorts-player-frame iframe { width: 100%; height: 100%; border: none; display: block; }
 
-    .shorts-tap-catcher { position: absolute; top: 0; left: 0; right: 0; bottom: 110px; z-index: 4; cursor: pointer; }
+    /* Covers the *entire* slide, including the area over the native YouTube
+       control bar — a swipe starting there would otherwise be captured by
+       the cross-origin iframe instead of reaching our scroll container.
+       This div only intercepts taps (mute toggle / double-tap like); the
+       chrome underneath stays fully visible per YouTube ToS, just not
+       directly clickable through it, the same trade every TikTok/Reels-
+       style custom player makes. */
+    .shorts-tap-catcher { position: absolute; inset: 0; z-index: 4; cursor: pointer; }
 
     .shorts-mute-flash {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
@@ -73,6 +88,19 @@
       z-index: 7; opacity: 0; pointer-events: none; transition: opacity 0.25s;
     }
     .shorts-mute-flash.show { opacity: 1; transition: none; }
+
+    .shorts-heart-burst {
+      position: absolute; left: 50%; top: 50%; font-size: 84px; z-index: 8;
+      opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(0.4);
+      filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+    }
+    .shorts-heart-burst.burst { animation: shortsHeartBurst 0.75s cubic-bezier(0.2,0.8,0.3,1) forwards; }
+    @keyframes shortsHeartBurst {
+      0% { opacity: 0; transform: translate(-50%,-50%) scale(0.3); }
+      30% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+      45% { transform: translate(-50%,-50%) scale(0.95); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(1.05); }
+    }
 
     .shorts-scrim {
       position: absolute; left: 0; right: 0; bottom: 0; height: 45%;
@@ -93,7 +121,7 @@
 
     .shorts-actions {
       position: absolute; right: 10px; bottom: 22px; z-index: 6;
-      display: flex; flex-direction: column; align-items: center; gap: 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
     }
     .shorts-action-btn {
       background: rgba(255,255,255,0.12); border: none; color: #fff; width: 44px; height: 44px;
@@ -120,6 +148,45 @@
     @supports (height: 100dvh) {
       .shorts-end { height: calc(100dvh - 64px); }
     }
+
+    /* Comments are real YouTube data (read-only — see functions/api/videos/[id]/comments.js),
+       shown in one shared bottom sheet reused across whichever slide is active
+       rather than duplicated per-slide. */
+    .shorts-comments-backdrop {
+      position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.55);
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .shorts-comments-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .shorts-comments-sheet {
+      position: fixed; left: 0; right: 0; z-index: 301;
+      /* Parked off-screen via a large fixed viewport-relative offset, not a
+         percentage of the sheet's own height — the sheet's content (and
+         therefore its natural height) changes from a small spinner to a
+         full comment list right as it opens, and a %-based transform
+         recomputes against that changing height mid-transition, which is
+         exactly what made this get stuck instead of sliding into view. */
+      bottom: -100vh;
+      max-height: 72vh; background: var(--surface); border-radius: 16px 16px 0 0;
+      border-top: 1px solid var(--border);
+      transition: bottom 0.25s ease;
+      display: flex; flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .shorts-comments-sheet.open { bottom: 0; }
+    .shorts-comments-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      font-family: 'Teko', sans-serif; font-size: 20px; font-weight: 600; flex-shrink: 0;
+    }
+    .shorts-comments-close { background: none; border: none; color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+    .shorts-comments-list { overflow-y: auto; padding: 6px 18px 18px; flex: 1; -webkit-overflow-scrolling: touch; }
+    .shorts-comment-item { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .shorts-comment-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+    .shorts-comment-body { flex: 1; min-width: 0; }
+    .shorts-comment-author { font-size: 12px; font-weight: 700; }
+    .shorts-comment-text { font-size: 13px; color: rgba(240,240,240,0.85); line-height: 1.45; margin-top: 3px; overflow-wrap: break-word; }
+    .shorts-comment-meta { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; gap: 12px; align-items: center; }
 
     /* On phones the bottom mobile nav (56px, see .mobile-nav in style.css)
        overlays the feed rather than pushing it up (body opts out of the
@@ -159,6 +226,15 @@
 
 <div class="shorts-feed" id="shorts-feed">
   <div class="shorts-loading"><div class="spinner"></div></div>
+</div>
+
+<div class="shorts-comments-backdrop" id="comments-backdrop"></div>
+<div class="shorts-comments-sheet" id="comments-sheet">
+  <div class="shorts-comments-header">
+    <span>Comments</span>
+    <button class="shorts-comments-close" id="comments-close" aria-label="Close comments">✕</button>
+  </div>
+  <div class="shorts-comments-list" id="comments-list"></div>
 </div>
 
 <div id="mobile-nav-root"></div>

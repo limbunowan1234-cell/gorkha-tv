@@ -176,6 +176,16 @@ CREATE TABLE IF NOT EXISTS shorts_affinity (
 );
 CREATE INDEX IF NOT EXISTS idx_shorts_affinity_session ON shorts_affinity(session_key);
 
+-- Read-only cache of a video's real YouTube comments — one row per video,
+-- storing the whole fetched batch as JSON rather than a per-comment table,
+-- since it's always read/replaced as one unit.
+CREATE TABLE IF NOT EXISTS video_comments_cache (
+  youtube_video_id TEXT PRIMARY KEY,
+  comments_json     TEXT,   -- JSON array of {author, authorAvatar, text, likeCount, publishedAt}
+  status             TEXT NOT NULL DEFAULT 'ok' CHECK (status IN ('ok', 'disabled')),
+  fetched_at         TEXT NOT NULL
+);
+
 -- Minimal generic rate limiter for unauthenticated write endpoints
 -- (admin login attempts, public channel submissions) — secondary
 -- defense-in-depth alongside Cloudflare's own edge-level protections.

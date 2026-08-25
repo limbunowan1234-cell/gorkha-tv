@@ -90,7 +90,7 @@ function renderSlide(item, index) {
   el.innerHTML = `
     <div class="shorts-poster" style="background-image:url('${escapeHtml(poster)}')"></div>
     <div class="shorts-player-frame" id="yt-player-${index}"></div>
-    <div class="shorts-tap-catcher" data-action="toggle-mute"></div>
+    <div class="shorts-tap-catcher" data-action="tap-catcher"></div>
     <div class="shorts-mute-flash" data-mute-flash>🔇</div>
     <div class="shorts-scrim"></div>
     <div class="shorts-info">
@@ -106,6 +106,10 @@ function renderSlide(item, index) {
         <div class="shorts-action-label">Save</div>
       </div>
       <div>
+        <button class="shorts-action-btn" data-action="comments">💬</button>
+        <div class="shorts-action-label">Comments</div>
+      </div>
+      <div>
         <button class="shorts-action-btn" data-action="share">↗</button>
         <div class="shorts-action-label">Share</div>
       </div>
@@ -116,14 +120,62 @@ function renderSlide(item, index) {
     </div>
   `;
 
-  el.querySelector('[data-action="toggle-mute"]').addEventListener('click', () => toggleMute(el));
+  el.querySelector('[data-action="tap-catcher"]').addEventListener('click', (e) => handleTapCatcherTap(e, el, item));
   el.querySelector('[data-action="open-creator"]').addEventListener('click', () => {
     window.location.href = creatorUrl({ youtube_channel_id: item.youtube_channel_id });
   });
   el.querySelector('[data-action="like"]').addEventListener('click', (e) => toggleLike(item, e.currentTarget));
+  el.querySelector('[data-action="comments"]').addEventListener('click', () => openComments(item));
   el.querySelector('[data-action="share"]').addEventListener('click', () => shareItem(item));
 
   return el;
+}
+
+// Single tap = mute toggle, double tap = like (Instagram/TikTok convention).
+// A single tap's action is held for TAP_DELAY_MS to see whether a second tap
+// follows — the standard, only-reliable-across-browsers way to disambiguate
+// the two on a touchscreen, at the cost of a small (~250ms) delay before a
+// genuine single tap toggles mute.
+const TAP_DELAY_MS = 250;
+const tapState = new WeakMap(); // slide el -> { count, timer }
+
+function handleTapCatcherTap(e, slideEl, item) {
+  const state = tapState.get(slideEl) || { count: 0, timer: null };
+  state.count += 1;
+
+  if (state.count === 1) {
+    state.timer = setTimeout(() => {
+      toggleMute(slideEl);
+      state.count = 0;
+    }, TAP_DELAY_MS);
+  } else {
+    clearTimeout(state.timer);
+    state.count = 0;
+    likeWithHeartBurst(item, slideEl, e);
+  }
+  tapState.set(slideEl, state);
+}
+
+async function likeWithHeartBurst(item, slideEl, e) {
+  const rect = slideEl.getBoundingClientRect();
+  spawnHeartBurst(slideEl, e.clientX - rect.left, e.clientY - rect.top);
+
+  // Double-tap always likes — it never un-likes an already-saved Short, same
+  // as Instagram: tapping twice on something you've already liked just
+  // replays the animation.
+  if (favouriteIds.has(item.id)) return;
+  const btn = slideEl.querySelector('[data-action="like"]');
+  await toggleLike(item, btn);
+}
+
+function spawnHeartBurst(slideEl, x, y) {
+  const el = document.createElement('div');
+  el.className = 'shorts-heart-burst burst';
+  el.textContent = '❤️';
+  el.style.left = `${x}px`;
+  el.style.top = `${y}px`;
+  slideEl.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
 }
 
 function toggleMute(slideEl) {
@@ -220,6 +272,62 @@ function recordDwellEvent(index) {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') recordDwellEvent(currentIndex);
 });
+
+// Comments are real YouTube data (functions/api/videos/[id]/comments.js) —
+// read-only, viewers reply on YouTube itself. One shared sheet reused across
+// slides rather than building a drawer per slide.
+const commentsBackdrop = document.getElementById('comments-backdrop');
+const commentsSheet = document.getElementById('comments-sheet');
+const commentsList = document.getElementById('comments-list');
+let commentsRequestToken = 0;
+
+async function openComments(item) {
+  commentsBackdrop.classList.add('open');
+  commentsSheet.classList.add('open');
+  commentsList.innerHTML = `<div class="loading" style="padding:24px 0;"><div class="spinner"></div></div>`;
+
+  const requestToken = ++commentsRequestToken;
+  try {
+    const { comments, disabled } = await apiFetch(`/videos/${encodeURIComponent(item.youtube_video_id)}/comments`);
+    if (requestToken !== commentsRequestToken) return; // viewer already moved to a different Short — drop this stale response
+
+    if (disabled) {
+      commentsList.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:24px 0;text-align:center;">Comments are off for this video.</div>`;
+    } else if (!comments.length) {
+      commentsList.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:24px 0;text-align:center;">No comments yet.</div>`;
+    } else {
+      commentsList.innerHTML = comments.map(commentItemHTML).join('');
+    }
+  } catch {
+    if (requestToken !== commentsRequestToken) return;
+    commentsList.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:24px 0;text-align:center;">Couldn't load comments — please try again.</div>`;
+  }
+}
+
+function commentItemHTML(c) {
+  const avatar = c.authorAvatar || '';
+  return `
+    <div class="shorts-comment-item">
+      <img class="shorts-comment-avatar" src="${escapeHtml(avatar)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+      <div class="shorts-comment-body">
+        <div class="shorts-comment-author">${escapeHtml(c.author || 'YouTube user')}</div>
+        <div class="shorts-comment-text">${escapeHtml(c.text || '')}</div>
+        <div class="shorts-comment-meta">
+          ${c.likeCount ? `<span>👍 ${escapeHtml(String(c.likeCount))}</span>` : ''}
+          ${c.publishedAt ? `<span>${new Date(c.publishedAt).toLocaleDateString()}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function closeComments() {
+  commentsBackdrop.classList.remove('open');
+  commentsSheet.classList.remove('open');
+  commentsRequestToken++; // invalidate any in-flight fetch so a late response can't reopen/repopulate a closed sheet
+}
+
+commentsBackdrop.addEventListener('click', closeComments);
+document.getElementById('comments-close').addEventListener('click', closeComments);
 
 async function shareItem(item) {
   const url = `${window.location.origin}/shorts/${item.youtube_video_id}`;

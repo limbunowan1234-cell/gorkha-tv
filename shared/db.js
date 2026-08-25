@@ -514,6 +514,25 @@ export async function getShortsAffinity(db, sessionKey) {
   return empty;
 }
 
+// ── Video comments cache (real YouTube comments, read-only — see shared/youtube.js's listCommentThreads) ──
+
+export async function getCachedComments(db, youtubeVideoId) {
+  return db.prepare(`SELECT comments_json, status, fetched_at FROM video_comments_cache WHERE youtube_video_id = ?`).bind(youtubeVideoId).first();
+}
+
+export async function setCachedComments(db, youtubeVideoId, commentsJson, status = 'ok') {
+  await db
+    .prepare(
+      `INSERT INTO video_comments_cache (youtube_video_id, comments_json, status, fetched_at) VALUES (?, ?, ?, ?)
+       ON CONFLICT(youtube_video_id) DO UPDATE SET
+         comments_json = excluded.comments_json,
+         status = excluded.status,
+         fetched_at = excluded.fetched_at`
+    )
+    .bind(youtubeVideoId, commentsJson, status, nowIso())
+    .run();
+}
+
 export async function addQuotaUsage(db, units, isSearchCall = false) {
   const date = todayKey();
   await db

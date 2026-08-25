@@ -162,6 +162,29 @@ export async function searchVideos(apiKey, query, { publishedAfter, maxResults =
   return { data: videoIds, unitsUsed: 100 };
 }
 
+// Top-level comments only (not nested replies — keeps the Shorts comments
+// drawer simple, matching the "don't over-engineer" scope of that feature).
+// Cheap: 1 unit, same as videos.list. Throws with err.youtubeReason ===
+// 'commentsDisabled' when the uploader has turned comments off — the caller
+// (functions/api/videos/[id]/comments.js) treats that as a normal, cacheable
+// state, not an error.
+export async function listCommentThreads(apiKey, videoId, maxResults = 30) {
+  const body = await apiGet('commentThreads', { part: 'snippet', videoId, maxResults, order: 'relevance', textFormat: 'plainText' }, apiKey);
+
+  const comments = (body.items || []).map((item) => {
+    const c = item.snippet.topLevelComment.snippet;
+    return {
+      author: c.authorDisplayName,
+      authorAvatar: c.authorProfileImageUrl,
+      text: c.textDisplay,
+      likeCount: c.likeCount,
+      publishedAt: c.publishedAt,
+    };
+  });
+
+  return { data: comments, unitsUsed: 1 };
+}
+
 export function parseIso8601Duration(iso) {
   const match = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso || '');
   if (!match) return null;
