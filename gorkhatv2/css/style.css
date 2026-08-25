@@ -297,14 +297,14 @@ nav {
 .card-sub { font-size: 11px; color: var(--muted); }
 
 /* ── TOP N CARDS ── */
-.num-card { flex-shrink: 0; width: 160px; cursor: pointer; display: flex; align-items: flex-end; }
+.num-card { flex-shrink: 0; width: 240px; cursor: pointer; display: flex; align-items: flex-end; }
 .num-big {
-  font-family: 'Teko', sans-serif; font-size: 110px; font-weight: 700; line-height: 1;
-  color: transparent; -webkit-text-stroke: 2px rgba(255,255,255,0.12);
-  margin-right: -14px; flex-shrink: 0; z-index: 1; user-select: none;
+  font-family: 'Teko', sans-serif; font-size: 170px; font-weight: 700; line-height: 1;
+  color: transparent; -webkit-text-stroke: 3px rgba(255,255,255,0.12);
+  margin-right: -22px; flex-shrink: 0; z-index: 1; user-select: none;
 }
 .num-card-img {
-  width: 110px; height: 62px; border-radius: 4px; flex-shrink: 0;
+  width: 180px; height: 101px; border-radius: 4px; flex-shrink: 0;
   overflow: hidden; transition: transform 0.3s; background: var(--surface2);
 }
 .num-card:hover .num-card-img { transform: scale(1.06); }
