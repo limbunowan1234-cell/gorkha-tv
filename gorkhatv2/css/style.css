@@ -111,6 +111,33 @@ nav {
 .dropdown-item.danger { color: #f87171; }
 .dropdown-divider { border: none; border-top: 1px solid var(--border); }
 
+/* ── MOBILE BOTTOM NAV ── */
+/* Desktop-hidden, phone-only tab bar — Shorts needs to be a one-tap primary
+   destination on mobile, not buried behind the horizontally-cramped top nav.
+   Height (56px) is a shared constant with templates/shorts.html's viewport
+   math (see its own comment) — keep the two in sync if this changes. */
+.mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(8,8,8,0.98); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.mobile-nav-inner {
+  display: flex; height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mobile-nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  color: var(--muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+}
+.mobile-nav-item svg { width: 22px; height: 22px; stroke: var(--muted); transition: stroke 0.15s, color 0.15s; }
+.mobile-nav-item.active { color: var(--text); }
+.mobile-nav-item.active svg { stroke: var(--red); }
+@media (max-width: 700px) {
+  .mobile-nav { display: block; }
+  body:not(.mobile-nav-overlay) { padding-bottom: 56px; }
+}
+
 /* ── HERO ── */
 .hero { position: relative; height: 580px; overflow: hidden; background: var(--surface); }
 .hero-bg {

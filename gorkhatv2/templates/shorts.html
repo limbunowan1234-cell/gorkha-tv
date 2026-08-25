@@ -120,9 +120,32 @@
     @supports (height: 100dvh) {
       .shorts-end { height: calc(100dvh - 64px); }
     }
+
+    /* On phones the bottom mobile nav (56px, see .mobile-nav in style.css)
+       overlays the feed rather than pushing it up (body opts out of the
+       padding-bottom push via .mobile-nav-overlay) — so the feed's own
+       usable height needs to shrink by that same 56px here instead, or the
+       last ~56px of each slide (and its Save/Share overlay) would sit
+       underneath the nav bar. */
+    @media (max-width: 700px) {
+      .shorts-feed, .shorts-slide, .shorts-loading, .shorts-empty, .shorts-end { height: calc(100vh - 64px - 56px); }
+      .shorts-player-frame {
+        width: min(100vw, calc((100vh - 64px - 56px) * 9 / 16));
+        height: min(calc(100vh - 64px - 56px), calc(100vw * 16 / 9));
+      }
+    }
+    @supports (height: 100dvh) {
+      @media (max-width: 700px) {
+        .shorts-feed, .shorts-slide, .shorts-loading, .shorts-empty, .shorts-end { height: calc(100dvh - 64px - 56px); }
+        .shorts-player-frame {
+          width: min(100vw, calc((100dvh - 64px - 56px) * 9 / 16));
+          height: min(calc(100dvh - 64px - 56px), calc(100vw * 16 / 9));
+        }
+      }
+    }
   </style>
 </head>
-<body>
+<body class="mobile-nav-overlay">
 
 <nav>
   <a href="/" class="logo-svg"><img src="/logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
@@ -138,6 +161,9 @@
   <div class="shorts-loading"><div class="spinner"></div></div>
 </div>
 
+<div id="mobile-nav-root"></div>
+
 <script type="module" src="/js/shorts.js"></script>
+<script type="module" src="/js/mobileNav.js"></script>
 </body>
 </html>
