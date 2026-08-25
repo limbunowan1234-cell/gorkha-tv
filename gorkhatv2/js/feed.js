@@ -94,8 +94,8 @@ function renderCard(item, index) {
     <div class="feed-media-wrap" data-index="${index}">
       <div class="feed-poster" style="background-image:url('${escapeHtml(poster)}')"></div>
       <div class="feed-player-frame" id="feed-player-${index}"></div>
-      <div class="feed-tap-catcher" data-action="tap-catcher"></div>
-      <div class="feed-mute-flash" data-mute-flash>🔇</div>
+      <div class="feed-tap-catcher" data-action="tap-catcher" title="Tap to open · double-tap to like"></div>
+      <button class="feed-mute-btn" data-action="mute-toggle" data-mute-icon aria-label="Toggle sound">🔇</button>
     </div>
     <div class="feed-actions-row">
       <button class="feed-action-btn ${isLiked ? 'liked' : ''}" data-action="like">
@@ -111,6 +111,7 @@ function renderCard(item, index) {
   `;
 
   el.querySelector('[data-action="tap-catcher"]').addEventListener('click', (e) => handleTapCatcherTap(e, el, item));
+  el.querySelector('[data-action="mute-toggle"]').addEventListener('click', () => toggleMute(el));
   el.querySelector('[data-action="open-creator"]').addEventListener('click', () => {
     window.location.href = creatorUrl({ youtube_channel_id: item.youtube_channel_id });
   });
@@ -130,8 +131,12 @@ function handleTapCatcherTap(e, cardEl, item) {
   state.count += 1;
 
   if (state.count === 1) {
+    // A plain tap opens the immersive full-screen swipe view at this exact
+    // video — reuses the /shorts/:id deep link built for Phase F, so no new
+    // routing/backend is needed here. Held for TAP_DELAY_MS in case a second
+    // tap follows (double-tap-to-like takes priority over navigating away).
     state.timer = setTimeout(() => {
-      toggleMute(cardEl);
+      window.location.href = `/shorts/${item.youtube_video_id}`;
       state.count = 0;
     }, TAP_DELAY_MS);
   } else {
@@ -172,11 +177,11 @@ function toggleMute(cardEl) {
   } catch {
     return;
   }
-  const flash = cardEl.querySelector('[data-mute-flash]');
-  flash.textContent = isMuted ? '🔇' : '🔊';
-  flash.classList.add('show');
-  clearTimeout(flash._timer);
-  flash._timer = setTimeout(() => flash.classList.remove('show'), 500);
+  // A persistent icon-button rather than shorts.js's transient flash — the
+  // tap that used to toggle mute now navigates away instead (see
+  // handleTapCatcherTap), so this dedicated button is the only mute control
+  // in the Feed and needs to keep showing the current state, not fade out.
+  cardEl.querySelector('[data-mute-icon]').textContent = isMuted ? '🔇' : '🔊';
 }
 
 async function toggleLike(item, btn) {

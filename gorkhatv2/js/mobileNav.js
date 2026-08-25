@@ -10,9 +10,14 @@ const TABS = [
     icon: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   },
   {
-    href: '/shorts',
+    // "Shorts" opens the scrollable Feed (pages/feed.html), not the
+    // full-screen swipe page directly — tapping a specific card in the Feed
+    // is what opens the immersive /shorts/:id swipe view. Still highlighted
+    // active while actually inside that immersive view (path starts with
+    // /shorts), since it's still "in Shorts" conceptually, just one tap deeper.
+    href: '/pages/feed.html',
     label: 'Shorts',
-    match: (path) => path.startsWith('/shorts'),
+    match: (path) => path.startsWith('/shorts') || path.includes('/feed'),
     icon: '<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/>',
   },
   {
