@@ -1,10 +1,10 @@
 import { json, errorResponse, readJsonBody } from '../../../shared/http.js';
-import { resolveShortsSessionKey, bumpShortsAffinity } from '../../../shared/db.js';
+import { resolveSessionKey, bumpShortsAffinity } from '../../../shared/db.js';
 import { SHORTS_AFFINITY_WEIGHTS } from '../../../shared/constants.js';
 
 // Fire-and-forget watch-behavior signal from the Shorts feed (see
 // gorkhatv2/js/shorts.js) — no auth required, works for anonymous viewers via
-// resolveShortsSessionKey's anon-cookie fallback. Never blocks or fails
+// resolveSessionKey's anon-cookie fallback. Never blocks or fails
 // playback: any error here is swallowed by the caller (sendBeacon has no
 // response handling anyway).
 export async function onRequestPost(context) {
@@ -18,7 +18,7 @@ export async function onRequestPost(context) {
   if (!category && !channelId) return errorResponse('category or channelId is required.', 400);
 
   try {
-    const { sessionKey, setCookieHeader } = await resolveShortsSessionKey(env.DB, request);
+    const { sessionKey, setCookieHeader } = await resolveSessionKey(env.DB, request);
     const delta = SHORTS_AFFINITY_WEIGHTS[eventType];
 
     await Promise.all([

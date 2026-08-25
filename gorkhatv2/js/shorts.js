@@ -1,6 +1,7 @@
 import { apiFetch, ytThumb, creatorUrl, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 import { initCommentsDrawer, openComments } from './commentsDrawer.js';
+import { loadYouTubeApi } from './youtubeApi.js';
 
 const feedEl = document.getElementById('shorts-feed');
 
@@ -293,23 +294,6 @@ async function shareItem(item) {
   }
 }
 
-// Loaded lazily (not a static <script> tag) so it doesn't block the page,
-// and so we control exactly when player creation is allowed to start.
-let ytApiPromise = null;
-function loadYouTubeApi() {
-  if (ytApiPromise) return ytApiPromise;
-  ytApiPromise = new Promise((resolve) => {
-    if (window.YT && window.YT.Player) {
-      resolve(window.YT);
-      return;
-    }
-    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-  });
-  return ytApiPromise;
-}
 
 async function ensurePlayer(index) {
   if (index < 0 || index >= items.length) return;

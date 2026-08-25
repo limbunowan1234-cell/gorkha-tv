@@ -477,7 +477,7 @@ export async function rejectChannelClaim(db, claimId) {
 // requiring sign-in, matching the plan's "per-session if no auth yet" ask.
 // Returns { sessionKey, setCookieHeader } — setCookieHeader is non-null only
 // when a fresh anon token was just minted and the caller needs to send it.
-export async function resolveShortsSessionKey(db, request) {
+export async function resolveSessionKey(db, request) {
   const cookies = parseCookies(request.headers.get('Cookie'));
 
   const user = await getSessionUser(db, cookies[VIEWER_SESSION_COOKIE]);
@@ -512,6 +512,77 @@ export async function getShortsAffinity(db, sessionKey) {
     (row.dimension === 'category' ? empty.category : empty.channel).set(row.value, row.score);
   }
   return empty;
+}
+
+// ── Watch progress + regular-video affinity (homepage "Continue Watching" / "Because You Liked") ──
+
+export async function upsertWatchProgress(db, sessionKey, youtubeVideoId, progressSeconds, durationSeconds) {
+  if (!sessionKey || !youtubeVideoId) return;
+  await db
+    .prepare(
+      `INSERT INTO watch_progress (session_key, youtube_video_id, progress_seconds, duration_seconds, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(session_key, youtube_video_id) DO UPDATE SET
+         progress_seconds = excluded.progress_seconds,
+         duration_seconds = excluded.duration_seconds,
+         updated_at = excluded.updated_at`
+    )
+    .bind(sessionKey, youtubeVideoId, Math.round(progressSeconds), durationSeconds ? Math.round(durationSeconds) : null, nowIso())
+    .run();
+}
+
+export async function getWatchProgress(db, sessionKey, youtubeVideoId) {
+  if (!sessionKey) return null;
+  return db
+    .prepare(`SELECT progress_seconds, duration_seconds FROM watch_progress WHERE session_key = ? AND youtube_video_id = ?`)
+    .bind(sessionKey, youtubeVideoId)
+    .first();
+}
+
+// Videos this viewer started but didn't finish — excludes near-the-start
+// (likely an accidental open) and near-the-end (effectively done watching).
+export async function getContinueWatching(db, sessionKey, limit = 12) {
+  if (!sessionKey) return [];
+  const { results } = await db
+    .prepare(
+      `SELECT v.id, v.youtube_video_id, v.title, v.thumbnail_url, v.channel_name, v.channel_handle,
+              v.youtube_channel_id, v.published_at, v.category, v.location,
+              wp.progress_seconds, wp.duration_seconds
+       FROM watch_progress wp
+       JOIN videos v ON v.youtube_video_id = wp.youtube_video_id
+       WHERE wp.session_key = ? AND v.status = 'published'
+         AND wp.progress_seconds > 10
+         AND wp.duration_seconds IS NOT NULL
+         AND wp.progress_seconds < wp.duration_seconds * 0.9
+       ORDER BY wp.updated_at DESC LIMIT ?`
+    )
+    .bind(sessionKey, limit)
+    .all();
+  return results;
+}
+
+export async function bumpVideoAffinity(db, sessionKey, dimension, value, delta) {
+  if (!sessionKey || !value) return;
+  await db
+    .prepare(
+      `INSERT INTO video_affinity (session_key, dimension, value, score, updated_at) VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(session_key, dimension, value) DO UPDATE SET
+         score = score + excluded.score,
+         updated_at = excluded.updated_at`
+    )
+    .bind(sessionKey, dimension, value, delta, nowIso())
+    .run();
+}
+
+// Returns the single highest-scoring channel and category for one viewer, or
+// null for either if there's no signal yet — used by
+// functions/api/home/personalized.js to pick what "Because You Liked" means.
+export async function getTopVideoAffinity(db, sessionKey) {
+  if (!sessionKey) return { topChannel: null, topCategory: null };
+  const [topChannel, topCategory] = await Promise.all([
+    db.prepare(`SELECT value, score FROM video_affinity WHERE session_key = ? AND dimension = 'channel' ORDER BY score DESC LIMIT 1`).bind(sessionKey).first(),
+    db.prepare(`SELECT value, score FROM video_affinity WHERE session_key = ? AND dimension = 'category' ORDER BY score DESC LIMIT 1`).bind(sessionKey).first(),
+  ]);
+  return { topChannel: topChannel || null, topCategory: topCategory || null };
 }
 
 // ── Video comments cache (real YouTube comments, read-only — see shared/youtube.js's listCommentThreads) ──

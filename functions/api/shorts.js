@@ -1,5 +1,5 @@
 import { json, errorResponse } from '../../shared/http.js';
-import { resolveShortsSessionKey, getShortsAffinity } from '../../shared/db.js';
+import { resolveSessionKey, getShortsAffinity } from '../../shared/db.js';
 import { SHORTS_RANKING_WEIGHTS } from '../../shared/constants.js';
 
 // Shorts feed — deliberately separate from /api/videos so the vertical
@@ -46,7 +46,7 @@ export async function onRequestGet(context) {
       return json({ shorts: [], nextCursor: null }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
 
-    const { sessionKey, setCookieHeader } = await resolveShortsSessionKey(env.DB, request);
+    const { sessionKey, setCookieHeader } = await resolveSessionKey(env.DB, request);
     const affinity = await getShortsAffinity(env.DB, sessionKey);
 
     const ranked = rankPool(pool, affinity).slice(0, limit);

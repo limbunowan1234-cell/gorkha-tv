@@ -10,6 +10,7 @@
 import { apiFetch, ytThumb, creatorUrl, formatCount, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 import { initCommentsDrawer, openComments } from './commentsDrawer.js';
+import { loadYouTubeApi } from './youtubeApi.js';
 
 const feedEl = document.getElementById('feed-wrap');
 
@@ -267,21 +268,6 @@ async function shareItem(item) {
   }
 }
 
-let ytApiPromise = null;
-function loadYouTubeApi() {
-  if (ytApiPromise) return ytApiPromise;
-  ytApiPromise = new Promise((resolve) => {
-    if (window.YT && window.YT.Player) {
-      resolve(window.YT);
-      return;
-    }
-    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-  });
-  return ytApiPromise;
-}
 
 async function ensurePlayer(index) {
   if (index < 0 || index >= items.length) return;

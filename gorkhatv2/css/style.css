@@ -267,6 +267,10 @@ nav {
   width: 44px; height: 44px; background: rgba(255,255,255,0.92);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
+
+/* Continue Watching progress bar */
+.card-progress-track { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,0.25); }
+.card-progress-fill { height: 100%; background: var(--red); }
 .play-circle svg { width: 18px; height: 18px; fill: #000; margin-left: 3px; }
 
 .card-cat-badge {

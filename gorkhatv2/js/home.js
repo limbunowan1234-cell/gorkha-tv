@@ -1,4 +1,4 @@
-import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, creatorCardHTML } from './api.js';
+import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, continueWatchingCardHTML, creatorCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️' };
@@ -42,6 +42,31 @@ async function loadHome() {
     document.querySelectorAll('.cards-scroll').forEach((el) => {
       el.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0;">Couldn't load content right now — please try again shortly.</div>`;
     });
+  }
+
+  loadPersonalizedRows();
+}
+
+// Separate request from /api/home on purpose — this data is per-viewer and
+// must never be cached at a shared/edge layer (see functions/api/home/personalized.js).
+// Its own independent try/catch so a failure here never takes down the rest
+// of a homepage that already rendered successfully.
+async function loadPersonalizedRows() {
+  try {
+    const { continueWatching, becauseYouLiked } = await apiFetch('/home/personalized');
+    renderRowCards('continue-watching-row', continueWatching, { hideIfEmpty: true, cardFn: continueWatchingCardHTML });
+
+    const likedSection = document.getElementById('because-you-liked-section');
+    if (becauseYouLiked && becauseYouLiked.items.length) {
+      document.getElementById('because-you-liked-title').textContent = `✨ ${becauseYouLiked.label}`;
+      likedSection.style.display = '';
+      document.getElementById('because-you-liked-row').innerHTML = becauseYouLiked.items.map(videoCardHTML).join('');
+    } else {
+      likedSection.style.display = 'none';
+    }
+  } catch {
+    // Cold start / not signed in / transient failure — both rows just stay
+    // hidden, exactly like a viewer with no history yet would see.
   }
 }
 
@@ -132,7 +157,7 @@ function renderRowCards(id, items, opts = {}) {
     el.innerHTML = opts.hideIfEmpty ? '' : `<div style="color:var(--muted);font-size:13px;padding:8px 0;">No content yet.</div>`;
     return;
   }
-  el.innerHTML = items_.map(videoCardHTML).join('');
+  el.innerHTML = items_.map(opts.cardFn || videoCardHTML).join('');
 }
 
 function renderLocationRows(byLocation) {

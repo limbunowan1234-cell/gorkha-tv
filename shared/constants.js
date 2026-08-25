@@ -108,3 +108,19 @@ export const SHORTS_RANKING_WEIGHTS = {
   categoryAffinity: 0.25,
   channelAffinity: 0.15,
 };
+
+// Points added to video_affinity.score — regular-video equivalent of
+// SHORTS_AFFINITY_WEIGHTS above. Regular videos don't have a "skip" signal
+// the way a swipe feed does (opening a watch page is already a deliberate
+// choice), so there's no negative weight here.
+export const VIDEO_AFFINITY_WEIGHTS = {
+  watched_30pct: 2, // first time a viewer's progress on a video crosses 30%
+  liked: 5, // added to favourites ("My List")
+};
+
+// A viewer's progress on a video must cross this fraction before it counts
+// as a genuine "watched" signal for video_affinity — matches the spirit of
+// SHORTS_AFFINITY_WEIGHTS.watched_full's 80% bar, just lower since opening a
+// long-form video and getting a third of the way through is already a much
+// more deliberate action than a Shorts swipe.
+export const WATCH_AFFINITY_THRESHOLD = 0.3;

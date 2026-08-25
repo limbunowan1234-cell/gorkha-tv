@@ -72,6 +72,28 @@ export function videoCardHTML(v) {
     </div>`;
 }
 
+// "Continue Watching" card — same .card shape as videoCardHTML plus a thin
+// progress-bar overlay on the thumbnail (functions/api/home/personalized.js
+// supplies progress_seconds/duration_seconds per item).
+export function continueWatchingCardHTML(v) {
+  const thumb = ytThumb(v);
+  const pct = v.duration_seconds ? Math.min(100, Math.round((v.progress_seconds / v.duration_seconds) * 100)) : 0;
+  return `
+    <div class="card" onclick="window.location.href='${watchUrl(v)}'">
+      <div class="card-thumb">
+        <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
+        <div class="card-play-overlay">
+          <div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+        <div class="card-progress-track"><div class="card-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(v.title || '')}</div>
+        <div class="card-sub">${escapeHtml(v.channel_name || '')}${v.location ? ' · ' + escapeHtml(v.location) : ''}</div>
+      </div>
+    </div>`;
+}
+
 // Netflix-style "Top 10" numbered row — .num-card/.num-big/.num-card-img
 // already existed in style.css from the original design shell but were
 // never wired up to real rendering until now. Used for the genuinely-ranked

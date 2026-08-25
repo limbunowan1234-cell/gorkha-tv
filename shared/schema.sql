@@ -196,6 +196,30 @@ CREATE TABLE IF NOT EXISTS video_view_daily (
 );
 CREATE INDEX IF NOT EXISTS idx_video_view_daily_date ON video_view_daily(view_date);
 
+-- Latest-known watch position per (viewer, video), not an event log — drives
+-- the homepage "Continue Watching" row and lets the watch page resume.
+CREATE TABLE IF NOT EXISTS watch_progress (
+  session_key       TEXT NOT NULL,
+  youtube_video_id  TEXT NOT NULL,
+  progress_seconds  INTEGER NOT NULL DEFAULT 0,
+  duration_seconds  INTEGER,
+  updated_at        TEXT NOT NULL,
+  PRIMARY KEY (session_key, youtube_video_id)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_progress_session ON watch_progress(session_key, updated_at DESC);
+
+-- Per-viewer weighted signal for regular (non-Shorts) videos — same shape as
+-- shorts_affinity, separate table since the two drive different rows.
+CREATE TABLE IF NOT EXISTS video_affinity (
+  session_key   TEXT NOT NULL,
+  dimension     TEXT NOT NULL CHECK (dimension IN ('category','channel')),
+  value         TEXT NOT NULL,
+  score         INTEGER NOT NULL DEFAULT 0,
+  updated_at    TEXT NOT NULL,
+  PRIMARY KEY (session_key, dimension, value)
+);
+CREATE INDEX IF NOT EXISTS idx_video_affinity_session ON video_affinity(session_key);
+
 -- Minimal generic rate limiter for unauthenticated write endpoints
 -- (admin login attempts, public channel submissions) — secondary
 -- defense-in-depth alongside Cloudflare's own edge-level protections.

@@ -1,5 +1,10 @@
 import { apiFetch, ytThumb, watchUrl, creatorUrl, formatViews, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
+import { loadYouTubeApi } from './youtubeApi.js';
+
+let ytPlayer = null;
+let currentVideo = null;
+let progressSyncTimer = null;
 
 function getVideoIdFromPath() {
   const match = window.location.pathname.match(/\/watch\/([^/?#]+)/);
@@ -14,10 +19,12 @@ async function init() {
 
   try {
     const { video } = await apiFetch(`/videos/${encodeURIComponent(id)}`);
+    currentVideo = video;
     renderVideo(video);
     initFavouriteButton(video);
     loadRelated(id);
     recordView(id);
+    initPlayer(video);
   } catch (err) {
     renderNotFound();
   }
@@ -31,11 +38,71 @@ function recordView(id) {
   fetch(`/api/videos/${encodeURIComponent(id)}/view`, { method: 'POST' }).catch(() => {});
 }
 
+// Real YT.Player (not a plain <iframe>) so playback progress can actually be
+// read — powers the homepage "Continue Watching" row and lets a viewer
+// resume where they left off. autoplay stays off, matching the previous
+// plain-embed behavior (a viewer still clicks play themselves).
+async function initPlayer(v) {
+  const YT = await loadYouTubeApi();
+  // #watch-player already has the right aspect-ratio/sizing CSS from the
+  // plain-iframe era (.watch-player { aspect-ratio:16/9 } / iframe {
+  // width:100%;height:100% }) — YT.Player replaces the div in place and the
+  // resulting iframe picks up the same rules, no template changes needed.
+  ytPlayer = new YT.Player('watch-player', {
+    videoId: v.youtube_video_id,
+    playerVars: { autoplay: 0, rel: 0, playsinline: 1 },
+    events: {
+      onReady: async (e) => {
+        try {
+          const { progress } = await apiFetch(`/videos/${encodeURIComponent(v.youtube_video_id)}/progress`);
+          if (progress && progress.duration_seconds && progress.progress_seconds < progress.duration_seconds * 0.9) {
+            e.target.seekTo(progress.progress_seconds, true);
+          }
+        } catch {
+          /* resume is a nice-to-have — playback still works without it */
+        }
+      },
+      onStateChange: (e) => {
+        if (e.data === YT.PlayerState.PLAYING) {
+          clearInterval(progressSyncTimer);
+          progressSyncTimer = setInterval(syncProgress, 20000);
+        } else {
+          clearInterval(progressSyncTimer);
+          if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) syncProgress();
+        }
+      },
+    },
+  });
+}
+
+function syncProgress() {
+  if (!ytPlayer || !currentVideo || typeof ytPlayer.getCurrentTime !== 'function') return;
+  const progressSeconds = ytPlayer.getCurrentTime();
+  const durationSeconds = ytPlayer.getDuration();
+  if (!durationSeconds) return;
+
+  const payload = JSON.stringify({
+    progressSeconds,
+    durationSeconds,
+    category: currentVideo.category,
+    channelId: currentVideo.youtube_channel_id,
+  });
+  const url = `/api/videos/${encodeURIComponent(currentVideo.youtube_video_id)}/progress`;
+  if (navigator.sendBeacon) {
+    navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+  } else {
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+  }
+}
+
+// Flushes progress on tab-hide/navigation-away — onStateChange only catches
+// an explicit pause/end, not the viewer just closing the tab mid-playback.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') syncProgress();
+});
+
 function renderVideo(v) {
   document.title = `${v.title} | GorkhaTV`;
-
-  const player = document.getElementById('watch-player');
-  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${encodeURIComponent(v.youtube_video_id)}" title="${escapeHtml(v.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
 
   document.getElementById('watch-title').textContent = v.title || '';
 
@@ -94,7 +161,7 @@ async function initFavouriteButton(v) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ videoId: v.id }),
+          body: JSON.stringify({ videoId: v.id, category: v.category, channelId: v.youtube_channel_id }),
         });
         isFavourited = true;
         showToast('Added to favourites 🔖');
