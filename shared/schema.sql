@@ -228,3 +228,34 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   count        INTEGER NOT NULL DEFAULT 0,
   window_start TEXT NOT NULL
 );
+
+-- ── Follows (viewer -> channel) ──
+CREATE TABLE IF NOT EXISTS follows (
+  user_id     TEXT NOT NULL,
+  channel_id  TEXT NOT NULL,
+  created_at  TEXT NOT NULL,
+  PRIMARY KEY (user_id, channel_id)
+);
+CREATE INDEX IF NOT EXISTS idx_follows_channel ON follows(channel_id);
+
+-- ── Analytics (DAU/MAU, new-vs-returning, watch time) ──
+CREATE TABLE IF NOT EXISTS session_activity_daily (
+  session_key   TEXT NOT NULL,
+  activity_date TEXT NOT NULL,
+  page_views    INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (session_key, activity_date)
+);
+CREATE INDEX IF NOT EXISTS idx_session_activity_date ON session_activity_daily(activity_date);
+
+CREATE TABLE IF NOT EXISTS session_first_seen (
+  session_key     TEXT PRIMARY KEY,
+  first_seen_date TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS watch_time_daily (
+  session_key      TEXT NOT NULL,
+  watch_date       TEXT NOT NULL,
+  seconds_watched  INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (session_key, watch_date)
+);
+CREATE INDEX IF NOT EXISTS idx_watch_time_date ON watch_time_daily(watch_date);

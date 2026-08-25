@@ -252,7 +252,7 @@ export async function recordSyncError(db, runId, entityType, entityId, errorMess
 
 // ── Quota tracking ──
 
-function todayKey() {
+export function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
 }
 
@@ -359,6 +359,33 @@ export async function addFavourite(db, userId, videoId) {
 
 export async function removeFavourite(db, userId, videoId) {
   await db.prepare(`DELETE FROM favourites WHERE user_id = ? AND video_id = ?`).bind(userId, videoId).run();
+}
+
+// ── Follows (viewer -> channel) ──
+
+export async function addFollow(db, userId, channelId) {
+  await db.prepare(`INSERT OR IGNORE INTO follows (user_id, channel_id, created_at) VALUES (?, ?, ?)`).bind(userId, channelId, nowIso()).run();
+}
+
+export async function removeFollow(db, userId, channelId) {
+  await db.prepare(`DELETE FROM follows WHERE user_id = ? AND channel_id = ?`).bind(userId, channelId).run();
+}
+
+export async function listFollowedChannels(db, userId) {
+  const { results } = await db
+    .prepare(
+      `SELECT c.id, c.youtube_channel_id, c.channel_name, c.channel_handle, c.thumbnail_url, c.category, c.location, c.verified
+       FROM follows f JOIN channels c ON c.id = f.channel_id
+       WHERE f.user_id = ? AND c.status = 'approved' ORDER BY f.created_at DESC`
+    )
+    .bind(userId)
+    .all();
+  return results;
+}
+
+export async function getFollowerCount(db, channelId) {
+  const row = await db.prepare(`SELECT COUNT(*) AS c FROM follows WHERE channel_id = ?`).bind(channelId).first();
+  return row?.c || 0;
 }
 
 export async function listFavourites(db, userId) {
@@ -626,5 +653,40 @@ export async function addQuotaUsage(db, units, isSearchCall = false) {
          search_calls_used = search_calls_used + excluded.search_calls_used`
     )
     .bind(date, units, isSearchCall ? 1 : 0)
+    .run();
+}
+
+// ── Site analytics (DAU/MAU, new-vs-returning, watch time) ──
+
+// Fired once per page load (see gorkhatv2/js/auth.js's initAuthNav) — records
+// that this session_key was active today, and (via INSERT OR IGNORE) the
+// first date it was ever seen at all, so "new vs returning" never requires
+// scanning the full activity history.
+export async function recordSessionActivity(db, sessionKey) {
+  if (!sessionKey) return;
+  const date = todayKey();
+  await Promise.all([
+    db
+      .prepare(
+        `INSERT INTO session_activity_daily (session_key, activity_date, page_views) VALUES (?, ?, 1)
+         ON CONFLICT(session_key, activity_date) DO UPDATE SET page_views = page_views + 1`
+      )
+      .bind(sessionKey, date)
+      .run(),
+    db.prepare(`INSERT OR IGNORE INTO session_first_seen (session_key, first_seen_date) VALUES (?, ?)`).bind(sessionKey, date).run(),
+  ]);
+}
+
+// Approximate watch-time accumulator — deltaSeconds is the caller's already-
+// clamped difference between successive progress-sync pings (see
+// functions/api/videos/[id]/progress.js), not a raw event log.
+export async function bumpWatchTime(db, sessionKey, deltaSeconds) {
+  if (!sessionKey || deltaSeconds <= 0) return;
+  await db
+    .prepare(
+      `INSERT INTO watch_time_daily (session_key, watch_date, seconds_watched) VALUES (?, ?, ?)
+       ON CONFLICT(session_key, watch_date) DO UPDATE SET seconds_watched = seconds_watched + excluded.seconds_watched`
+    )
+    .bind(sessionKey, todayKey(), deltaSeconds)
     .run();
 }

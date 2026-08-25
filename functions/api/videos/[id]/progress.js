@@ -1,6 +1,11 @@
 import { json, errorResponse, readJsonBody } from '../../../../shared/http.js';
-import { resolveSessionKey, upsertWatchProgress, getWatchProgress, bumpVideoAffinity, checkRateLimit } from '../../../../shared/db.js';
+import { resolveSessionKey, upsertWatchProgress, getWatchProgress, bumpVideoAffinity, bumpWatchTime, checkRateLimit } from '../../../../shared/db.js';
 import { VIDEO_AFFINITY_WEIGHTS, WATCH_AFFINITY_THRESHOLD } from '../../../../shared/constants.js';
+
+// Caps a single progress-sync delta (~20s apart, see watch.js's syncProgress)
+// so a rewind never goes negative and a seek-ahead never inflates watch time
+// beyond what one sync interval could plausibly cover.
+const MAX_WATCH_TIME_DELTA_SECONDS = 30;
 
 // :id is the YouTube video id. Drives the homepage "Continue Watching" row
 // and lets the watch page resume playback — see gorkhatv2/js/watch.js.
@@ -33,19 +38,32 @@ export async function onRequestPost(context) {
   try {
     const { sessionKey, setCookieHeader } = await resolveSessionKey(env.DB, request);
 
+    // Fetched unconditionally now: feeds both the affinity-threshold check
+    // below and the watch-time delta (approximate accumulated watch time —
+    // see shared/db.js's bumpWatchTime).
+    const existing = await getWatchProgress(env.DB, sessionKey, params.id);
+
     // Bump video_affinity only the first time this viewer's progress on this
     // video crosses the threshold — not on every ~20s ping, which would
     // otherwise inflate the score for one long watch far beyond what a
     // genuinely-repeated signal (e.g. Saves) is worth.
     let shouldBump = false;
     if (durationSeconds && (body?.category || body?.channelId)) {
-      const existing = await getWatchProgress(env.DB, sessionKey, params.id);
       const wasBelow = !existing || existing.progress_seconds < durationSeconds * WATCH_AFFINITY_THRESHOLD;
       const nowAbove = progressSeconds >= durationSeconds * WATCH_AFFINITY_THRESHOLD;
       shouldBump = wasBelow && nowAbove;
     }
 
-    await upsertWatchProgress(env.DB, sessionKey, params.id, progressSeconds, durationSeconds);
+    // Clamp: a rewind (negative) contributes nothing; a seek-ahead is capped
+    // at roughly one sync interval's worth, so a single jump can't inflate
+    // total watch time.
+    const prevProgress = existing ? existing.progress_seconds : 0;
+    const watchDelta = Math.max(0, Math.min(progressSeconds - prevProgress, MAX_WATCH_TIME_DELTA_SECONDS));
+
+    await Promise.all([
+      upsertWatchProgress(env.DB, sessionKey, params.id, progressSeconds, durationSeconds),
+      watchDelta > 0 ? bumpWatchTime(env.DB, sessionKey, watchDelta) : null,
+    ]);
 
     if (shouldBump) {
       const delta = VIDEO_AFFINITY_WEIGHTS.watched_30pct;

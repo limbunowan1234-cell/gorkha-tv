@@ -45,6 +45,8 @@ body { background: var(--dark); }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 18px 20px; }
 .stat-card .n { font-family: 'Teko', sans-serif; font-size: 34px; font-weight: 600; line-height: 1; }
 .stat-card .l { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 28px; }
+.chart-card h2 { font-family: 'Teko', sans-serif; font-size: 18px; font-weight: 600; margin-bottom: 14px; }
 
 .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .hub-card {

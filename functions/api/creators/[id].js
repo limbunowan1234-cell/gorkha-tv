@@ -1,4 +1,5 @@
 import { cacheableJson, errorResponse } from '../../../shared/http.js';
+import { getFollowerCount } from '../../../shared/db.js';
 
 const CREATOR_COLUMNS =
   'id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, description, location, category, verified, featured, submitted_by_user_id';
@@ -26,7 +27,12 @@ export async function onRequestGet(context) {
     const claimed = !!creator.submitted_by_user_id;
     delete creator.submitted_by_user_id;
 
-    return cacheableJson({ creator: { ...creator, claimed }, videos }, 120);
+    // Follower count tolerates this response's 120s shared cache fine; a
+    // per-viewer "am I following" flag must not go here — see
+    // gorkhatv2/js/creator.js, which resolves that client-side instead.
+    const followerCount = await getFollowerCount(env.DB, creator.id);
+
+    return cacheableJson({ creator: { ...creator, claimed, followerCount }, videos }, 120);
   } catch (err) {
     return errorResponse('This creator profile is temporarily unavailable.', 503);
   }

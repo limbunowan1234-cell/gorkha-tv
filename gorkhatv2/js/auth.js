@@ -12,6 +12,8 @@ export function getCurrentUser() {
 }
 
 export async function initAuthNav() {
+  pingActivity(); // fire-and-forget, runs on every public page load — powers admin analytics (DAU/MAU)
+
   const navRight = document.getElementById('nav-right');
   if (!navRight) return;
 
@@ -28,6 +30,10 @@ export async function initAuthNav() {
   }
 
   renderSignInButton();
+}
+
+function pingActivity() {
+  fetch('/api/track/ping', { method: 'POST', credentials: 'include' }).catch(() => {});
 }
 
 async function renderSignInButton() {

@@ -1,4 +1,4 @@
-import { apiFetch, escapeHtml, videoCardHTML, showToast } from './api.js';
+import { apiFetch, escapeHtml, videoCardHTML, showToast, formatCount } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 
 let currentChannel = null;
@@ -18,6 +18,7 @@ async function init() {
     currentChannel = creator;
     renderCreator(creator, videos);
     renderClaimBox(creator);
+    initFollowButton(creator);
   } catch {
     renderNotFound();
   }
@@ -36,8 +37,12 @@ function renderCreator(c, videos) {
     <div>
       <div class="creator-name">${escapeHtml(c.channel_name)}${c.verified ? ' <span class="verified-tick" title="Verified">✓</span>' : ''}</div>
       <div class="creator-meta">${meta.join(' · ')}</div>
+      <div class="creator-stats"><span id="follower-count" data-count="${c.followerCount}">${formatCount(c.followerCount)}</span> follower${c.followerCount === 1 ? '' : 's'}</div>
       ${c.description ? `<p class="creator-desc">${escapeHtml(c.description)}</p>` : ''}
-      ${c.channel_url ? `<a class="creator-yt-link" href="${escapeHtml(c.channel_url)}" target="_blank" rel="noopener">▶ Visit Channel on YouTube</a>` : ''}
+      <div class="creator-actions">
+        <button class="follow-btn" id="follow-btn"></button>
+        ${c.channel_url ? `<a class="creator-yt-link" href="${escapeHtml(c.channel_url)}" target="_blank" rel="noopener">▶ Visit Channel on YouTube</a>` : ''}
+      </div>
       <div class="claim-box" id="claim-box"></div>
     </div>`;
 
@@ -45,6 +50,67 @@ function renderCreator(c, videos) {
   grid.innerHTML = videos.length
     ? videos.map(videoCardHTML).join('')
     : `<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">📭</div><h3>No published videos yet</h3></div>`;
+}
+
+async function initFollowButton(c) {
+  const btn = document.getElementById('follow-btn');
+  if (!btn) return;
+
+  if (!getCurrentUser()) {
+    setFollowButtonState(btn, false);
+    btn.onclick = () => showToast('Sign in to follow creators');
+    return;
+  }
+
+  let isFollowing = false;
+  try {
+    const { follows } = await apiFetch('/follows');
+    isFollowing = follows.some((f) => f.id === c.id);
+  } catch {
+    /* nice-to-have, button still works without it */
+  }
+  setFollowButtonState(btn, isFollowing);
+
+  btn.onclick = async () => {
+    try {
+      if (isFollowing) {
+        await fetch(`/api/follows/${encodeURIComponent(c.id)}`, { method: 'DELETE', credentials: 'include' });
+        isFollowing = false;
+        bumpFollowerCount(-1);
+        showToast('Unfollowed');
+      } else {
+        await fetch('/api/follows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ channelId: c.id }),
+        });
+        isFollowing = true;
+        bumpFollowerCount(1);
+        showToast('Following ✓');
+      }
+      setFollowButtonState(btn, isFollowing);
+    } catch {
+      showToast('Something went wrong — please try again.');
+    }
+  };
+}
+
+function setFollowButtonState(btn, isFollowing) {
+  btn.textContent = isFollowing ? '✓ Following' : '+ Follow';
+  btn.classList.toggle('following', isFollowing);
+}
+
+// Optimistic local update — the follower count came from a 120s-cached
+// response, so it won't reflect this click server-side for up to 2 minutes.
+// Tracks the raw number in data-count (not parsed back out of the formatted
+// "1.2K"-style text, which would lose precision).
+function bumpFollowerCount(delta) {
+  const el = document.getElementById('follower-count');
+  if (!el) return;
+  const next = Math.max(0, (parseInt(el.dataset.count, 10) || 0) + delta);
+  el.dataset.count = next;
+  el.textContent = formatCount(next);
 }
 
 function renderClaimBox(c) {

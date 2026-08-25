@@ -1,20 +1,23 @@
-import { apiFetch, ytThumb, watchUrl, escapeHtml, showToast } from './api.js';
+import { apiFetch, ytThumb, watchUrl, creatorUrl, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 
 async function init() {
   await initAuthNav();
 
   if (!getCurrentUser()) {
-    document.getElementById('fav-grid').innerHTML = `
+    const lockedHtml = `
       <div class="empty" style="grid-column:1/-1;">
         <div class="empty-icon">🔒</div>
-        <h3>Sign in to see your favourites</h3>
-        <p>Use the sign-in button in the top-right to save videos to your list.</p>
+        <h3>Sign in to see this</h3>
+        <p>Use the sign-in button in the top-right.</p>
       </div>`;
+    document.getElementById('fav-grid').innerHTML = lockedHtml;
+    document.getElementById('following-grid').innerHTML = lockedHtml;
     return;
   }
 
   loadFavourites();
+  loadFollowing();
 }
 
 async function loadFavourites() {
@@ -72,6 +75,53 @@ document.getElementById('fav-grid').addEventListener('click', async (e) => {
 
   const card = e.target.closest('.card');
   if (card) window.location.href = card.dataset.watchUrl;
+});
+
+async function loadFollowing() {
+  const grid = document.getElementById('following-grid');
+  try {
+    const { follows } = await apiFetch('/follows');
+    if (!follows.length) {
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">👥</div><h3>Not following anyone yet</h3><p>Tap "Follow" on any creator's page to see them here.</p></div>`;
+      return;
+    }
+    grid.innerHTML = follows.map(followCardHTML).join('');
+  } catch (err) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1;"><div class="empty-icon">⚠️</div><h3>Couldn't load following</h3><p>${escapeHtml(err.message)}</p></div>`;
+  }
+}
+
+function followCardHTML(c) {
+  return `
+    <div class="card" data-id="${c.id}" data-creator-url="${escapeHtml(creatorUrl(c))}">
+      <div class="card-thumb" style="background:var(--surface2);">
+        ${c.thumbnail_url ? `<img src="${escapeHtml(c.thumbnail_url)}" alt="${escapeHtml(c.channel_name)}" loading="lazy">` : ''}
+        <button class="card-like-btn liked" data-unfollow="${c.id}" title="Unfollow">✕ Unfollow</button>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(c.channel_name || '')}${c.verified ? ' <span class="verified-tick" title="Verified">✓</span>' : ''}</div>
+        <div class="card-sub">${escapeHtml(c.category || '')}${c.location ? ' · ' + escapeHtml(c.location) : ''}</div>
+      </div>
+    </div>`;
+}
+
+document.getElementById('following-grid').addEventListener('click', async (e) => {
+  const unfollowBtn = e.target.closest('[data-unfollow]');
+  if (unfollowBtn) {
+    const id = unfollowBtn.dataset.unfollow;
+    try {
+      await fetch(`/api/follows/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+      unfollowBtn.closest('.card').remove();
+      showToast('Unfollowed');
+      if (!document.querySelectorAll('#following-grid .card').length) loadFollowing();
+    } catch {
+      showToast('Failed to unfollow — please try again.');
+    }
+    return;
+  }
+
+  const card = e.target.closest('.card');
+  if (card) window.location.href = card.dataset.creatorUrl;
 });
 
 init();
