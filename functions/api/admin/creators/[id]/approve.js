@@ -1,5 +1,5 @@
 import { json, errorResponse } from '../../../../../shared/http.js';
-import { getChannelById, updateChannelStatus } from '../../../../../shared/db.js';
+import { getChannelById, getChannelByYoutubeId, updateChannelStatus } from '../../../../../shared/db.js';
 import { resolveChannelForApproval } from '../../../../../shared/sync.js';
 
 // Resolves the channel on YouTube (confirms it's real, fetches its uploads
@@ -14,6 +14,21 @@ export async function onRequestPost(context) {
   try {
     const reference = channel.youtube_channel_id || channel.channel_url || channel.channel_handle;
     const resolved = await resolveChannelForApproval(env, reference);
+
+    // A public submission can resolve to a YouTube channel that's already on
+    // the platform under a different row (e.g. admin-added earlier, or a
+    // second "submit your channel"/claim attempt for the same creator).
+    // channels.youtube_channel_id is UNIQUE, so this would otherwise surface
+    // as a raw D1 constraint error — catch it here with an actionable
+    // message instead, and point at the existing row so the admin knows to
+    // reject this duplicate rather than guess what happened.
+    const existing = await getChannelByYoutubeId(env.DB, resolved.youtubeChannelId);
+    if (existing && existing.id !== params.id) {
+      return errorResponse(
+        `This channel is already on GorkhaTV as "${existing.channel_name}" (${existing.status}). Reject this duplicate submission instead of approving it.`,
+        409
+      );
+    }
 
     await updateChannelStatus(env.DB, params.id, 'approved', {
       monitoringEnabled: true,
