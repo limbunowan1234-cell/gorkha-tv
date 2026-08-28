@@ -50,7 +50,7 @@
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr><th>Video</th><th>Author</th><th>Comment</th><th>Type</th><th>Posted</th><th>Actions</th></tr>
+          <tr><th>Video</th><th>Author</th><th>Comment</th><th>Type</th><th>Posted</th><th class="actions-col">Actions</th></tr>
         </thead>
         <tbody id="comments-tbody">
           <tr><td colspan="6" class="admin-loading">Loading…</td></tr>
@@ -84,7 +84,7 @@
         <td class="cell-title" title="${escapeHtml(c.body)}">${escapeHtml(c.body)}</td>
         <td>${c.parent_comment_id ? 'Reply' : 'Comment'}</td>
         <td>${new Date(c.created_at).toLocaleDateString()}</td>
-        <td>
+        <td class="actions-col">
           <div class="row-actions">
             <button class="btn btn-danger btn-sm" data-action="delete">Delete</button>
           </div>

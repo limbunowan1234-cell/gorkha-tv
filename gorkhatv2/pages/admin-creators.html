@@ -84,7 +84,7 @@
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr><th>Channel</th><th>Location</th><th>Category</th><th>Status</th><th>Monitoring</th><th>Last checked</th><th>Actions</th></tr>
+          <tr><th>Channel</th><th>Location</th><th>Category</th><th>Status</th><th>Monitoring</th><th>Last checked</th><th class="actions-col">Actions</th></tr>
         </thead>
         <tbody id="creators-tbody">
           <tr><td colspan="7" class="admin-loading">Loading…</td></tr>
@@ -116,7 +116,7 @@
         <td>${statusBadge(c.status)}</td>
         <td>${c.monitoring_enabled ? '✅' : '—'}</td>
         <td>${c.last_checked_at ? new Date(c.last_checked_at).toLocaleString() : 'never'}</td>
-        <td>
+        <td class="actions-col">
           <div class="row-actions">
             ${c.status !== 'approved' ? `<button class="btn btn-success btn-sm" data-action="approve">Approve</button>` : ''}
             ${c.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" data-action="reject">Reject</button>` : ''}

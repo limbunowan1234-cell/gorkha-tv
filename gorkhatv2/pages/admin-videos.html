@@ -89,7 +89,7 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Video</th><th>Channel</th><th>Category</th><th>Location</th><th>Type</th><th>Score</th><th>Status</th><th>Published</th><th>Actions</th>
+            <th>Video</th><th>Channel</th><th>Category</th><th>Location</th><th>Type</th><th>Score</th><th>Status</th><th>Published</th><th class="actions-col">Actions</th>
           </tr>
         </thead>
         <tbody id="videos-tbody">
@@ -154,7 +154,7 @@
         <td>${v.relevance_score ?? '—'}</td>
         <td>${statusBadge(v.status)}${v.featured ? ' <span class="badge badge-featured">Featured</span>' : ''}</td>
         <td>${v.published_at ? new Date(v.published_at).toLocaleDateString() : '—'}</td>
-        <td>
+        <td class="actions-col">
           <div class="row-actions">
             ${v.status !== 'published' ? `<button class="btn btn-success btn-sm" data-action="approve">Approve</button>` : ''}
             ${v.status !== 'rejected' ? `<button class="btn btn-danger btn-sm" data-action="reject">Reject</button>` : ''}

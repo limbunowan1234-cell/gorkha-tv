@@ -118,6 +118,11 @@ table.admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--border
 table.admin-table tr:last-child td { border-bottom: none; }
 table.admin-table tr:hover td { background: rgba(255,255,255,0.02); }
 .row-actions { display: flex; gap: 5px; flex-wrap: wrap; max-width: 175px; }
+/* Keeps Approve/Reject etc. reachable without scrolling the whole table
+   sideways — the table has enough columns that the Actions column would
+   otherwise sit off-screen past the visible edge. */
+th.actions-col, td.actions-col { position: sticky; right: 0; background: var(--surface); box-shadow: -6px 0 8px -6px rgba(0,0,0,0.5); }
+table.admin-table tr:hover td.actions-col { background: var(--surface2); }
 .cell-title { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell-thumb { width: 64px; height: 36px; border-radius: 3px; overflow: hidden; background: var(--surface2); flex-shrink: 0; }
 .cell-thumb img { width: 100%; height: 100%; object-fit: cover; }
