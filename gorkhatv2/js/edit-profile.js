@@ -1,5 +1,6 @@
-import { apiFetch, escapeHtml, showToast } from './api.js';
+import { apiFetch, escapeHtml, showToast, formatCount } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
+import { renderLineChart } from './admin-chart.js';
 
 let categories = [];
 let locations = [];
@@ -64,7 +65,10 @@ async function loadChannels() {
       return;
     }
     list.innerHTML = channels.map(channelItemHTML).join('');
-    channels.forEach((c) => wireChannelForm(c.id));
+    channels.forEach((c) => {
+      wireChannelForm(c.id);
+      if (c.status === 'approved') loadChannelAnalytics(c.id);
+    });
   } catch (err) {
     list.innerHTML = `<p class="text-muted">Couldn't load your channels: ${escapeHtml(err.message)}</p>`;
   }
@@ -99,7 +103,35 @@ function channelItemHTML(c) {
       </div>
       <button type="button" class="btn btn-secondary btn-sm channel-save-btn">Save Channel</button>
       <div class="save-msg"></div>
+      ${c.status === 'approved' ? `<div class="channel-analytics" id="analytics-${c.id}"><div class="admin-loading">Loading analytics…</div></div>` : ''}
     </div>`;
+}
+
+async function loadChannelAnalytics(channelId) {
+  const box = document.getElementById(`analytics-${channelId}`);
+  if (!box) return;
+  try {
+    const { analytics: a } = await apiFetch(`/my/channels/${encodeURIComponent(channelId)}/analytics`);
+    box.innerHTML = `
+      <div class="channel-stat-grid">
+        <div class="channel-stat"><div class="n">${formatCount(a.totalViews)}</div><div class="l">Total views</div></div>
+        <div class="channel-stat"><div class="n">${a.videoCount}</div><div class="l">Videos</div></div>
+        <div class="channel-stat"><div class="n">${formatCount(a.totalLikes)}</div><div class="l">Total likes</div></div>
+        <div class="channel-stat"><div class="n">${formatCount(a.avgViews)}</div><div class="l">Avg views / video</div></div>
+      </div>
+      ${
+        a.topVideo
+          ? `<div class="channel-top-video">
+               <span class="l">Top video:</span> ${escapeHtml(a.topVideo.title)} — ${formatCount(a.topVideo.view_count)} views
+             </div>`
+          : ''
+      }
+      <div class="channel-trend-label">On-site views — last 7 days</div>
+      <div id="trend-${channelId}"></div>`;
+    renderLineChart(document.getElementById(`trend-${channelId}`), a.viewsTrend.map((r) => ({ c: r.views })), { height: 60 });
+  } catch {
+    box.innerHTML = ''; // analytics are a nice-to-have — the edit form above still works without them
+  }
 }
 
 function wireChannelForm(channelId) {

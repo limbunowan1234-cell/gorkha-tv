@@ -83,6 +83,10 @@ export async function updateChannelStatus(db, id, status, extra = {}) {
     fields.push('youtube_channel_id = ?');
     values.push(extra.youtubeChannelId);
   }
+  if ('thumbnailUrl' in extra) {
+    fields.push('thumbnail_url = ?');
+    values.push(extra.thumbnailUrl);
+  }
   values.push(id);
   await db.prepare(`UPDATE channels SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
 }
@@ -324,6 +328,12 @@ export async function getChannelsByOwner(db, userId) {
     .bind(userId)
     .all();
   return results;
+}
+
+// Shared ownership check — used by both the self-edit PATCH and the
+// analytics GET route (functions/api/my/channels/[id]/*).
+export async function getOwnedChannel(db, channelId, userId) {
+  return db.prepare(`SELECT id, youtube_channel_id, channel_name, status FROM channels WHERE id = ? AND submitted_by_user_id = ?`).bind(channelId, userId).first();
 }
 
 const OWNER_EDITABLE_CHANNEL_FIELDS = { description: 'description', location: 'location', category: 'category' };

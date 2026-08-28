@@ -34,6 +34,10 @@ export async function onRequestPost(context) {
       monitoringEnabled: true,
       uploadsPlaylistId: resolved.uploadsPlaylistId,
       youtubeChannelId: resolved.youtubeChannelId,
+      // resolveChannelForApproval already fetches this from YouTube — it was
+      // previously discarded here, leaving every approved channel's profile
+      // picture blank.
+      thumbnailUrl: resolved.thumbnailUrl,
     });
     return json({ ok: true });
   } catch (err) {
