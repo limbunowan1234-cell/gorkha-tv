@@ -40,6 +40,37 @@
     .related-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .related-title { font-size: 13px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .related-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    #watch-comments { margin-top: 32px; }
+    .comment-composer { display: flex; gap: 12px; margin-bottom: 20px; }
+    .comment-composer textarea {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+      font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 12px; resize: vertical; min-height: 44px;
+    }
+    .comment-composer-signedout {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px;
+      color: var(--muted); font-size: 13px; cursor: pointer; margin-bottom: 20px;
+    }
+    .comment-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+    .comment-item { display: flex; gap: 12px; margin-bottom: 18px; }
+    .comment-body-wrap { flex: 1; min-width: 0; }
+    .comment-author { font-size: 13px; font-weight: 700; }
+    .comment-date { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 6px; }
+    .comment-text { font-size: 13px; line-height: 1.5; margin: 4px 0 6px; white-space: pre-wrap; word-break: break-word; }
+    .comment-row-actions { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+    .comment-row-actions button { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; font-family: 'Inter', sans-serif; }
+    .comment-row-actions button:hover { color: var(--text); }
+    .comment-replies { margin-top: 12px; padding-left: 20px; border-left: 2px solid var(--border); }
+    .reply-composer { display: none; gap: 10px; margin-top: 10px; }
+    .reply-composer textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 8px 10px; resize: vertical; min-height: 36px; }
+    .comment-submit-btn, .comment-reply-submit-btn, .comment-load-more-btn {
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+    }
+    .comment-submit-btn { background: var(--red); color: #fff; border: none; padding: 8px 18px; margin-top: 6px; }
+    .comment-submit-btn:hover { opacity: 0.85; }
+    .comment-reply-submit-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 6px 14px; align-self: flex-start; }
+    .comment-reply-submit-btn:hover { border-color: var(--text); }
+    .comment-load-more-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; margin-top: 4px; }
+    .comment-load-more-btn:hover { border-color: var(--text); }
     @media (max-width: 900px) {
       .watch-wrap { padding: 16px 20px 40px; }
       .watch-grid { grid-template-columns: 1fr; }
@@ -85,6 +116,13 @@
       </div>
 
       <p class="watch-desc" id="watch-desc"></p>
+
+      <section id="watch-comments">
+        <div class="watch-side-title" id="comments-count-title">Comments</div>
+        <div id="comment-composer"></div>
+        <div id="comments-list"><div class="loading"><div class="spinner"></div></div></div>
+        <button class="comment-load-more-btn" id="load-more-comments" style="display:none;">Load more comments</button>
+      </section>
     </div>
 
     <div>

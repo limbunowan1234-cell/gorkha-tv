@@ -700,3 +700,80 @@ export async function bumpWatchTime(db, sessionKey, deltaSeconds) {
     .bind(sessionKey, todayKey(), deltaSeconds)
     .run();
 }
+
+// ── Native video comments (see functions/api/videos/[id]/native-comments/*
+// and functions/api/comments/* — NOT video_comments_cache, the separate
+// read-only YouTube-comments mirror used by Shorts/Feed) ──
+
+export async function insertVideoComment(db, { youtubeVideoId, userId, parentCommentId, body, authorName, authorAvatarUrl }) {
+  const id = newId();
+  const ts = nowIso();
+  await db
+    .prepare(
+      `INSERT INTO video_comments (id, youtube_video_id, user_id, parent_comment_id, body, author_name, author_avatar_url, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+    .bind(id, youtubeVideoId, userId, parentCommentId || null, body, authorName, authorAvatarUrl || null, ts)
+    .run();
+  return { id, createdAt: ts };
+}
+
+export async function listTopLevelComments(db, youtubeVideoId, { page = 1, limit = 20 } = {}) {
+  const offset = (page - 1) * limit;
+  const { results } = await db
+    .prepare(
+      `SELECT c.*, (SELECT COUNT(*) FROM video_comments r WHERE r.parent_comment_id = c.id) AS reply_count
+       FROM video_comments c
+       WHERE c.youtube_video_id = ? AND c.parent_comment_id IS NULL
+       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`
+    )
+    .bind(youtubeVideoId, limit, offset)
+    .all();
+  return results;
+}
+
+export async function countTopLevelComments(db, youtubeVideoId) {
+  const row = await db
+    .prepare(`SELECT COUNT(*) AS total FROM video_comments WHERE youtube_video_id = ? AND parent_comment_id IS NULL`)
+    .bind(youtubeVideoId)
+    .first();
+  return row?.total || 0;
+}
+
+// Oldest-first (chronological reply order) — capped, no further pagination
+// in v1; revisit if a single thread ever exceeds this in practice.
+export async function listCommentReplies(db, parentCommentId, limit = 50) {
+  const { results } = await db
+    .prepare(`SELECT * FROM video_comments WHERE parent_comment_id = ? ORDER BY created_at ASC LIMIT ?`)
+    .bind(parentCommentId, limit)
+    .all();
+  return results;
+}
+
+export async function getCommentById(db, id) {
+  return db.prepare(`SELECT * FROM video_comments WHERE id = ?`).bind(id).first();
+}
+
+// Deletes a comment; if it's a top-level comment, cascades to its replies
+// (hard delete, no tombstone — see Phase J plan for the tradeoff).
+export async function deleteCommentCascade(db, id) {
+  await db.prepare(`DELETE FROM video_comments WHERE id = ? OR parent_comment_id = ?`).bind(id, id).run();
+}
+
+export async function listAllCommentsAdmin(db, { page = 1, limit = 30 } = {}) {
+  const offset = (page - 1) * limit;
+  const { results } = await db
+    .prepare(
+      `SELECT c.id, c.body, c.author_name, c.parent_comment_id, c.created_at, c.youtube_video_id, v.title AS video_title
+       FROM video_comments c LEFT JOIN videos v ON v.youtube_video_id = c.youtube_video_id
+       ORDER BY c.created_at DESC LIMIT ? OFFSET ?`
+    )
+    .bind(limit, offset)
+    .all();
+  return results;
+}
+
+export async function countAllComments(db) {
+  const row = await db.prepare(`SELECT COUNT(*) AS total FROM video_comments`).first();
+  return row?.total || 0;
+}

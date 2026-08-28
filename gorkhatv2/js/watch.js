@@ -1,6 +1,7 @@
 import { apiFetch, ytThumb, watchUrl, creatorUrl, formatViews, escapeHtml, showToast } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 import { loadYouTubeApi } from './youtubeApi.js';
+import { initComments } from './comments.js';
 
 let ytPlayer = null;
 let currentVideo = null;
@@ -22,6 +23,7 @@ async function init() {
     currentVideo = video;
     renderVideo(video);
     initFavouriteButton(video);
+    initComments(video);
     loadRelated(id);
     recordView(id);
     initPlayer(video);

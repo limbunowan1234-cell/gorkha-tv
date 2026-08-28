@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Comments — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-claims.html">Claims</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+      <li><a href="admin-analytics.html">Analytics</a></li>
+      <li><a href="admin-comments.html" class="active">Comments</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Comments</h1>
+    <p class="text-muted" style="margin-bottom:18px;">Native comments viewers post on the watch page — separate from YouTube's own comments shown in Shorts/Feed. Deleting here removes it (and, for a top-level comment, its replies) permanently.</p>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Video</th><th>Author</th><th>Comment</th><th>Type</th><th>Posted</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="comments-tbody">
+          <tr><td colspan="6" class="admin-loading">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-secondary btn-sm" id="prev-page" disabled>← Prev</button>
+      <span class="text-muted" id="page-label"></span>
+      <button class="btn btn-secondary btn-sm" id="next-page">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  let page = 1;
+  const limit = 30;
+  let total = 0;
+
+  function renderRow(c) {
+    return `
+      <tr data-id="${c.id}">
+        <td>
+          <div class="cell-title" title="${escapeHtml(c.video_title || c.youtube_video_id)}">${escapeHtml(c.video_title || c.youtube_video_id)}</div>
+          <a href="/watch/${encodeURIComponent(c.youtube_video_id)}" target="_blank" rel="noopener" class="text-muted">View video →</a>
+        </td>
+        <td>${escapeHtml(c.author_name)}</td>
+        <td class="cell-title" title="${escapeHtml(c.body)}">${escapeHtml(c.body)}</td>
+        <td>${c.parent_comment_id ? 'Reply' : 'Comment'}</td>
+        <td>${new Date(c.created_at).toLocaleDateString()}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-danger btn-sm" data-action="delete">Delete</button>
+          </div>
+        </td>
+      </tr>`;
+  }
+
+  async function loadComments() {
+    const tbody = document.getElementById('comments-tbody');
+    tbody.innerHTML = `<tr><td colspan="6" class="admin-loading">Loading…</td></tr>`;
+    try {
+      const data = await adminFetch(`/comments?page=${page}&limit=${limit}`);
+      total = data.total;
+      document.getElementById('page-label').textContent = total ? `Page ${page} of ${Math.max(1, Math.ceil(total / limit))} (${total} total)` : '';
+      document.getElementById('prev-page').disabled = page <= 1;
+      document.getElementById('next-page').disabled = page * limit >= total;
+      tbody.innerHTML = data.comments.length
+        ? data.comments.map(renderRow).join('')
+        : `<tr><td colspan="6" class="admin-empty">No comments yet.</td></tr>`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="6" class="admin-empty">Couldn't load comments: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  document.getElementById('comments-tbody').addEventListener('click', async (e) => {
+    if (e.target.dataset.action !== 'delete') return;
+    const row = e.target.closest('tr');
+    const id = row.dataset.id;
+    if (!confirm('Delete this comment? Replies to it (if any) will be deleted too.')) return;
+    try {
+      await adminFetch(`/comments/${id}`, { method: 'DELETE' });
+      toast('Deleted.');
+      loadComments();
+    } catch (err) {
+      toast(err.message || 'Failed to delete.');
+    }
+  });
+
+  document.getElementById('prev-page').addEventListener('click', () => {
+    if (page > 1) { page -= 1; loadComments(); }
+  });
+  document.getElementById('next-page').addEventListener('click', () => {
+    if (page * limit < total) { page += 1; loadComments(); }
+  });
+
+  initAdminPage(loadComments);
+</script>
+</body>
+</html>
