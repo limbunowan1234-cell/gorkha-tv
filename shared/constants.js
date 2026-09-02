@@ -31,17 +31,38 @@ export const CATEGORIES = [
   { slug: 'events', label: 'Events' },
 ];
 
+// English keywords alone miss almost everything — most of this region's real
+// content is titled/described in Nepali (Devanagari script), which shares no
+// substring with any English word here, so matchCategory() silently returned
+// null for it and every such video fell back to shared/sync.js's per-channel
+// default category instead of its own actual topic (confirmed: a channel
+// posting festival announcements, music releases, school events, and a real
+// news story were all lumped under "news" this way). Devanagari terms below
+// are a first pass, not an exhaustive/native-speaker-reviewed list — worth
+// refining further, but they cover the common cases seen in practice.
 export const CATEGORY_KEYWORDS = {
-  news: ['news', 'breaking', 'headlines', 'bulletin', 'report'],
-  vlogs: ['vlog', 'vlogging', 'daily life', 'day in my life'],
-  travel: ['travel', 'trip', 'tourism', 'tourist', 'trek', 'hiking', 'homestay', 'sightseeing'],
-  food: ['food', 'recipe', 'cooking', 'street food', 'restaurant', 'momo', 'thukpa', 'cuisine'],
-  culture: ['culture', 'festival', 'tradition', 'heritage', 'dashain', 'tihar', 'losar', 'folk'],
-  music: ['song', 'music video', 'singer', 'album', 'lyrics', 'nepali song', 'gorkha song'],
-  interviews: ['interview', 'conversation with', 'in talk with', 'q&a'],
-  entertainment: ['comedy', 'entertainment', 'drama', 'short film', 'skit'],
-  sports: ['sports', 'football', 'cricket', 'tournament', 'match', 'marathon'],
-  events: ['event', 'celebration', 'ceremony', 'rally', 'programme', 'program', 'inauguration'],
+  news: [
+    'news', 'breaking', 'headlines', 'bulletin', 'report',
+    'समाचार', 'खबर', 'घोटाला', 'छानबिन', 'राजनीतिक', 'राजनीति', 'बयान', 'मुख्यमन्त्री', 'दुर्घटना', 'मृत्यु',
+  ],
+  vlogs: ['vlog', 'vlogging', 'daily life', 'day in my life', 'भ्लग'],
+  travel: ['travel', 'trip', 'tourism', 'tourist', 'trek', 'hiking', 'homestay', 'sightseeing', 'यात्रा', 'घुम्न', 'पर्यटन'],
+  food: ['food', 'recipe', 'cooking', 'street food', 'restaurant', 'momo', 'thukpa', 'cuisine', 'खाना', 'परिकार', 'खानपान'],
+  culture: ['culture', 'festival', 'tradition', 'heritage', 'dashain', 'tihar', 'losar', 'folk', 'संस्कृति', 'चाड', 'चाडपर्व', 'परम्परा', 'दशैं', 'तिहार', 'लोसार', 'जन्माष्टमी'],
+  // 'गीत' (bare "song") deliberately excluded — it's a substring of unrelated
+  // words like 'रङ्गीत' (the Rangeet river), which produced a real false
+  // match (a drowning-death story got tagged "music"). 'संगीत'/'गायक' are
+  // long enough to be safe.
+  music: ['song', 'music video', 'singer', 'album', 'lyrics', 'nepali song', 'gorkha song', 'संगीत', 'गायक', 'गायिका'],
+  interviews: ['interview', 'conversation with', 'in talk with', 'q&a', 'अन्तर्वार्ता'],
+  entertainment: ['comedy', 'entertainment', 'drama', 'short film', 'skit', 'मनोरञ्जन', 'हास्य', 'नाटक'],
+  // Bare 'खेल' (game/sport) deliberately excluded — it's a substring of
+  // 'खेलमैदान' ("sports ground"/playground), a generic way to name any open
+  // public ground used as an event venue regardless of what the event
+  // actually is (a political rally in this case, not sports). 'खेलकुद'
+  // (the specific word for "sports" as an activity) doesn't have this problem.
+  sports: ['sports', 'football', 'cricket', 'tournament', 'match', 'marathon', 'खेलकुद'],
+  events: ['event', 'celebration', 'ceremony', 'rally', 'programme', 'program', 'inauguration', 'कार्यक्रम', 'समारोह', 'आयोजना', 'प्रतियोगिता'],
 };
 
 // Terms that indicate a false-positive match (e.g. unrelated "Darjeeling" brand
