@@ -132,6 +132,22 @@ function renderVideo(v) {
 
   document.getElementById('watch-yt-link').href = `https://www.youtube.com/watch?v=${encodeURIComponent(v.youtube_video_id)}`;
   document.getElementById('watch-desc').textContent = v.description || '';
+  initDescriptionToggle();
+}
+
+// Descriptions clamp to 5 lines by default (see .watch-desc.clamped) — only
+// show the toggle when the text actually overflows that, so a short
+// description never gets a pointless "Show more" button.
+function initDescriptionToggle() {
+  const desc = document.getElementById('watch-desc');
+  const btn = document.getElementById('watch-desc-toggle');
+  desc.classList.add('clamped');
+  btn.textContent = 'Show more';
+  btn.style.display = desc.scrollHeight > desc.clientHeight + 1 ? '' : 'none';
+  btn.onclick = () => {
+    const expanded = desc.classList.toggle('clamped') === false;
+    btn.textContent = expanded ? 'Show less' : 'Show more';
+  };
 }
 
 async function initFavouriteButton(v) {
