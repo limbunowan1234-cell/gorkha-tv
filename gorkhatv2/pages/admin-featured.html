@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Featured (Hero) — GorkhaTV Admin</title>
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>
+    .hero-order-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; background: var(--surface); }
+    .hero-order-rank { width: 26px; text-align: center; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+    .hero-order-row .cell-thumb { width: 90px; height: 51px; flex-shrink: 0; }
+    .hero-order-info { flex: 1; min-width: 0; }
+    .hero-order-info .cell-title { font-weight: 600; }
+    .hero-order-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .hero-order-actions button { width: 30px; height: 30px; padding: 0; }
+    .featured-search-results { margin-top: 10px; }
+    .featured-search-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .featured-search-row .cell-thumb { width: 90px; height: 51px; flex-shrink: 0; }
+    .featured-search-info { flex: 1; min-width: 0; }
+  </style>
+</head>
+<body>
+
+<div class="admin-login-gate" id="admin-login-gate" style="display:none;">
+  <div class="admin-login-card">
+    <h1>Gorkha<em>TV</em> Admin</h1>
+    <p>Sign in to manage videos, creators, and categories.</p>
+    <form id="admin-login-form">
+      <div class="field">
+        <label for="admin-password-input">Password</label>
+        <input type="password" id="admin-password-input" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Sign In</button>
+      <div class="admin-login-error" id="admin-login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="admin-app" style="display:none;">
+  <div class="admin-topbar">
+    <div class="admin-brand">Gorkha<em>TV</em> <span class="tag">Admin</span></div>
+    <ul class="admin-nav">
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-videos.html">Videos</a></li>
+      <li><a href="admin-creators.html">Creators</a></li>
+      <li><a href="admin-claims.html">Claims</a></li>
+      <li><a href="admin-categories.html">Categories</a></li>
+      <li><a href="admin-featured.html" class="active">Featured</a></li>
+      <li><a href="admin-analytics.html">Analytics</a></li>
+      <li><a href="admin-comments.html">Comments</a></li>
+    </ul>
+    <div class="admin-topbar-right">
+      <button class="btn btn-secondary btn-sm" data-admin-logout>Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-container">
+    <h1 class="admin-page-title">Hero Carousel (Featured)</h1>
+    <p class="text-muted" style="margin-bottom:18px;">Controls which videos appear in the homepage hero carousel, and in what order. The top 5 rows below are what visitors see first. Videos with no explicit order fall back to newest-first, after the ranked ones.</p>
+
+    <div class="field" style="max-width:480px;">
+      <label for="featured-search-input">Add a video to Featured</label>
+      <input type="text" id="featured-search-input" placeholder="Search published videos by title or channel…">
+    </div>
+    <div class="featured-search-results" id="featured-search-results"></div>
+
+    <h2 class="admin-page-title" style="font-size:20px;margin-top:32px;">Currently Featured (hero order)</h2>
+    <div id="hero-order-list">
+      <div class="admin-loading">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initAdminPage, adminFetch, toast, escapeHtml } from '../js/admin-common.js';
+
+  let featured = []; // sorted: explicit hero_order first, then unranked by published_at desc
+  let searchTimer = null;
+
+  function thumbOf(v) {
+    return v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/default.jpg`;
+  }
+
+  function sortFeatured(list) {
+    return [...list].sort((a, b) => {
+      const aOrder = a.hero_order === null || a.hero_order === undefined ? Infinity : a.hero_order;
+      const bOrder = b.hero_order === null || b.hero_order === undefined ? Infinity : b.hero_order;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return new Date(b.published_at) - new Date(a.published_at);
+    });
+  }
+
+  function renderHeroOrderRow(v, index) {
+    return `
+      <div class="hero-order-row" data-id="${v.id}">
+        <div class="hero-order-rank">${index + 1}</div>
+        <div class="cell-thumb"><img src="${escapeHtml(thumbOf(v))}" loading="lazy" alt=""></div>
+        <div class="hero-order-info">
+          <div class="cell-title" title="${escapeHtml(v.title)}">${escapeHtml(v.title)}</div>
+          <div class="text-muted">${escapeHtml(v.channel_name || '')}</div>
+        </div>
+        <div class="hero-order-actions">
+          <button class="btn btn-secondary btn-sm" data-action="up" ${index === 0 ? 'disabled' : ''} title="Move up">▲</button>
+          <button class="btn btn-secondary btn-sm" data-action="down" ${index === featured.length - 1 ? 'disabled' : ''} title="Move down">▼</button>
+          <button class="btn btn-danger btn-sm" data-action="remove" title="Remove from Featured">✕</button>
+        </div>
+      </div>`;
+  }
+
+  function renderHeroOrderList() {
+    const root = document.getElementById('hero-order-list');
+    root.innerHTML = featured.length
+      ? featured.map(renderHeroOrderRow).join('')
+      : `<div class="admin-empty">No videos are featured yet — search above and add one.</div>`;
+  }
+
+  async function loadFeatured() {
+    const { videos } = await adminFetch('/videos?featured=1&status=published&limit=50');
+    featured = sortFeatured(videos);
+    renderHeroOrderList();
+  }
+
+  async function swap(id, direction) {
+    const idx = featured.findIndex((v) => v.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= featured.length) return;
+
+    const a = featured[idx];
+    const b = featured[swapIdx];
+    // Ranks are assigned as plain 1..N sequence numbers here — a full
+    // renumber on every swap, not just exchanging the two existing values —
+    // so unranked (NULL) neighbors always get a real number too, guaranteeing
+    // every row in this list has a distinct order after any move.
+    [featured[idx], featured[swapIdx]] = [featured[swapIdx], featured[idx]];
+    try {
+      await Promise.all(
+        featured.map((v, i) => adminFetch(`/videos/${v.id}`, { method: 'PATCH', body: JSON.stringify({ heroOrder: i + 1 }) }))
+      );
+      renderHeroOrderList();
+    } catch (err) {
+      toast(err.message);
+      await loadFeatured();
+    }
+  }
+
+  async function remove(id) {
+    try {
+      await adminFetch(`/videos/${id}`, { method: 'PATCH', body: JSON.stringify({ featured: false, heroOrder: null }) });
+      toast('Removed from Featured.');
+      await loadFeatured();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  async function addToFeatured(id) {
+    try {
+      const nextOrder = featured.reduce((max, v) => Math.max(max, v.hero_order || 0), 0) + 1;
+      await adminFetch(`/videos/${id}`, { method: 'PATCH', body: JSON.stringify({ featured: true, heroOrder: nextOrder }) });
+      toast('Added to Featured.');
+      document.getElementById('featured-search-input').value = '';
+      document.getElementById('featured-search-results').innerHTML = '';
+      await loadFeatured();
+    } catch (err) {
+      toast(err.message);
+    }
+  }
+
+  function renderSearchRow(v) {
+    const already = featured.some((f) => f.id === v.id);
+    return `
+      <div class="featured-search-row" data-id="${v.id}">
+        <div class="cell-thumb"><img src="${escapeHtml(thumbOf(v))}" loading="lazy" alt=""></div>
+        <div class="featured-search-info">
+          <div class="cell-title" title="${escapeHtml(v.title)}">${escapeHtml(v.title)}</div>
+          <div class="text-muted">${escapeHtml(v.channel_name || '')}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-action="add" ${already ? 'disabled' : ''}>${already ? 'Featured' : 'Add to Featured'}</button>
+      </div>`;
+  }
+
+  async function runSearch(q) {
+    const root = document.getElementById('featured-search-results');
+    if (!q.trim()) {
+      root.innerHTML = '';
+      return;
+    }
+    root.innerHTML = `<div class="admin-loading">Searching…</div>`;
+    try {
+      const { videos } = await adminFetch(`/videos?status=published&q=${encodeURIComponent(q)}&limit=20`);
+      root.innerHTML = videos.length
+        ? videos.map(renderSearchRow).join('')
+        : `<div class="admin-empty">No published videos match "${escapeHtml(q)}".</div>`;
+    } catch (err) {
+      root.innerHTML = `<div class="admin-empty">Search failed: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function setupInteractions() {
+    document.getElementById('featured-search-input').addEventListener('input', (e) => {
+      clearTimeout(searchTimer);
+      const q = e.target.value;
+      searchTimer = setTimeout(() => runSearch(q), 300);
+    });
+
+    document.getElementById('featured-search-results').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action="add"]');
+      if (!btn) return;
+      addToFeatured(btn.closest('[data-id]').dataset.id);
+    });
+
+    document.getElementById('hero-order-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const id = btn.closest('[data-id]').dataset.id;
+      if (btn.dataset.action === 'up') swap(id, 'up');
+      else if (btn.dataset.action === 'down') swap(id, 'down');
+      else if (btn.dataset.action === 'remove') remove(id);
+    });
+  }
+
+  async function init() {
+    setupInteractions();
+    await loadFeatured();
+  }
+
+  initAdminPage(init);
+</script>
+</body>
+</html>

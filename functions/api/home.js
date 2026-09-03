@@ -33,7 +33,10 @@ export async function onRequestGet(context) {
 
   try {
     const [heroRes, trendingRes, latestRes, byLocationRes, byCategoryRes, newsRes, creatorsRes] = await Promise.all([
-      env.DB.prepare(`SELECT ${VIDEO_COLUMNS} FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND featured = 1 ORDER BY published_at DESC LIMIT 5`).all(),
+      // Explicitly-ranked (hero_order set by an admin via admin-featured.html)
+      // surface first, in that order; unranked featured videos fall back to
+      // today's latest-first behavior, after the ranked ones ("nulls last").
+      env.DB.prepare(`SELECT ${VIDEO_COLUMNS}, hero_order FROM videos WHERE status = 'published' AND ${NOT_SHORT} AND featured = 1 ORDER BY (hero_order IS NULL) ASC, hero_order ASC, published_at DESC LIMIT 5`).all(),
       // Real GorkhaTV engagement, not YouTube's public stats or an admin
       // flag — recent on-site views (video_view_daily) plus recent Saves,
       // weighted the same way as everywhere else (a save is worth 10 views).

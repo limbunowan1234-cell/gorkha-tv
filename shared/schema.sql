@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS videos (
   ai_confidence_score        REAL,   -- reserved, unused in v1 (future AI classification step)
   ai_labels                  TEXT,   -- reserved, unused in v1 (JSON)
   content_type               TEXT CHECK (content_type IN ('short','video')),   -- classified via YouTube's own /shorts/ redirect signal, see shared/migrations/005
+  hero_order                  INTEGER,   -- admin-controlled hero-carousel rank; NULL = unranked, falls back to published_at DESC (see shared/migrations/016)
   discovered_at              TEXT,
   approved_at                 TEXT,
   created_at                TEXT NOT NULL,
@@ -87,7 +88,10 @@ INSERT OR IGNORE INTO categories (slug, label, sort_order) VALUES
   ('interviews',    'Interviews',    7),
   ('entertainment', 'Entertainment', 8),
   ('sports',        'Sports',        9),
-  ('events',        'Events',        10);
+  ('events',        'Events',        10),
+  ('movies',        'Movies',        11),
+  ('webseries',     'Web Series',    12),
+  ('shortfilms',    'Short Films',   13);
 
 -- ── Viewers (Google-authenticated, via Google Identity Services id_token verification) ──
 CREATE TABLE IF NOT EXISTS users (

@@ -239,6 +239,10 @@ export async function updateVideoStatus(db, id, status, extra = {}) {
     fields.push('content_type = ?');
     values.push(extra.contentType);
   }
+  if ('heroOrder' in extra) {
+    fields.push('hero_order = ?');
+    values.push(extra.heroOrder === null || extra.heroOrder === undefined ? null : Number(extra.heroOrder));
+  }
   values.push(id);
   await db.prepare(`UPDATE videos SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
 }

@@ -32,6 +32,7 @@ export async function onRequestPatch(context) {
     }
     extra.contentType = body.contentType;
   }
+  if (body.heroOrder !== undefined) extra.heroOrder = body.heroOrder;
 
   await updateVideoStatus(env.DB, params.id, body.status || video.status, extra);
   return json({ ok: true });
