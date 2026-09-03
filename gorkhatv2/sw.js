@@ -2,7 +2,7 @@
 // Cache-first for static app shell assets; everything else (the /api/*
 // backend, YouTube embeds, dynamic SSR pages) goes straight to network.
 
-const CACHE_NAME = "gorkhatv-shell-20260903T162221Z";
+const CACHE_NAME = "gorkhatv-shell-20260903T173616Z";
 
 const SHELL_ASSETS = [
   "/",

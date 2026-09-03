@@ -70,11 +70,34 @@ async function loadPersonalizedRows() {
   }
 }
 
+// The hero banner is by far the largest image on the site, so the stored
+// thumbnail_url (YouTube's "high" quality, 480x360 — fine for a small card)
+// looks visibly blurry stretched across it. Try YouTube's 1280x720
+// maxresdefault first and fall back to the normal thumbnail if that specific
+// video doesn't have one. A real video missing a maxres variant 404s
+// cleanly, but YouTube's CDN can also serve a 200 OK 120x90 grey
+// placeholder instead of erroring (confirmed directly) — the naturalWidth
+// check below catches that case too, not just onerror.
+function setHeroBackground(bg, item) {
+  const fallback = () => {
+    bg.style.backgroundImage = `url(${ytThumb(item)})`;
+  };
+  if (!item.youtube_video_id) return fallback();
+
+  const maxres = new Image();
+  maxres.onload = () => {
+    if (maxres.naturalWidth > 120) bg.style.backgroundImage = `url(${maxres.src})`;
+    else fallback();
+  };
+  maxres.onerror = fallback;
+  maxres.src = `https://img.youtube.com/vi/${item.youtube_video_id}/maxresdefault.jpg`;
+}
+
 function renderHero() {
   if (!heroItems.length) return;
   const item = heroItems[heroIndex];
   const bg = document.getElementById('hero-bg');
-  if (bg) bg.style.backgroundImage = `url(${ytThumb(item)})`;
+  if (bg) setHeroBackground(bg, item);
 
   const tag = document.getElementById('hero-tag');
   const title = document.getElementById('hero-title');
