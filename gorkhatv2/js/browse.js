@@ -20,12 +20,29 @@ function init() {
   initAuthNav();
 }
 
+// News is promoted to its own branded destination rather than a plain
+// filtered grid — see functions/category/[cat].js for the matching SEO
+// title/description. Khabar Darjeeling is a real, already-approved channel
+// (editorial credit, not a content filter — the grid below still shows
+// every published news video from every source channel).
 function updateTitle() {
-  const el = document.getElementById('browse-title');
-  if (!el) return;
-  if (state.category) el.textContent = `${capitalize(state.category)} Videos`;
-  else if (state.location) el.textContent = `Videos from ${state.location}`;
-  else el.textContent = 'Browse';
+  const titleEl = document.getElementById('browse-title');
+  const subEl = document.getElementById('browse-subtitle');
+  if (!titleEl) return;
+
+  if (state.category === 'news') {
+    titleEl.textContent = '📰 Gorkha TV News';
+    if (subEl) {
+      subEl.innerHTML = 'Powered by <a href="/khabardarjeeling">Khabar Darjeeling</a>';
+      subEl.style.display = '';
+    }
+    return;
+  }
+  if (subEl) subEl.style.display = 'none';
+
+  if (state.category) titleEl.textContent = `${capitalize(state.category)} Videos`;
+  else if (state.location) titleEl.textContent = `Videos from ${state.location}`;
+  else titleEl.textContent = 'Browse';
 }
 
 function capitalize(s) {

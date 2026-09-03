@@ -18,7 +18,10 @@
   <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js"></script>
   <style>
     .browse-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
-    .browse-title { font-family: 'Teko', sans-serif; font-size: 28px; font-weight: 600; margin-bottom: 16px; }
+    .browse-title { font-family: 'Teko', sans-serif; font-size: 28px; font-weight: 600; margin-bottom: 4px; }
+    .browse-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 16px; display: none; }
+    .browse-subtitle a { color: var(--text); font-weight: 600; text-decoration: none; }
+    .browse-subtitle a:hover { text-decoration: underline; }
     .browse-toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     .browse-toolbar select {
       background: var(--surface2); border: 1px solid var(--border); color: var(--text);
@@ -55,6 +58,7 @@
 
 <div class="browse-wrap">
   <h1 class="browse-title" id="browse-title">Browse</h1>
+  <div class="browse-subtitle" id="browse-subtitle"></div>
   <div class="browse-toolbar">
     <select id="category-select"><option value="">All categories</option></select>
     <select id="location-select"><option value="">All locations</option></select>

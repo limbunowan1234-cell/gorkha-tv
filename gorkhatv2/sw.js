@@ -2,7 +2,7 @@
 // Cache-first for static app shell assets; everything else (the /api/*
 // backend, YouTube embeds, dynamic SSR pages) goes straight to network.
 
-const CACHE_NAME = "gorkhatv-shell-20260903T185215Z";
+const CACHE_NAME = "gorkhatv-shell-20260903T192229Z";
 
 const SHELL_ASSETS = [
   "/",
@@ -20,10 +20,21 @@ const SHELL_ASSETS = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Add individually so one missing file doesn't fail the whole install
+      // Add individually so one missing file doesn't fail the whole install.
+      // Plain cache.add(url) is subject to the browser's ordinary HTTP cache
+      // for that request — if a stale copy of e.g. js/home.js was already
+      // cached from an earlier visit (Cache-Control: max-age=14400 on static
+      // assets), cache.add() can silently reuse it, poisoning this BRAND NEW
+      // versioned cache with old content even though CACHE_NAME itself is
+      // new (confirmed directly: a fresh cache generation held a stale
+      // js/home.js after rapid same-session redeploys). fetch(url, {cache:
+      // 'reload'}) forces a real network round-trip, bypassing HTTP cache,
+      // so every new SW version's shell is guaranteed fresh.
       return Promise.all(
         SHELL_ASSETS.map((url) =>
-          cache.add(url).catch((err) => console.warn("[sw] skip", url, err))
+          fetch(url, { cache: "reload" })
+            .then((response) => cache.put(url, response))
+            .catch((err) => console.warn("[sw] skip", url, err))
         )
       );
     })

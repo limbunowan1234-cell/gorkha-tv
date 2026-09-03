@@ -2,8 +2,17 @@ import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, nu
 import { initAuthNav } from './auth.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️' };
-const CATEGORY_EMOJI = { news: '📰', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🎬', sports: '⚽', events: '🎉' };
+const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
 const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
+// Movies/Web Series/Short Films/Vlogs/Travel lead the category-rows section
+// — the "premium content" prioritization the homepage redesign asked for.
+// News is never in byCategory at all (see functions/api/home.js) — it now
+// lives at its own branded destination, /category/news, reachable via nav.
+const CATEGORY_ROW_ORDER = ['movies', 'webseries', 'shortfilms', 'vlogs', 'travel', 'food', 'culture', 'music', 'interviews', 'entertainment', 'sports', 'events'];
+// Overrides for slugs whose naive "capitalize the slug" label would be
+// wrong (matches shared/schema.sql's categories.label for these two — the
+// rest are single words where capitalizing the slug already matches).
+const CATEGORY_LABEL_OVERRIDES = { webseries: 'Web Series', shortfilms: 'Short Films' };
 
 let heroItems = [];
 let heroIndex = 0;
@@ -203,24 +212,25 @@ function renderLocationRows(byLocation) {
 function renderCategoryRows(byCategory) {
   const wrap = document.getElementById('category-rows');
   if (!wrap) return;
-  const rows = Object.entries(byCategory)
-    .filter(([, items]) => items.length)
-    .map(([slug, items]) => {
-      const label = slug.charAt(0).toUpperCase() + slug.slice(1);
+  // Fixed priority order (CATEGORY_ROW_ORDER), not insertion/SQL-result
+  // order, then any category not in that list (future-proofing) tacked on
+  // at the end. Every row here is genuinely engagement-ranked, see
+  // functions/api/home.js — all "Top 10", no exceptions (News, the one
+  // former exception, no longer appears here at all).
+  const slugs = [...CATEGORY_ROW_ORDER, ...Object.keys(byCategory).filter((s) => !CATEGORY_ROW_ORDER.includes(s))];
+  const rows = slugs
+    .filter((slug) => (byCategory[slug] || []).length)
+    .map((slug) => {
+      const label = CATEGORY_LABEL_OVERRIDES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1);
       return {
-        // News stays a plain latest-by-date row (time-sensitive), not a "Top 10" —
-        // every other category row is now genuinely engagement-ranked, see functions/api/home.js.
-        title: slug === 'news' ? `${CATEGORY_EMOJI[slug] || ''} ${label}` : `${CATEGORY_EMOJI[slug] || ''} Top 10 ${label}`,
+        title: `${CATEGORY_EMOJI[slug] || ''} Top 10 ${label}`,
         link: categoryUrl(slug),
-        items,
-        numbered: slug !== 'news',
+        items: byCategory[slug],
       };
     });
   wrap.innerHTML = rows.map((row, i) => rowHTML(`cat-row-${i}`, row)).join('');
   rows.forEach((row, i) => {
-    document.getElementById(`cat-row-${i}`).innerHTML = row.numbered
-      ? row.items.map((v, idx) => numberedCardHTML(v, idx + 1)).join('')
-      : row.items.map(videoCardHTML).join('');
+    document.getElementById(`cat-row-${i}`).innerHTML = row.items.map((v, idx) => numberedCardHTML(v, idx + 1)).join('');
   });
 }
 

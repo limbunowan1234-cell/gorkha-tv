@@ -18,8 +18,18 @@ export async function onRequest(context) {
   try {
     const category = await env.DB.prepare('SELECT slug, label FROM categories WHERE slug = ? AND active = 1').bind(cat).first();
     const label = category?.label || capitalize(cat);
-    const title = `${label} Videos | GorkhaTV`;
-    const description = `Watch ${label.toLowerCase()} videos from the Darjeeling hills — Darjeeling, Kalimpong, Kurseong, Mirik and Siliguri — curated on GorkhaTV.`;
+    // News gets real branding here (and in gorkhatv2/js/browse.js's on-page
+    // title/subtitle) since it's promoted to its own destination rather than
+    // a homepage row — see functions/api/home.js for the homepage side of
+    // this. Khabar Darjeeling is a real, already-approved channel on the
+    // platform (channels.slug = 'khabardarjeeling'); this is an editorial
+    // credit, not a content filter — the feed below still shows every
+    // published news video from every source channel.
+    const title = cat === 'news' ? 'Gorkha TV News — Powered by Khabar Darjeeling | GorkhaTV' : `${label} Videos | GorkhaTV`;
+    const description =
+      cat === 'news'
+        ? 'Breaking news and updates from across the Darjeeling hills, brought to you by Gorkha TV in partnership with Khabar Darjeeling.'
+        : `Watch ${label.toLowerCase()} videos from the Darjeeling hills — Darjeeling, Kalimpong, Kurseong, Mirik and Siliguri — curated on GorkhaTV.`;
     const pageUrl = `${url.origin}/category/${encodeURIComponent(cat)}`;
 
     const injected = `
