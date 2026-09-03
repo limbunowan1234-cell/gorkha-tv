@@ -2,7 +2,7 @@ import { json, errorResponse } from '../../shared/http.js';
 
 const VIDEO_COLUMNS =
   'id, youtube_video_id, title, thumbnail_url, channel_name, published_at, category, location, duration_seconds, view_count';
-const CREATOR_COLUMNS = 'id, youtube_channel_id, channel_name, channel_handle, thumbnail_url, location, category';
+const CREATOR_COLUMNS = 'id, youtube_channel_id, channel_name, channel_handle, thumbnail_url, location, category, slug';
 
 export async function onRequestGet(context) {
   const { request, env } = context;

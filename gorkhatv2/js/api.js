@@ -21,8 +21,11 @@ export function watchUrl(video) {
   return `/watch/${video.youtube_video_id}`;
 }
 
+// Channels' canonical URL is their root-level slug — falls back to the old
+// /creator/:id form (which 301s to the slug) if a given API response ever
+// doesn't include one, so a stale cached payload never produces a dead link.
 export function creatorUrl(creator) {
-  return `/creator/${creator.youtube_channel_id}`;
+  return creator.slug ? `/${creator.slug}` : `/creator/${creator.youtube_channel_id}`;
 }
 
 export function categoryUrl(slug) {

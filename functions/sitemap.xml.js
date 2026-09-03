@@ -22,7 +22,7 @@ export async function onRequestGet(context) {
   try {
     const [{ results: videos }, { results: creators }, { results: categories }] = await Promise.all([
       env.DB.prepare(`SELECT youtube_video_id, content_type, updated_at FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 2000`).all(),
-      env.DB.prepare(`SELECT youtube_channel_id, updated_at FROM channels WHERE status = 'approved' LIMIT 500`).all(),
+      env.DB.prepare(`SELECT slug, updated_at FROM channels WHERE status = 'approved' AND slug IS NOT NULL LIMIT 500`).all(),
       env.DB.prepare(`SELECT slug FROM categories WHERE active = 1`).all(),
     ]);
 
@@ -33,7 +33,7 @@ export async function onRequestGet(context) {
       const loc = v.content_type === 'short' ? `${origin}/shorts/${v.youtube_video_id}` : `${origin}/watch/${v.youtube_video_id}`;
       urls.push({ loc, lastmod: v.updated_at, changefreq: 'weekly', priority: '0.7' });
     }
-    for (const c of creators) urls.push({ loc: `${origin}/creator/${c.youtube_channel_id}`, lastmod: c.updated_at, changefreq: 'weekly', priority: '0.6' });
+    for (const c of creators) urls.push({ loc: `${origin}/${c.slug}`, lastmod: c.updated_at, changefreq: 'weekly', priority: '0.6' });
     for (const c of categories) urls.push({ loc: `${origin}/category/${c.slug}`, changefreq: 'daily', priority: '0.6' });
     for (const loc of LOCATIONS) urls.push({ loc: `${origin}/location/${encodeURIComponent(loc)}`, changefreq: 'daily', priority: '0.6' });
   } catch (err) {

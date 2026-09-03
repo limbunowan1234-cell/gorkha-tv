@@ -1,6 +1,6 @@
 import { cacheableJson, errorResponse } from '../../../shared/http.js';
 
-const CREATOR_COLUMNS = 'id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, description, location, category, verified, featured';
+const CREATOR_COLUMNS = 'id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, description, location, category, verified, featured, slug';
 
 export async function onRequestGet(context) {
   const { request, env } = context;

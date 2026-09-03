@@ -4,7 +4,7 @@
 // hands us a D1-compatible binding.
 
 import { randomToken, parseCookies, buildSetCookie } from './auth.js';
-import { VIEWER_SESSION_COOKIE, ANON_SESSION_COOKIE, ANON_SESSION_TTL_SECONDS } from './constants.js';
+import { VIEWER_SESSION_COOKIE, ANON_SESSION_COOKIE, ANON_SESSION_TTL_SECONDS, RESERVED_ROOT_SLUGS } from './constants.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -87,8 +87,41 @@ export async function updateChannelStatus(db, id, status, extra = {}) {
     fields.push('thumbnail_url = ?');
     values.push(extra.thumbnailUrl);
   }
+  if ('slug' in extra) {
+    fields.push('slug = ?');
+    values.push(extra.slug);
+  }
   values.push(id);
   await db.prepare(`UPDATE channels SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
+}
+
+// Lowercase, [a-z0-9] only, everything else stripped entirely (not
+// hyphenated) — "Adhar Limbu" -> "adharlimbu", "Mr darjeeling -" ->
+// "mrdarjeeling", matching the exact style requested for root-level channel
+// profile URLs (gorkhatv.site/:slug).
+export function slugify(text) {
+  return (text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+// Generates a slug for a channel that's about to become approved and doesn't
+// have one yet, guaranteed unique and never a reserved top-level path (see
+// RESERVED_ROOT_SLUGS / functions/[slug].js). Falls back to a short
+// id-derived slug if the channel name has no Latin/digit characters at all
+// (slugify() would otherwise return ''), and appends -2, -3, ... on collision
+// with another channel's slug.
+export async function assignUniqueChannelSlug(db, channelName, fallbackId) {
+  const base = slugify(channelName) || `channel${(fallbackId || '').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase()}`;
+
+  let candidate = base;
+  let suffix = 2;
+  for (;;) {
+    if (!RESERVED_ROOT_SLUGS.has(candidate)) {
+      const existing = await db.prepare(`SELECT 1 FROM channels WHERE slug = ?`).bind(candidate).first();
+      if (!existing) return candidate;
+    }
+    candidate = `${base}${suffix}`;
+    suffix += 1;
+  }
 }
 
 const CHANNEL_EDITABLE_FIELDS = {
@@ -384,7 +417,7 @@ export async function removeFollow(db, userId, channelId) {
 export async function listFollowedChannels(db, userId) {
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.youtube_channel_id, c.channel_name, c.channel_handle, c.thumbnail_url, c.category, c.location, c.verified
+      `SELECT c.id, c.youtube_channel_id, c.channel_name, c.channel_handle, c.thumbnail_url, c.category, c.location, c.verified, c.slug
        FROM follows f JOIN channels c ON c.id = f.channel_id
        WHERE f.user_id = ? AND c.status = 'approved' ORDER BY f.created_at DESC`
     )

@@ -1,5 +1,5 @@
 import { json, errorResponse } from '../../../../../shared/http.js';
-import { getChannelById, getChannelByYoutubeId, updateChannelStatus } from '../../../../../shared/db.js';
+import { getChannelById, getChannelByYoutubeId, updateChannelStatus, assignUniqueChannelSlug } from '../../../../../shared/db.js';
 import { resolveChannelForApproval } from '../../../../../shared/sync.js';
 
 // Resolves the channel on YouTube (confirms it's real, fetches its uploads
@@ -30,6 +30,12 @@ export async function onRequestPost(context) {
       );
     }
 
+    // Only generate a slug if this channel doesn't already have one — a
+    // channel being re-approved (e.g. previously suspended) keeps its
+    // existing profile URL rather than getting a new one that would break
+    // whatever's already linked to it.
+    const slug = channel.slug || (await assignUniqueChannelSlug(env.DB, channel.channel_name, params.id));
+
     await updateChannelStatus(env.DB, params.id, 'approved', {
       monitoringEnabled: true,
       uploadsPlaylistId: resolved.uploadsPlaylistId,
@@ -38,6 +44,7 @@ export async function onRequestPost(context) {
       // previously discarded here, leaving every approved channel's profile
       // picture blank.
       thumbnailUrl: resolved.thumbnailUrl,
+      slug,
     });
     return json({ ok: true });
   } catch (err) {

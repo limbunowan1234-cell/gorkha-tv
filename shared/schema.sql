@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS channels (
   youtube_channel_id       TEXT UNIQUE,   -- nullable: unresolved until an admin approves a public submission
   channel_name             TEXT NOT NULL,
   channel_handle           TEXT,
+  slug                     TEXT UNIQUE,   -- root-level profile URL (gorkhatv.site/:slug), assigned on first approval
   channel_url              TEXT,
   thumbnail_url            TEXT,
   description               TEXT,

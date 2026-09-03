@@ -3,9 +3,12 @@ import { initAuthNav, getCurrentUser } from './auth.js';
 
 let currentChannel = null;
 
+// This script only ever loads on a page functions/[slug].js served — the
+// site's root-level channel profile route — so the first (only) path
+// segment is always the channel's slug, no fixed prefix to match against.
 function getChannelIdFromPath() {
-  const match = window.location.pathname.match(/\/creator\/([^/?#]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+  const slug = decodeURIComponent(window.location.pathname.slice(1));
+  return slug || null;
 }
 
 async function init() {

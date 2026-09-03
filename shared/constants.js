@@ -92,6 +92,18 @@ export const QUOTA = {
 
 export const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
+// Every literal top-level path this site serves — a channel slug (see
+// functions/[slug].js) must never collide with one of these, and the
+// catch-all route itself checks this list as defense-in-depth (some of
+// these, like a bare "watch" with no id, wouldn't be caught by any more
+// specific route and would otherwise fall through to the slug handler).
+export const RESERVED_ROOT_SLUGS = new Set([
+  'watch', 'creator', 'category', 'location', 'shorts', 'api',
+  'css', 'icons', 'js', 'pages', 'templates',
+  'sitemap.xml', 'robots.txt', 'manifest.json', 'sw.js', 'ads.txt',
+  'logo-circle.png', 'logo-horizantal.png', '_headers', '_redirects',
+]);
+
 export const CHANNEL_STATUSES = ['pending', 'approved', 'rejected', 'suspended'];
 export const VIDEO_STATUSES = ['published', 'pending_review', 'rejected', 'removed'];
 

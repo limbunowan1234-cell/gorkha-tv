@@ -80,7 +80,7 @@ export async function onRequestGet(context) {
       ).all(),
       env.DB
         .prepare(
-          `SELECT id, youtube_channel_id, channel_name, channel_handle, thumbnail_url, description, location, category
+          `SELECT id, youtube_channel_id, channel_name, channel_handle, thumbnail_url, description, location, category, slug
            FROM channels WHERE status = 'approved' AND featured = 1 ORDER BY channel_name LIMIT 12`
         )
         .all(),

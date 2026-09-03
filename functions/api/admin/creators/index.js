@@ -1,6 +1,6 @@
 import { json, errorResponse, readJsonBody } from '../../../../shared/http.js';
 import { resolveChannelForApproval } from '../../../../shared/sync.js';
-import { getChannelByYoutubeId, insertChannelSubmission, updateChannelStatus } from '../../../../shared/db.js';
+import { getChannelByYoutubeId, insertChannelSubmission, updateChannelStatus, assignUniqueChannelSlug } from '../../../../shared/db.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -43,7 +43,8 @@ export async function onRequestPost(context) {
       location: body?.location,
       category: body?.category,
     });
-    await updateChannelStatus(env.DB, id, 'approved', { monitoringEnabled: true, uploadsPlaylistId: resolved.uploadsPlaylistId });
+    const slug = await assignUniqueChannelSlug(env.DB, resolved.channelName, id);
+    await updateChannelStatus(env.DB, id, 'approved', { monitoringEnabled: true, uploadsPlaylistId: resolved.uploadsPlaylistId, slug });
 
     return json({ ok: true, channelId: id });
   } catch (err) {
