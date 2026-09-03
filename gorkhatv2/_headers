@@ -8,12 +8,19 @@
 # page's event handling to addEventListener-only, which is a structural
 # change out of scope for a hardening pass. The policy still meaningfully
 # restricts object embeds, base-tag injection, and framing.
+#
+# 'unsafe-eval' was added specifically for the Infolinks ad script
+# (resources.infolinks.com) — confirmed directly that its library throws
+# "Uncaught EvalError" and fails to run without it. This is a real,
+# deliberate weakening (script-src is already 'unsafe-inline', so this is
+# incremental, not a first departure) — worth knowing if this site ever
+# drops Infolinks, since it could be removed again at that point.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://pagead2.googlesyndication.com https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; frame-src https://www.youtube.com https://accounts.google.com; connect-src 'self' https://accounts.google.com https://www.youtube.com; base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://pagead2.googlesyndication.com https://www.youtube.com https://s.ytimg.com https://resources.infolinks.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; frame-src https://www.youtube.com https://accounts.google.com; connect-src 'self' https://accounts.google.com https://www.youtube.com; base-uri 'self'; object-src 'none'; frame-ancestors 'self'
 
 # Never cache personalized/sensitive API responses, regardless of any
 # per-route Cache-Control an individual Function might also set.
