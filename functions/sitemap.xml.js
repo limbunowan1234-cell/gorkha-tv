@@ -17,6 +17,10 @@ export async function onRequestGet(context) {
     { loc: `${origin}/pages/feed.html`, changefreq: 'hourly', priority: '0.8' },
     { loc: `${origin}/pages/search.html`, changefreq: 'weekly', priority: '0.4' },
     { loc: `${origin}/pages/submit-channel.html`, changefreq: 'monthly', priority: '0.5' },
+    { loc: `${origin}/pages/about.html`, changefreq: 'monthly', priority: '0.3' },
+    { loc: `${origin}/pages/contact.html`, changefreq: 'monthly', priority: '0.3' },
+    { loc: `${origin}/pages/terms.html`, changefreq: 'monthly', priority: '0.2' },
+    { loc: `${origin}/pages/privacy.html`, changefreq: 'monthly', priority: '0.2' },
   ];
 
   try {
