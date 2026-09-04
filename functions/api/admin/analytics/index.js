@@ -18,8 +18,14 @@ export async function onRequestGet(context) {
   const monthAgo = daysAgo(29);
   const weekAgo = daysAgo(6);
 
-  const [dauRow, mauRow, newTodayRow, trend, watchToday, watch7d, watch30d] = await Promise.all([
+  const yesterday = daysAgo(1);
+
+  const [dauRow, dauYesterdayRow, mauRow, newTodayRow, trend, watchToday, watchYesterday, watch7d, watch30d] = await Promise.all([
     db.prepare(`SELECT COUNT(DISTINCT session_key) AS c FROM session_activity_daily WHERE activity_date = ?`).bind(today).first(),
+    // Yesterday's DAU, purely so the frontend can show a "vs yesterday"
+    // delta pill on the headline number — the single most common thing a
+    // "professional" analytics dashboard shows next to its top-line metric.
+    db.prepare(`SELECT COUNT(DISTINCT session_key) AS c FROM session_activity_daily WHERE activity_date = ?`).bind(yesterday).first(),
     db.prepare(`SELECT COUNT(DISTINCT session_key) AS c FROM session_activity_daily WHERE activity_date >= ?`).bind(monthAgo).first(),
     db.prepare(`SELECT COUNT(*) AS c FROM session_first_seen WHERE first_seen_date = ?`).bind(today).first(),
     db
@@ -27,6 +33,7 @@ export async function onRequestGet(context) {
       .bind(monthAgo)
       .all(),
     db.prepare(`SELECT COALESCE(SUM(seconds_watched),0) AS s FROM watch_time_daily WHERE watch_date = ?`).bind(today).first(),
+    db.prepare(`SELECT COALESCE(SUM(seconds_watched),0) AS s FROM watch_time_daily WHERE watch_date = ?`).bind(yesterday).first(),
     db.prepare(`SELECT COALESCE(SUM(seconds_watched),0) AS s FROM watch_time_daily WHERE watch_date >= ?`).bind(weekAgo).first(),
     db.prepare(`SELECT COALESCE(SUM(seconds_watched),0) AS s FROM watch_time_daily WHERE watch_date >= ?`).bind(monthAgo).first(),
   ]);
@@ -38,10 +45,11 @@ export async function onRequestGet(context) {
   return json(
     {
       dau,
+      dauYesterday: dauYesterdayRow.c,
       mau: mauRow.c,
       newToday,
       returningToday: Math.max(0, dau - newToday),
-      watchTimeSeconds: { today: watchToday.s, last7d: watch7d.s, last30d: watch30d.s },
+      watchTimeSeconds: { today: watchToday.s, yesterday: watchYesterday.s, last7d: watch7d.s, last30d: watch30d.s },
       dauTrend: trend.results,
     },
     { headers: { 'Cache-Control': 'private, no-store' } }

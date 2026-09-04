@@ -46,13 +46,23 @@
 
   <div class="admin-container">
     <h1 class="admin-page-title">Analytics</h1>
+    <p class="text-muted" style="margin-bottom:24px;">Overview of viewer activity across GorkhaTV. Numbers reflect on-site sessions, not YouTube's own stats.</p>
 
+    <div class="stat-section-title">Audience</div>
     <div class="stat-grid" id="stat-grid">
       <div class="admin-loading">Loading stats…</div>
     </div>
 
+    <div class="stat-section-title">Watch time</div>
+    <div class="stat-grid" id="engagement-grid">
+      <div class="admin-loading">Loading stats…</div>
+    </div>
+
     <div class="chart-card">
-      <h2>Active sessions — last 30 days</h2>
+      <div class="chart-card-header">
+        <h2>Active sessions</h2>
+        <span class="text-muted chart-card-sub">Daily unique sessions, last 30 days</span>
+      </div>
       <div id="dau-chart"><div class="admin-loading">Loading chart…</div></div>
     </div>
   </div>
