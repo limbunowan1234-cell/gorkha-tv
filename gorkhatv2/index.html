@@ -35,6 +35,10 @@
     .nav-creator-link {
       background: var(--red) !important; color: white !important; padding: 8px 14px !important;
       border-radius: 4px !important; font-weight: 700 !important; font-size: 13px !important; transition: all 0.2s !important;
+      text-transform: uppercase; letter-spacing: 0.8px; white-space: nowrap; flex-shrink: 0;
+      /* Pulled out of the scrollable .nav-links pill row (see style.css) so this
+         CTA is never scrolled out of view on narrower desktop widths — it now
+         sits between the genre pills and the search bar, always visible. */
     }
     .nav-creator-link:hover { opacity: 0.85 !important; transform: translateY(-1px) !important; }
 
@@ -79,8 +83,9 @@
     <li><a href="/category/interviews">Interviews</a></li>
     <li><a href="/category/vlogs">Vlogs</a></li>
     <li><a href="/category/travel">Travel</a></li>
-    <li><a href="pages/submit-channel.html" class="nav-creator-link">🎬 Creator</a></li>
   </ul>
+
+  <a href="pages/submit-channel.html" class="nav-creator-link">🎬 Creator</a>
 
   <div class="search-wrap" style="margin-left:auto;">
     <div class="search-bar">

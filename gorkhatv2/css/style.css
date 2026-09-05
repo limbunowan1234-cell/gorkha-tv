@@ -47,9 +47,30 @@ nav {
   border-bottom: 1px solid rgba(255,255,255,0.05);
   padding: 0 48px; display: flex; align-items: center; gap: 36px; height: 64px;
 }
+.logo-svg, .search-wrap, .nav-right { flex-shrink: 0; }
+.nav-links { min-width: 0; }
 
-.nav-links { display: flex; gap: 4px; list-style: none; }
+/* With 7 genre links plus Home/Browse/Shorts/Creator, this row has more
+   items than comfortably fit in nav's fixed 64px height on most desktop
+   widths. Rather than let flex-shrink squeeze individual links below their
+   content width (which wraps multi-word labels like "Web Series" mid-word,
+   and splits "🎬 Creator" onto two lines — confirmed directly, that's what
+   was happening), the row scrolls horizontally instead, same pattern as
+   YouTube's own category-chip bar. overflow-x:auto (rather than visible)
+   also gives the flex item a 0 automatic minimum width, which is what lets
+   it actually shrink to fit next to the logo/search instead of overflowing
+   the page. min-width:0 on nav itself is the matching fix on the other
+   flex axis. Scrollbar hidden since the pill shapes + edge clipping are
+   affordance enough; a horizontal scrollbar under a nav bar reads as a bug.
+*/
+.nav-links {
+  display: flex; gap: 4px; list-style: none;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+.nav-links li { flex-shrink: 0; }
 .nav-links a {
+  display: inline-block; white-space: nowrap;
   padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
   color: var(--muted); transition: color 0.2s, background 0.2s;
   text-transform: uppercase; letter-spacing: 0.8px;
@@ -432,6 +453,10 @@ footer { background: var(--surface); border-top: 1px solid var(--border); paddin
 @media (max-width: 900px) {
   nav { padding: 0 20px; gap: 16px; }
   .nav-links { display: none; }
+  /* Was already hidden on mobile before it lived inside .nav-links (the
+     bottom mobile nav is the primary way to get around on phones) — keep
+     that behavior now that it's a standalone element. */
+  .nav-creator-link { display: none; }
   .search-bar { padding: 7px 12px; }
   .search-bar input { width: 130px; }
   .search-bar svg { width: 18px; height: 18px; opacity: 0.7; }
