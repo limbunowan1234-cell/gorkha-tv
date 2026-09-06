@@ -2,13 +2,14 @@ import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, nu
 import { initAuthNav } from './auth.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️' };
-const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
+const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
 const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
-// Movies/Web Series/Short Films/Vlogs/Travel lead the category-rows section
-// — the "premium content" prioritization the homepage redesign asked for.
-// News is never in byCategory at all (see functions/api/home.js) — it now
-// lives at its own branded destination, /category/news, reachable via nav.
-const CATEGORY_ROW_ORDER = ['movies', 'webseries', 'shortfilms', 'vlogs', 'travel', 'food', 'culture', 'music', 'interviews', 'entertainment', 'sports', 'events'];
+// Movies/Web Series/Short Films/Comedy/Vlogs/Travel lead the category-rows
+// section — the "premium content" prioritization the homepage redesign
+// asked for. News is never in byCategory at all (see functions/api/home.js)
+// — it now lives at its own branded destination, /category/news, reachable
+// via nav.
+const CATEGORY_ROW_ORDER = ['movies', 'webseries', 'shortfilms', 'comedy', 'vlogs', 'travel', 'food', 'culture', 'music', 'interviews', 'entertainment', 'sports', 'events'];
 // Overrides for slugs whose naive "capitalize the slug" label would be
 // wrong (matches shared/schema.sql's categories.label for these two — the
 // rest are single words where capitalizing the slug already matches).
