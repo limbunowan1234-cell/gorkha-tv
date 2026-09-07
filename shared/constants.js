@@ -1,7 +1,14 @@
 // Framework-agnostic constants shared by worker-sync, Pages Functions, and (future) any other backend.
 // Plain JS module, no Cloudflare-specific imports — keep it that way.
 
-export const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
+// Sikkim is a neighboring state, not part of the Darjeeling hills proper —
+// included by explicit product decision to cover Sikkim content too, not an
+// oversight. Every other constant/UI list derived from LOCATIONS picks it up
+// automatically (see shared/relevance.js, /api/locations, sitemap.xml,
+// functions/location/[loc].js); only the few UI files with their own
+// hand-duplicated copy of this array (gorkhatv2/js/home.js, admin-videos.html,
+// admin-creators.html) need a matching edit.
+export const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
 
 // Keyword variants used by the relevance scorer (shared/relevance.js) to match
 // against video/channel title, description and tags. Lowercase; matching is
@@ -12,6 +19,10 @@ export const LOCATION_KEYWORDS = {
   Kurseong: ['kurseong'],
   Mirik: ['mirik'],
   Siliguri: ['siliguri', 'shiliguri'],
+  // Gangtok (capital) and a few well-known towns, alongside the state name
+  // itself — same "town names, not just the region name" pattern as the
+  // other locations above.
+  Sikkim: ['sikkim', 'gangtok', 'namchi', 'pelling', 'ravangla', 'lachung', 'lachen'],
 };
 
 // Region-wide terms that count as a location match without pinning a specific town

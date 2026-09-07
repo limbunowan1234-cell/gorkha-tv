@@ -1,9 +1,9 @@
 import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, continueWatchingCardHTML, creatorCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
 
-const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️' };
+const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
-const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri'];
+const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
 // Movies/Web Series/Short Films/Comedy/Vlogs/Travel lead the category-rows
 // section — the "premium content" prioritization the homepage redesign
 // asked for. News is never in byCategory at all (see functions/api/home.js)
