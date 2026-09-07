@@ -44,6 +44,7 @@ export async function onRequestPost(context) {
       // previously discarded here, leaving every approved channel's profile
       // picture blank.
       thumbnailUrl: resolved.thumbnailUrl,
+      bannerUrl: resolved.bannerUrl,
       slug,
     });
     return json({ ok: true });

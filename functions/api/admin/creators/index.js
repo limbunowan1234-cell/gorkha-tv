@@ -39,12 +39,15 @@ export async function onRequestPost(context) {
       channelName: resolved.channelName,
       channelUrl,
       thumbnailUrl: resolved.thumbnailUrl,
+      bannerUrl: resolved.bannerUrl,
       description: resolved.description,
       location: body?.location,
       category: body?.category,
     });
     const slug = await assignUniqueChannelSlug(env.DB, resolved.channelName, id);
     await updateChannelStatus(env.DB, id, 'approved', { monitoringEnabled: true, uploadsPlaylistId: resolved.uploadsPlaylistId, slug });
+    // insertChannelSubmission above already stored bannerUrl for a new row —
+    // no separate updateChannelStatus write needed for it here.
 
     return json({ ok: true, channelId: id });
   } catch (err) {

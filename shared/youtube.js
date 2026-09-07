@@ -46,7 +46,11 @@ export function parseChannelReference(input) {
 }
 
 export async function getChannel(apiKey, ref) {
-  const params = { part: 'snippet,contentDetails' };
+  // brandingSettings costs nothing extra (channels.list is a flat 1 unit
+  // regardless of how many `part`s are requested) and is the only way to
+  // get the channel's cover/banner image — confirmed directly against real
+  // channels that bannerExternalUrl is reliably populated.
+  const params = { part: 'snippet,contentDetails,brandingSettings' };
   if (ref.type === 'id') params.id = ref.value;
   else if (ref.type === 'handle') params.forHandle = ref.value;
   else if (ref.type === 'username') params.forUsername = ref.value;
@@ -61,6 +65,7 @@ export async function getChannel(apiKey, ref) {
       channelName: item.snippet.title,
       description: item.snippet.description,
       thumbnailUrl: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url,
+      bannerUrl: item.brandingSettings?.image?.bannerExternalUrl || null,
       uploadsPlaylistId: item.contentDetails.relatedPlaylists.uploads,
       customUrl: item.snippet.customUrl,
     },

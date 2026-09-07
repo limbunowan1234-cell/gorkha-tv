@@ -30,6 +30,26 @@ async function init() {
 function renderCreator(c, videos) {
   document.title = `${c.channel_name} | GorkhaTV`;
 
+  // Hidden by default in CSS — only shown (and only pulls .creator-wrap up
+  // to overlap it) once the image has actually been confirmed to load.
+  // YouTube's bannerExternalUrl is a legacy branding-API field that isn't
+  // reliable for every channel (some resolve to a genuinely broken/expired
+  // CDN reference) — same defensive load-then-reveal pattern already used
+  // for the homepage hero background (see home.js's setHeroBackground),
+  // rather than trusting the URL blindly and risking a broken-image box.
+  const banner = document.getElementById('creator-banner');
+  const wrap = document.getElementById('creator-wrap');
+  if (banner && c.banner_url) {
+    const probe = new Image();
+    probe.onload = () => {
+      if (probe.naturalWidth < 2) return; // 1x1 placeholder, not a real banner
+      banner.style.backgroundImage = `url(${c.banner_url})`;
+      banner.style.display = 'block';
+      wrap?.classList.add('has-banner');
+    };
+    probe.src = c.banner_url;
+  }
+
   const meta = [];
   if (c.category) meta.push(escapeHtml(c.category));
   if (c.location) meta.push(escapeHtml(c.location));

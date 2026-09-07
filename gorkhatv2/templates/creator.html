@@ -11,7 +11,19 @@
   <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
   <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js"></script>
   <style>
+    /* Hidden by default (display:none) — js/creator.js only reveals this
+       when the channel actually has a banner_url, so a channel without one
+       doesn't show an empty grey box. */
+    .creator-banner {
+      display: none; width: 100%; height: 220px; background-size: cover; background-position: center;
+      background-color: var(--surface); position: relative;
+    }
+    .creator-banner::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(8,8,8,0) 40%, rgba(8,8,8,0.92) 100%);
+    }
     .creator-wrap { max-width: 1400px; margin: 0 auto; padding: 32px 48px 60px; }
+    .creator-wrap.has-banner { margin-top: -64px; position: relative; z-index: 1; }
     .creator-hero { display: flex; gap: 20px; align-items: center; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
     .creator-hero img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
     .creator-name { font-family: 'Teko', sans-serif; font-size: 34px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
@@ -47,7 +59,8 @@
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
-<div class="creator-wrap">
+<div class="creator-banner" id="creator-banner"></div>
+<div class="creator-wrap" id="creator-wrap">
   <div class="creator-hero" id="creator-hero">
     <div class="loading"><div class="spinner"></div></div>
   </div>

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS channels (
   slug                     TEXT UNIQUE,   -- root-level profile URL (gorkhatv.site/:slug), assigned on first approval
   channel_url              TEXT,
   thumbnail_url            TEXT,
+  banner_url                TEXT,   -- cover/banner image, from channels.list brandingSettings
   description               TEXT,
   location                 TEXT,   -- Darjeeling | Kalimpong | Kurseong | Mirik | Siliguri | Other
   category                 TEXT,

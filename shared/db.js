@@ -43,10 +43,10 @@ export async function insertChannelSubmission(db, submission) {
   await db
     .prepare(
       `INSERT INTO channels
-        (id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url,
+        (id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, banner_url,
          description, location, category, status, verified, featured, monitoring_enabled,
          contact_name, contact_email, submitted_by_user_id, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, 0, 0, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0, 0, 0, ?, ?, ?, ?, ?)`
     )
     .bind(
       id,
@@ -55,6 +55,7 @@ export async function insertChannelSubmission(db, submission) {
       submission.channelHandle || null,
       submission.channelUrl || null,
       submission.thumbnailUrl || null,
+      submission.bannerUrl || null,
       submission.description || null,
       submission.location || null,
       submission.category || null,
@@ -86,6 +87,10 @@ export async function updateChannelStatus(db, id, status, extra = {}) {
   if ('thumbnailUrl' in extra) {
     fields.push('thumbnail_url = ?');
     values.push(extra.thumbnailUrl);
+  }
+  if ('bannerUrl' in extra) {
+    fields.push('banner_url = ?');
+    values.push(extra.bannerUrl);
   }
   if ('slug' in extra) {
     fields.push('slug = ?');
