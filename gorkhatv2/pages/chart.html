@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top 100 Hills Hits | GorkhaTV</title>
+  <meta name="description" content="The Top 100 music chart for the Darjeeling hills and Sikkim — ranked by real engagement.">
+  <link rel="canonical" href="https://gorkhatv.site/pages/chart.html">
+  <meta property="og:title" content="Top 100 Hills Hits | GorkhaTV">
+  <meta property="og:description" content="The Top 100 music chart for the Darjeeling hills and Sikkim — ranked by real engagement.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
+  <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
+  <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js"></script>
+  <style>
+    .chart-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+    .chart-title { font-family: 'Teko', sans-serif; font-size: 36px; font-weight: 600; margin-bottom: 4px; }
+    .chart-sub { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+    .chart-list { display: flex; flex-direction: column; gap: 4px; }
+    .chart-row {
+      display: flex; align-items: center; gap: 14px; padding: 8px; border-radius: 6px;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .chart-row:hover { background: var(--surface2); }
+    .chart-rank { font-family: 'Teko', sans-serif; font-size: 26px; font-weight: 600; color: var(--muted); width: 44px; text-align: center; flex-shrink: 0; }
+    .chart-row:nth-child(1) .chart-rank, .chart-row:nth-child(2) .chart-rank, .chart-row:nth-child(3) .chart-rank { color: var(--red); }
+    .chart-thumb { width: 120px; aspect-ratio: 16/9; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: var(--surface2); }
+    .chart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .chart-info { min-width: 0; flex: 1; }
+    .chart-row-title { font-size: 14px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .chart-row-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    @media (max-width: 700px) {
+      .chart-wrap { padding: 20px 16px 40px; }
+      .chart-title { font-size: 28px; }
+      .chart-thumb { width: 90px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="browse.html">Browse</a></li>
+    <li><a href="feed.html">Shorts</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="chart-wrap">
+  <h1 class="chart-title">🎵 Top 100 Hills Hits</h1>
+  <p class="chart-sub">The Darjeeling hills and Sikkim's music, ranked by real engagement — updated as GorkhaTV syncs.</p>
+  <div class="chart-list" id="chart-list"><div class="loading"><div class="spinner"></div></div></div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="about.html">About Us</a>
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="contact.html">Contact Us</a>
+  </div>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<div id="mobile-nav-root"></div>
+
+<script type="module" src="../js/chart.js"></script>
+<script type="module" src="../js/mobileNav.js"></script>
+</body>
+</html>

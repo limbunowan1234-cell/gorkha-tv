@@ -6,6 +6,29 @@ import { initComments } from './comments.js';
 let ytPlayer = null;
 let currentVideo = null;
 let progressSyncTimer = null;
+let relatedVideos = []; // populated by loadRelated(); relatedVideos[0] doubles as the autoplay "up next" candidate
+let autoplayCountdownTimer = null;
+
+const AUTOPLAY_STORAGE_KEY = 'gtv_autoplay';
+const AUTOPLAY_COUNTDOWN_SECONDS = 5;
+
+// Unset = on, matching real YouTube's default and the confirmed product
+// choice here — only an explicit "off" turns it off.
+function isAutoplayOn() {
+  try {
+    return localStorage.getItem(AUTOPLAY_STORAGE_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
+function setAutoplay(on) {
+  try {
+    localStorage.setItem(AUTOPLAY_STORAGE_KEY, on ? 'on' : 'off');
+  } catch {
+    /* per-viewer convenience only — playback still works without persistence */
+  }
+}
 
 function getVideoIdFromPath() {
   const match = window.location.pathname.match(/\/watch\/([^/?#]+)/);
@@ -24,6 +47,7 @@ async function init() {
     renderVideo(video);
     initFavouriteButton(video);
     initComments(video);
+    initAutoplayToggle();
     loadRelated(id);
     recordView(id);
     initPlayer(video);
@@ -42,8 +66,10 @@ function recordView(id) {
 
 // Real YT.Player (not a plain <iframe>) so playback progress can actually be
 // read — powers the homepage "Continue Watching" row and lets a viewer
-// resume where they left off. autoplay stays off, matching the previous
-// plain-embed behavior (a viewer still clicks play themselves).
+// resume where they left off. The player itself never autoplays on load (a
+// viewer still clicks play themselves) — "autoplay" here means auto-
+// advancing to the next video once the current one ends, same as YouTube's
+// own toggle, handled by the ENDED branch below.
 async function initPlayer(v) {
   const YT = await loadYouTubeApi();
   // #watch-player already has the right aspect-ratio/sizing CSS from the
@@ -68,9 +94,11 @@ async function initPlayer(v) {
         if (e.data === YT.PlayerState.PLAYING) {
           clearInterval(progressSyncTimer);
           progressSyncTimer = setInterval(syncProgress, 20000);
+          hideAutoplayOverlay(); // a viewer replaying/scrubbing back into the video cancels any pending advance
         } else {
           clearInterval(progressSyncTimer);
           if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) syncProgress();
+          if (e.data === YT.PlayerState.ENDED) maybeShowAutoplayOverlay();
         }
       },
     },
@@ -95,6 +123,72 @@ function syncProgress() {
   } else {
     fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
   }
+}
+
+// Toggle sits in .watch-actions next to My List/Watch on YouTube. Reflects
+// and updates the same localStorage flag isAutoplayOn()/setAutoplay() read
+// and write, so it stays in sync with the ENDED-state behavior below.
+function initAutoplayToggle() {
+  const btn = document.getElementById('watch-autoplay-btn');
+  if (!btn) return;
+  const render = () => {
+    const on = isAutoplayOn();
+    btn.textContent = on ? '▶️ Autoplay: On' : '▶️ Autoplay: Off';
+    btn.classList.toggle('active', on);
+  };
+  render();
+  btn.onclick = () => {
+    setAutoplay(!isAutoplayOn());
+    render();
+    if (!isAutoplayOn()) hideAutoplayOverlay();
+  };
+}
+
+// YouTube-style "up next" card: shown over the player when the current
+// video ends, autoplay is on, and there's a related video to advance to
+// (relatedVideos[0], populated by loadRelated() below — no separate fetch).
+// Counts down in plain text (no animated ring) — matches this codebase's
+// existing plain-CSS, no-heavy-animation style elsewhere (the analytics
+// chart, the stat cards).
+function maybeShowAutoplayOverlay() {
+  if (!isAutoplayOn() || !relatedVideos.length) return;
+  const next = relatedVideos[0];
+  const overlay = document.getElementById('autoplay-overlay');
+  if (!overlay) return;
+
+  let secondsLeft = AUTOPLAY_COUNTDOWN_SECONDS;
+  overlay.innerHTML = `
+    <div class="autoplay-card" id="autoplay-card">
+      <div class="autoplay-thumb"><img src="${escapeHtml(ytThumb(next))}" alt=""></div>
+      <div class="autoplay-info">
+        <div class="autoplay-label">Playing next in <span id="autoplay-countdown">${secondsLeft}</span>…</div>
+        <div class="autoplay-next-title">${escapeHtml(next.title)}</div>
+      </div>
+      <button class="autoplay-cancel-btn" id="autoplay-cancel-btn">Cancel</button>
+    </div>`;
+  overlay.style.display = 'flex';
+
+  document.getElementById('autoplay-card').onclick = (e) => {
+    if (e.target.closest('#autoplay-cancel-btn')) return;
+    window.location.href = watchUrl(next);
+  };
+  document.getElementById('autoplay-cancel-btn').onclick = hideAutoplayOverlay;
+
+  autoplayCountdownTimer = setInterval(() => {
+    secondsLeft -= 1;
+    const countdownEl = document.getElementById('autoplay-countdown');
+    if (countdownEl) countdownEl.textContent = secondsLeft;
+    if (secondsLeft <= 0) {
+      clearInterval(autoplayCountdownTimer);
+      window.location.href = watchUrl(next);
+    }
+  }, 1000);
+}
+
+function hideAutoplayOverlay() {
+  clearInterval(autoplayCountdownTimer);
+  const overlay = document.getElementById('autoplay-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 // Flushes progress on tab-hide/navigation-away — onStateChange only catches
@@ -200,6 +294,7 @@ async function loadRelated(id) {
   const el = document.getElementById('related-list');
   try {
     const { related } = await apiFetch(`/videos/${encodeURIComponent(id)}/related`);
+    relatedVideos = related; // doubles as the autoplay "up next" queue — see maybeShowAutoplayOverlay()
     if (!related.length) {
       el.innerHTML = `<div style="color:var(--muted);font-size:13px;">No related videos yet.</div>`;
       return;

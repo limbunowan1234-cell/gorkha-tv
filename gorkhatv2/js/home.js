@@ -14,6 +14,10 @@ const CATEGORY_ROW_ORDER = ['movies', 'webseries', 'shortfilms', 'comedy', 'vlog
 // wrong (matches shared/schema.sql's categories.label for these two — the
 // rest are single words where capitalizing the slug already matches).
 const CATEGORY_LABEL_OVERRIDES = { webseries: 'Web Series', shortfilms: 'Short Films' };
+// Music's "See all" points at the dedicated Top 100 chart page instead of
+// the generic category browse grid — every other category still uses
+// categoryUrl(slug) as normal.
+const CATEGORY_LINK_OVERRIDES = { music: '/pages/chart.html' };
 
 let heroItems = [];
 let heroIndex = 0;
@@ -225,7 +229,7 @@ function renderCategoryRows(byCategory) {
       const label = CATEGORY_LABEL_OVERRIDES[slug] || slug.charAt(0).toUpperCase() + slug.slice(1);
       return {
         title: `${CATEGORY_EMOJI[slug] || ''} Top 10 ${label}`,
-        link: categoryUrl(slug),
+        link: CATEGORY_LINK_OVERRIDES[slug] || categoryUrl(slug),
         items: byCategory[slug],
       };
     });
