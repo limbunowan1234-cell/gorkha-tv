@@ -17,8 +17,8 @@ export function ytThumb(video) {
   return '';
 }
 
-export function watchUrl(video) {
-  return `/watch/${video.youtube_video_id}`;
+export function watchUrl(video, { autoplay } = {}) {
+  return `/watch/${video.youtube_video_id}${autoplay ? '?autoplay=1' : ''}`;
 }
 
 // Channels' canonical URL is their root-level slug — falls back to the old

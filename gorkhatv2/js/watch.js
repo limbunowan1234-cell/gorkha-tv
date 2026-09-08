@@ -66,19 +66,22 @@ function recordView(id) {
 
 // Real YT.Player (not a plain <iframe>) so playback progress can actually be
 // read — powers the homepage "Continue Watching" row and lets a viewer
-// resume where they left off. The player itself never autoplays on load (a
-// viewer still clicks play themselves) — "autoplay" here means auto-
-// advancing to the next video once the current one ends, same as YouTube's
-// own toggle, handled by the ENDED branch below.
+// resume where they left off. A direct visit never autoplays (a viewer
+// still clicks play themselves) — but a navigation that came FROM the
+// autoplay overlay below carries "?autoplay=1" (see watchUrl()'s optional
+// param), and this is where that actually takes effect: without it, the
+// overlay would advance to the right page but leave the new video sitting
+// there requiring another click, which defeats the point of "autoplay".
 async function initPlayer(v) {
   const YT = await loadYouTubeApi();
+  const shouldAutoplay = new URLSearchParams(window.location.search).get('autoplay') === '1';
   // #watch-player already has the right aspect-ratio/sizing CSS from the
   // plain-iframe era (.watch-player { aspect-ratio:16/9 } / iframe {
   // width:100%;height:100% }) — YT.Player replaces the div in place and the
   // resulting iframe picks up the same rules, no template changes needed.
   ytPlayer = new YT.Player('watch-player', {
     videoId: v.youtube_video_id,
-    playerVars: { autoplay: 0, rel: 0, playsinline: 1 },
+    playerVars: { autoplay: shouldAutoplay ? 1 : 0, rel: 0, playsinline: 1 },
     events: {
       onReady: async (e) => {
         try {
@@ -89,6 +92,10 @@ async function initPlayer(v) {
         } catch {
           /* resume is a nice-to-have — playback still works without it */
         }
+        // playerVars.autoplay alone doesn't always fire in every browser/
+        // embed context — an explicit playVideo() call is the standard,
+        // more reliable belt-and-suspenders pairing with it.
+        if (shouldAutoplay) e.target.playVideo();
       },
       onStateChange: (e) => {
         if (e.data === YT.PlayerState.PLAYING) {
@@ -170,7 +177,7 @@ function maybeShowAutoplayOverlay() {
 
   document.getElementById('autoplay-card').onclick = (e) => {
     if (e.target.closest('#autoplay-cancel-btn')) return;
-    window.location.href = watchUrl(next);
+    window.location.href = watchUrl(next, { autoplay: true });
   };
   document.getElementById('autoplay-cancel-btn').onclick = hideAutoplayOverlay;
 
@@ -180,7 +187,7 @@ function maybeShowAutoplayOverlay() {
     if (countdownEl) countdownEl.textContent = secondsLeft;
     if (secondsLeft <= 0) {
       clearInterval(autoplayCountdownTimer);
-      window.location.href = watchUrl(next);
+      window.location.href = watchUrl(next, { autoplay: true });
     }
   }, 1000);
 }
