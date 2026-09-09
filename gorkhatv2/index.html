@@ -64,6 +64,31 @@
       .creator-banner-subtitle { font-size: 11px; margin-bottom: 12px; }
       .creator-btn { padding: 6px 14px; font-size: 11px; flex: 1; min-width: 90px; }
     }
+
+    /* GORKHATV GENRE PILLS — each pill is tinted with its own genre color
+       (set inline per-pill by js/home.js from js/genres.js), scrolls
+       horizontally so it works identically on mobile and desktop (unlike
+       the old top-nav links, which were desktop-only). */
+    .genre-pills {
+      display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;
+      padding: 20px 48px 4px;
+    }
+    .genre-pills::-webkit-scrollbar { display: none; }
+    .genre-pill {
+      flex-shrink: 0; padding: 10px 20px; border-radius: 24px;
+      font-family: 'Teko', sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.3px;
+      border: 1.5px solid var(--pill-color, var(--red)); color: var(--pill-color, var(--red));
+      background: color-mix(in srgb, var(--pill-color, var(--red)) 12%, transparent);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .genre-pill:hover {
+      background: var(--pill-color, var(--red)); color: #000;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 700px) {
+      .genre-pills { padding: 16px 20px 4px; }
+      .genre-pill { padding: 8px 16px; font-size: 14px; }
+    }
   </style>
 </head>
 <body>
@@ -76,14 +101,6 @@
     <li><a href="/" class="active">Home</a></li>
     <li><a href="pages/browse.html">Browse</a></li>
     <li><a href="pages/feed.html">Shorts</a></li>
-    <li><a href="/category/movies">Movies</a></li>
-    <li><a href="/category/webseries">Web Series</a></li>
-    <li><a href="/category/news">News</a></li>
-    <li><a href="/category/shortfilms">Short Films</a></li>
-    <li><a href="/category/comedy">Comedy</a></li>
-    <li><a href="/category/interviews">Interviews</a></li>
-    <li><a href="/category/vlogs">Vlogs</a></li>
-    <li><a href="/category/travel">Travel</a></li>
   </ul>
 
   <a href="pages/submit-channel.html" class="nav-creator-link">🎬 Creator</a>
@@ -122,6 +139,11 @@
   </div>
   <div class="hero-dots" id="hero-dots"></div>
 </section>
+
+<!-- GENRE PILLS (branded — replaces the old plain-text genre nav links; each
+     pill goes to that genre's own themed page, in its own color, and shows
+     identically on mobile and desktop) -->
+<div class="genre-pills" id="genre-pills"></div>
 
 <!-- CATEGORY PILLS -->
 <div class="cats-bar" id="cats-bar"></div>

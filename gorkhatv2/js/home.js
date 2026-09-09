@@ -1,5 +1,6 @@
 import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, continueWatchingCardHTML, creatorCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
+import { GENRES } from './genres.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
@@ -25,10 +26,23 @@ let heroTimer = null;
 
 function initApp() {
   loadHome();
+  renderGenrePills();
   initCategoryPills();
   initSearch();
   initAuthNav();
   initHeroSwipe();
+}
+
+// The 6 branded genre destinations (GorkhaTV Talkies/Beats/Diaries/Bulletin/
+// Laughs/Flash) — static, no API call needed, so this renders instantly
+// rather than waiting on loadHome(). Each pill is tinted with its own color
+// via the --pill-color CSS var (see index.html's .genre-pill rule).
+function renderGenrePills() {
+  const bar = document.getElementById('genre-pills');
+  if (!bar) return;
+  bar.innerHTML = GENRES.map(
+    (g) => `<a class="genre-pill" style="--pill-color:${g.color}" href="${g.href}">${escapeHtml(g.label)}</a>`
+  ).join('');
 }
 
 if (document.readyState === 'loading') {

@@ -109,7 +109,7 @@ export const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 // these, like a bare "watch" with no id, wouldn't be caught by any more
 // specific route and would otherwise fall through to the slug handler).
 export const RESERVED_ROOT_SLUGS = new Set([
-  'watch', 'creator', 'category', 'location', 'shorts', 'api',
+  'watch', 'creator', 'category', 'location', 'shorts', 'genre', 'api',
   'css', 'icons', 'js', 'pages', 'templates',
   'sitemap.xml', 'robots.txt', 'manifest.json', 'sw.js', 'ads.txt',
   'logo-circle.png', 'logo-horizantal.png', '_headers', '_redirects',

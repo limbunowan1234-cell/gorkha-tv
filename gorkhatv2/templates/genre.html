@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genre | GorkhaTV</title>
+  <meta name="description" content="Explore this genre on GorkhaTV.">
+  <link rel="canonical" href="https://gorkhatv.site/genre/">
+  <meta property="og:title" content="Genre | GorkhaTV">
+  <meta property="og:description" content="Explore this genre on GorkhaTV.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="../logo-circle.png">
+  <link rel="stylesheet" href="../css/style.css">
+
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
+  <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
+  <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js"></script>
+  <style>
+    /* Every accent on this page reads off --red (row-title bar, see-all
+       hover, CTA button) — genre.js retints --red to the genre's own color
+       on load, so the whole page picks up the theme with no per-element
+       overrides needed. */
+    .genre-hero {
+      padding: 48px 24px 28px; text-align: center; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+    }
+    .genre-hero-label { font-family: 'Teko', sans-serif; font-size: 42px; font-weight: 700; color: var(--red); letter-spacing: 0.5px; }
+    .genre-hero-sub { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 520px; margin-left: auto; margin-right: auto; }
+    .genre-wrap { max-width: 1400px; margin: 0 auto; }
+    .genre-cta-wrap { padding: 8px 48px 40px; text-align: center; }
+    .genre-cta-btn {
+      display: inline-block; background: var(--red); color: #000; font-weight: 700; font-size: 14px;
+      padding: 12px 28px; border-radius: 4px; transition: opacity 0.2s;
+    }
+    .genre-cta-btn:hover { opacity: 0.85; }
+    .genre-empty { color: var(--muted); font-size: 13px; padding: 40px 48px; text-align: center; }
+    @media (max-width: 700px) {
+      .genre-hero { padding: 32px 20px 20px; }
+      .genre-hero-label { font-size: 30px; }
+      .genre-cta-wrap { padding: 8px 20px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo-svg"><img src="../logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="../pages/browse.html">Browse</a></li>
+    <li><a href="../pages/feed.html">Shorts</a></li>
+  </ul>
+  <div class="nav-right" id="nav-right"></div>
+</nav>
+
+<div class="genre-hero">
+  <div class="genre-hero-label" id="genre-label">Loading…</div>
+  <p class="genre-hero-sub" id="genre-sub"></p>
+</div>
+
+<div class="genre-wrap">
+  <div class="row" id="genre-primary-section">
+    <div class="row-header">
+      <h2 class="row-title" id="genre-primary-title">Loading</h2>
+    </div>
+    <div class="cards-scroll" id="genre-primary-row"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <div class="row" id="genre-secondary-section">
+    <div class="row-header">
+      <h2 class="row-title" id="genre-secondary-title">🆕 Latest</h2>
+    </div>
+    <div class="cards-scroll" id="genre-secondary-row"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <div class="genre-cta-wrap" id="genre-cta-wrap" style="display:none;">
+    <a href="../pages/chart.html" class="genre-cta-btn" id="genre-cta-btn">See All 100 →</a>
+  </div>
+
+  <!-- REGION-WISE TOP 10s — one row per location, within this genre only -->
+  <div id="genre-location-rows"></div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="../pages/about.html">About Us</a>
+    <a href="../pages/terms.html">Terms of Service</a>
+    <a href="../pages/privacy.html">Privacy Policy</a>
+    <a href="../pages/contact.html">Contact Us</a>
+  </div>
+  <div class="footer-bottom" style="border-top:none;">
+    <span>© 2026 GorkhaTV — Darjeeling in Every Frame</span>
+    <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
+  </div>
+</footer>
+
+<div id="mobile-nav-root"></div>
+
+<script type="module" src="../js/genre.js"></script>
+<script type="module" src="../js/mobileNav.js"></script>
+</body>
+</html>

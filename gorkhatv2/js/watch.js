@@ -12,6 +12,33 @@ let autoplayCountdownTimer = null;
 const AUTOPLAY_STORAGE_KEY = 'gtv_autoplay';
 const AUTOPLAY_COUNTDOWN_SECONDS = 5;
 
+// Videos already watched this tab session (sessionStorage — cleared when the
+// tab closes, not a permanent history) — used only to keep autoplay from
+// looping back to a song it already played. Every video visited counts, not
+// just autoplay-driven ones, so manually clicking a related video still
+// keeps it out of later autoplay suggestions too.
+const AUTOPLAY_HISTORY_KEY = 'gtv_autoplay_history';
+
+function getAutoplayHistory() {
+  try {
+    return JSON.parse(sessionStorage.getItem(AUTOPLAY_HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function addToAutoplayHistory(id) {
+  try {
+    const history = getAutoplayHistory();
+    if (!history.includes(id)) {
+      history.push(id);
+      sessionStorage.setItem(AUTOPLAY_HISTORY_KEY, JSON.stringify(history));
+    }
+  } catch {
+    /* best-effort — worst case autoplay can repeat a song, not a functional break */
+  }
+}
+
 // Unset = on, matching real YouTube's default and the confirmed product
 // choice here — only an explicit "off" turns it off.
 function isAutoplayOn() {
@@ -40,6 +67,8 @@ async function init() {
 
   const id = getVideoIdFromPath();
   if (!id) return renderNotFound();
+
+  addToAutoplayHistory(id);
 
   try {
     const { video } = await apiFetch(`/videos/${encodeURIComponent(id)}`);
@@ -153,13 +182,19 @@ function initAutoplayToggle() {
 
 // YouTube-style "up next" card: shown over the player when the current
 // video ends, autoplay is on, and there's a related video to advance to
-// (relatedVideos[0], populated by loadRelated() below — no separate fetch).
-// Counts down in plain text (no animated ring) — matches this codebase's
-// existing plain-CSS, no-heavy-animation style elsewhere (the analytics
-// chart, the stat cards).
+// (populated by loadRelated() below — no separate fetch). Picks the first
+// related candidate not already played this tab session (see
+// AUTOPLAY_HISTORY_KEY above), so a tight cluster of songs that keep
+// recommending each other doesn't loop — if every related video has
+// already been played, autoplay simply has nothing new to offer and stays
+// silent rather than repeating one. Counts down in plain text (no animated
+// ring) — matches this codebase's existing plain-CSS, no-heavy-animation
+// style elsewhere (the analytics chart, the stat cards).
 function maybeShowAutoplayOverlay() {
   if (!isAutoplayOn() || !relatedVideos.length) return;
-  const next = relatedVideos[0];
+  const history = getAutoplayHistory();
+  const next = relatedVideos.find((v) => !history.includes(v.youtube_video_id));
+  if (!next) return;
   const overlay = document.getElementById('autoplay-overlay');
   if (!overlay) return;
 
