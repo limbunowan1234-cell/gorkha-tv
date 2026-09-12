@@ -116,9 +116,18 @@ export async function listVideosByIds(apiKey, videoIds) {
 
   for (let i = 0; i < videoIds.length; i += 50) {
     const batch = videoIds.slice(i, i + 50);
+    // 'status' costs nothing extra (videos.list is a flat 1 unit regardless
+    // of how many parts are requested) and is the only way to know
+    // status.embeddable — a video with embedding disabled by its owner
+    // plays fine on youtube.com but shows YouTube's own "Video unavailable"
+    // card in our IFrame player (confirmed directly: a 56M-view video sat
+    // at #1 on the music chart while being unplayable on-site). This
+    // platform only ever embeds, never rehosts, so a non-embeddable video
+    // is fundamentally broken here — shared/sync.js rejects on this flag
+    // before a video is ever published.
     const body = await apiGet(
       'videos',
-      { part: 'snippet,contentDetails,statistics', id: batch.join(',') },
+      { part: 'snippet,contentDetails,statistics,status', id: batch.join(',') },
       apiKey
     );
     unitsUsed += 1;
@@ -139,6 +148,7 @@ export async function listVideosByIds(apiKey, videoIds) {
         durationSeconds: parseIso8601Duration(item.contentDetails.duration),
         viewCount: Number(item.statistics?.viewCount || 0),
         likeCount: item.statistics?.likeCount != null ? Number(item.statistics.likeCount) : null,
+        embeddable: item.status?.embeddable !== false, // absent/undefined treated as embeddable (fail open — most videos don't restrict this)
       });
     }
   }

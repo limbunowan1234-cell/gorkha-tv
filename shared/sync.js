@@ -75,7 +75,16 @@ export async function runChannelPollSync(env) {
             stats.videosFound += 1;
             if (await db.videoExists(env.DB, v.youtubeVideoId)) continue;
 
-            const { score, location, category, status } = classifyVideo(v, { source: 'channel_poll', channelApproved: true });
+            let { score, location, category, status } = classifyVideo(v, { source: 'channel_poll', channelApproved: true });
+
+            // A video with embedding disabled by its owner plays fine on
+            // youtube.com but shows YouTube's own "Video unavailable" card
+            // in our IFrame player — this platform only ever embeds, never
+            // rehosts, so it's fundamentally broken here regardless of how
+            // relevant/popular it is. Overrides relevance scoring entirely
+            // (confirmed directly: a 56M-view video sat at #1 on the music
+            // chart while being unplayable on-site).
+            if (!v.embeddable) status = 'removed';
 
             // Best-effort: classifyContentType costs an extra fetch() subrequest for
             // anything short enough to plausibly be a Short, so it's skipped once the
@@ -188,7 +197,11 @@ export async function runKeywordDiscoverySync(env) {
 
         for (const v of fullVideos) {
           stats.videosFound += 1;
-          const { score, location: matchedLocation, category, status } = classifyVideo(v, { source: 'keyword_search', channelApproved: false });
+          let { score, location: matchedLocation, category, status } = classifyVideo(v, { source: 'keyword_search', channelApproved: false });
+
+          // See the matching comment in runChannelPollSync above — a
+          // non-embeddable video is unplayable here no matter how relevant.
+          if (!v.embeddable) status = 'removed';
 
           let contentType = null;
           if (subrequestsUsed < QUOTA.maxSubrequestsPerRun) {
@@ -249,6 +262,11 @@ export async function addVideoManually(env, youtubeVideoIdOrUrl, overrides = {})
   const { data } = await yt.listVideosByIds(env.YOUTUBE_API_KEY, [youtubeVideoId]);
   const video = data[0];
   if (!video) throw new Error('Video not found on YouTube (deleted, private, or invalid ID).');
+  // Unlike the automated pipelines (which silently mark these 'removed' so a
+  // sync run doesn't stall on one bad video), a manual add surfaces this as
+  // an error immediately — an admin picking a specific video should know
+  // right away why it won't play here, rather than finding a dead embed later.
+  if (!video.embeddable) throw new Error('This video has embedding disabled by its owner and cannot be played on GorkhaTV.');
 
   const { contentType } = await classifyContentType(video.youtubeVideoId, video.durationSeconds);
 
