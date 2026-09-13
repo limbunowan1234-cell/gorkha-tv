@@ -198,13 +198,20 @@ nav {
 .hero { position: relative; height: 580px; overflow: hidden; background: var(--surface); }
 .hero-bg {
   position: absolute; inset: 0; background-size: cover; background-position: center top;
-  filter: brightness(0.45); transition: background-image 0.6s ease;
+  filter: brightness(0.75); transition: background-image 0.6s ease;
 }
+/* Was brightness(0.45) + a gradient covering 65% of the width — together
+   that crushed the whole image (including the right two-thirds, where
+   there's no text to protect) down to a near-black silhouette. Feedback:
+   too dark overall, not just "text needs contrast" dark. Brightness raised
+   so the image actually reads; the gradient now only shades enough of the
+   left edge for the title/description to stay legible, and fades out much
+   sooner instead of dimming most of the frame. */
 .hero-gradient {
   position: absolute; inset: 0;
   background:
-    linear-gradient(to right, var(--dark) 30%, transparent 65%),
-    linear-gradient(to top, rgba(8,8,8,0.95) 0%, transparent 40%);
+    linear-gradient(to right, var(--dark) 8%, transparent 45%),
+    linear-gradient(to top, rgba(8,8,8,0.85) 0%, transparent 32%);
 }
 .hero-content {
   position: relative; z-index: 2; height: 100%;
