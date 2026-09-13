@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+/* Teko/Inter are loaded via a real <link rel="stylesheet"> in every page's
+   <head> (with a preceding <link rel="preconnect">), not a CSS @import here
+   — @import is render-blocking in a way a <link> isn't: the browser can't
+   even start requesting the imported stylesheet until it has downloaded
+   and parsed this file up to the @import line, then must wait on that
+   nested fetch before applying ANY of style.css's own rules. A <link> in
+   the HTML is discovered by the browser's preload scanner immediately and
+   loads in parallel with everything else in <head>. */
 
 :root {
   --red: #E8192C;
