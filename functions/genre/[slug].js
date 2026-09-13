@@ -3,7 +3,7 @@
 // pattern as functions/category/[cat].js. Only the 5 real category-backed
 // genres live here; Shorts ("GorkhaTV Flash") is a themed link straight to
 // the existing pages/feed.html, not a page of its own — see gorkhatv2/js/genres.js.
-import { stripDefaultSeoTags } from '../../shared/http.js';
+import { stripDefaultSeoTags, breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
 const GENRE_CONFIG = {
   movies: { category: 'movies', label: 'GorkhaTV Talkies', color: '#D4A017', kind: 'trending_latest', tagline: 'Movies from across the Darjeeling hills.' },
@@ -42,10 +42,12 @@ export async function onRequest(context) {
   <meta name="twitter:description" content="${escapeHtml(description)}">
   <meta name="theme-color" content="${genre.color}">
   <script>window.__GENRE = ${JSON.stringify({ slug, ...genre })};</script>
+  <script type="application/ld+json">${breadcrumbJsonLd([{ name: 'Home', url: url.origin }, { name: genre.label, url: pageUrl }])}</script>
   `;
 
   html = stripDefaultSeoTags(html);
   html = html.replace(/<head>/i, `<head>${injected}`);
+  html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML([{ name: 'Home', url: url.origin }, { name: genre.label, url: pageUrl }]));
 
   return new Response(html, {
     headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },

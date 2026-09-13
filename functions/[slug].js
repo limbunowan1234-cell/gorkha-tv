@@ -15,6 +15,8 @@
 // answer is: whenever this isn't a real channel slug, hand the request to
 // the real static-asset resolver and return whatever it says (the real file,
 // or its own genuine 404) rather than assuming.
+import { breadcrumbJsonLd, breadcrumbHTML } from '../shared/http.js';
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -69,10 +71,12 @@ export async function onRequest(context) {
     <meta name="twitter:description" content="${escapeHtml(description)}">
     ${creator.thumbnail_url ? `<meta name="twitter:image" content="${escapeHtml(creator.thumbnail_url)}">` : ''}
     <script type="application/ld+json">${structuredData}</script>
+    <script type="application/ld+json">${breadcrumbJsonLd([{ name: 'Home', url: url.origin }, { name: creator.channel_name, url: pageUrl }])}</script>
     `;
 
   html = html.replace(/<title>.*?<\/title>/i, '');
   html = html.replace(/<head>/i, `<head>${metaTags}`);
+  html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML([{ name: 'Home', url: url.origin }, { name: creator.channel_name, url: pageUrl }]));
 
   return new Response(html, {
     headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },

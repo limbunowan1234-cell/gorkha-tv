@@ -2,7 +2,7 @@
 // filter (window.__PRESET) plus SEO/OG meta tags server-side.
 
 import { LOCATIONS } from '../../shared/constants.js';
-import { stripDefaultSeoTags } from '../../shared/http.js';
+import { stripDefaultSeoTags, breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -31,10 +31,12 @@ export async function onRequest(context) {
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <script>window.__PRESET = ${JSON.stringify({ location: loc })};</script>
+    <script type="application/ld+json">${breadcrumbJsonLd([{ name: 'Home', url: url.origin }, { name: loc, url: pageUrl }])}</script>
     `;
 
   html = stripDefaultSeoTags(html);
   html = html.replace(/<head>/i, `<head>${injected}`);
+  html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML([{ name: 'Home', url: url.origin }, { name: loc, url: pageUrl }]));
 
   return new Response(html, { headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' } });
 }

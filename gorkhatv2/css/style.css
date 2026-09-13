@@ -136,6 +136,25 @@ nav {
 .dropdown-item.danger { color: #f87171; }
 .dropdown-divider { border: none; border-top: 1px solid var(--border); }
 
+/* ── BREADCRUMB ── */
+/* Server-injected (see shared/http.js's breadcrumbHTML) on every deep SSR
+   page — watch/genre/category/location/creator — right under the top nav.
+   Not shown on the homepage or the full-screen Shorts/Feed pages (no real
+   hierarchy to show there). Plain text trail, no card/background — reads as
+   part of the page chrome, not another UI element competing for attention. */
+.breadcrumb {
+  padding: 12px 48px; font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  max-width: 1400px; margin: 0 auto;
+}
+.breadcrumb a { color: var(--muted); transition: color 0.15s; }
+.breadcrumb a:hover { color: var(--text); }
+.breadcrumb span[aria-current] { color: var(--text); font-weight: 500; }
+.breadcrumb-sep { color: rgba(255,255,255,0.25); }
+@media (max-width: 700px) {
+  .breadcrumb { padding: 10px 20px; font-size: 11px; }
+}
+
 /* ── MOBILE BOTTOM NAV ── */
 /* Desktop-hidden, phone-only tab bar — Shorts needs to be a one-tap primary
    destination on mobile, not buried behind the horizontally-cramped top nav.

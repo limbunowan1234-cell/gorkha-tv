@@ -5,6 +5,14 @@
 // functions/pages/video.js, which matched literal filename "video.js" ->
 // route "/pages/video" and never actually intercepted "/pages/video.html".
 
+import { breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
+
+// Categories with their own branded /genre/:slug page (see functions/genre/
+// [slug].js) — the breadcrumb links there instead of the generic
+// /category/:slug grid for these, same destination the homepage's genre
+// pills use. Every other category still links to /category/:slug.
+const GENRE_SLUGS = new Set(['movies', 'music', 'vlogs', 'news', 'comedy']);
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -20,7 +28,7 @@ export async function onRequest(context) {
 
   try {
     const video = await env.DB.prepare(
-      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds
+      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds, category
        FROM videos WHERE youtube_video_id = ? AND status = 'published'`
     )
       .bind(id)
@@ -28,6 +36,12 @@ export async function onRequest(context) {
 
     if (!video) {
       return new Response(html, { headers: res.headers });
+    }
+
+    let categoryLabel = null;
+    if (video.category) {
+      const cat = await env.DB.prepare(`SELECT label FROM categories WHERE slug = ? AND active = 1`).bind(video.category).first();
+      categoryLabel = cat?.label || video.category.charAt(0).toUpperCase() + video.category.slice(1);
     }
 
     const title = `${video.title} | GorkhaTV`;
@@ -47,6 +61,15 @@ export async function onRequest(context) {
       ...(video.channel_name ? { author: { '@type': 'Person', name: video.channel_name } } : {}),
     });
 
+    const breadcrumbTrail = [{ name: 'Home', url: url.origin }];
+    if (categoryLabel) {
+      breadcrumbTrail.push({
+        name: categoryLabel,
+        url: GENRE_SLUGS.has(video.category) ? `${url.origin}/genre/${video.category}` : `${url.origin}/category/${encodeURIComponent(video.category)}`,
+      });
+    }
+    breadcrumbTrail.push({ name: video.title, url: pageUrl });
+
     const metaTags = `
     <title>${escapeHtml(title)}</title>
     <meta name="description" content="${escapeHtml(description)}">
@@ -61,11 +84,13 @@ export async function onRequest(context) {
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${thumbnail}">
     <script type="application/ld+json">${structuredData}</script>
+    <script type="application/ld+json">${breadcrumbJsonLd(breadcrumbTrail)}</script>
     `;
 
     html = html.replace(/<title>.*?<\/title>/i, '');
     html = html.replace(/<meta name="description"[^>]*>/i, '');
     html = html.replace(/<head>/i, `<head>${metaTags}`);
+    html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML(breadcrumbTrail));
 
     return new Response(html, {
       headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },

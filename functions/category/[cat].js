@@ -2,7 +2,7 @@
 // filter (window.__PRESET) plus SEO/OG meta tags server-side, so this is a
 // real crawlable URL rather than a query-string-only view.
 
-import { stripDefaultSeoTags } from '../../shared/http.js';
+import { stripDefaultSeoTags, breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -44,10 +44,12 @@ export async function onRequest(context) {
     <meta name="twitter:title" content="${escapeHtml(title)}">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <script>window.__PRESET = ${JSON.stringify({ category: cat })};</script>
+    <script type="application/ld+json">${breadcrumbJsonLd([{ name: 'Home', url: url.origin }, { name: label, url: pageUrl }])}</script>
     `;
 
     html = stripDefaultSeoTags(html);
     html = html.replace(/<head>/i, `<head>${injected}`);
+    html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML([{ name: 'Home', url: url.origin }, { name: label, url: pageUrl }]));
 
     return new Response(html, { headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' } });
   } catch (err) {

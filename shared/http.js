@@ -37,6 +37,47 @@ export function stripDefaultSeoTags(html) {
     .replace(/<meta name="twitter:[^"]*"[^>]*>/gi, '');
 }
 
+// BreadcrumbList structured data — Google renders this as a breadcrumb
+// trail in search results instead of the raw URL path, which reliably
+// improves click-through on deep pages (watch/genre/category/location/
+// creator) that are usually the actual entry point from search, not the
+// homepage. `items` is [{name, url}], root-first (Home always first).
+// Escaping matches functions/watch/[id].js's existing safeJsonLd: JSON.stringify
+// can legally emit a literal "</script>" inside a string value (e.g. a
+// video title containing that text), which would terminate the embedding
+// <script> tag early — <-escaping "<" prevents that.
+export function breadcrumbJsonLd(items) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  }).replace(/</g, '\\u003c');
+}
+
+// Sitewide visible breadcrumb trail — plain HTML, server-injected alongside
+// the SEO meta tags on the same SSR routes that also emit breadcrumbJsonLd
+// above, so it's present without waiting on client JS and always matches
+// the structured data exactly. `items` is [{name, url}] root-first; the
+// last item renders as plain text (current page, not a link), matching
+// standard breadcrumb UX.
+export function breadcrumbHTML(items) {
+  const parts = items.map((item, i) => {
+    const isLast = i === items.length - 1;
+    const label = escapeHtmlForBreadcrumb(item.name);
+    return isLast ? `<span aria-current="page">${label}</span>` : `<a href="${escapeHtmlForBreadcrumb(item.url)}">${label}</a>`;
+  });
+  return `<nav class="breadcrumb" aria-label="Breadcrumb">${parts.join('<span class="breadcrumb-sep">›</span>')}</nav>`;
+}
+
+function escapeHtmlForBreadcrumb(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export async function readJsonBody(request) {
   try {
     return await request.json();
