@@ -19,6 +19,17 @@ const ENGAGEMENT_EXPR = '(view_count + COALESCE(like_count, 0) * 10)';
 // confirmed directly), then the artist's other content generally, then
 // other channels sharing both category and location, then either alone —
 // each tier ranked by actual engagement, not upload date.
+//
+// Ranking by relevance_tier alone let one prolific artist's whole catalog
+// fill the entire list before any other channel appeared at all — direct
+// user feedback: "up next" kept giving the same artist only, wanted a mix.
+// channel_rank (ROW_NUMBER, partitioned per channel, best video first)
+// fixes this by selecting round-robin: every channel's #1 candidate is
+// ranked ahead of ANY channel's #2 candidate, so with LIMIT 12 and >=12
+// distinct candidate channels the list is one video per artist, still
+// ordered by relevance_tier/engagement within each round — the current
+// video's own artist still leads (their best tier-4 match wins round 1),
+// it just doesn't crowd out everyone else the way a flat sort did.
 export async function onRequestGet(context) {
   const { env, params } = context;
   try {
@@ -32,19 +43,22 @@ export async function onRequestGet(context) {
     const { results } = await env.DB
       .prepare(
         `SELECT ${VIDEO_COLUMNS} FROM (
-           SELECT *,
-             CASE
-               WHEN youtube_channel_id = ?1 AND category = ?2 THEN 4
-               WHEN youtube_channel_id = ?1 THEN 3
-               WHEN category = ?2 AND location = ?3 THEN 2
-               WHEN category = ?2 OR location = ?3 THEN 1
-               ELSE 0
-             END AS relevance_tier
-           FROM videos
-           WHERE status = 'published' AND ${NOT_SHORT} AND youtube_video_id != ?4
-             AND (youtube_channel_id = ?1 OR category = ?2 OR location = ?3)
+           SELECT *, ROW_NUMBER() OVER (PARTITION BY youtube_channel_id ORDER BY relevance_tier DESC, ${ENGAGEMENT_EXPR} DESC) AS channel_rank
+           FROM (
+             SELECT *,
+               CASE
+                 WHEN youtube_channel_id = ?1 AND category = ?2 THEN 4
+                 WHEN youtube_channel_id = ?1 THEN 3
+                 WHEN category = ?2 AND location = ?3 THEN 2
+                 WHEN category = ?2 OR location = ?3 THEN 1
+                 ELSE 0
+               END AS relevance_tier
+             FROM videos
+             WHERE status = 'published' AND ${NOT_SHORT} AND youtube_video_id != ?4
+               AND (youtube_channel_id = ?1 OR category = ?2 OR location = ?3)
+           )
          )
-         ORDER BY relevance_tier DESC, ${ENGAGEMENT_EXPR} DESC, published_at DESC
+         ORDER BY channel_rank ASC, relevance_tier DESC, ${ENGAGEMENT_EXPR} DESC, published_at DESC
          LIMIT 12`
       )
       .bind(video.youtube_channel_id, video.category, video.location, params.id)
