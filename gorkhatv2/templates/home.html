@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="logo-circle.png">
+  <link rel="icon" type="image/png" href="/logo-circle.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GorkhaTV — Digital Home of Darjeeling</title>
@@ -17,10 +17,11 @@
   <meta name="twitter:image" content="https://gorkhatv.site/logo-circle.png">
   <link rel="canonical" href="https://gorkhatv.site">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"GorkhaTV","url":"https://gorkhatv.site","description":"A Netflix-style discovery platform for Darjeeling-region YouTube content — Darjeeling, Kalimpong, Kurseong, Mirik and Siliguri.","potentialAction":{"@type":"SearchAction","target":"https://gorkhatv.site/pages/search.html?q={search_term_string}","query-input":"required name=search_term_string"}}</script>
+  <!-- HERO-PRELOAD-PLACEHOLDER --><!-- functions/index.js injects a <link rel=preload as=image> for the actual hero video's thumbnail here, so the browser starts fetching the page's largest image immediately during HTML parse instead of waiting on js/home.js's fetch('/api/home') -> DOM update chain. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#141414">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -98,20 +99,20 @@
 
 <!-- NAV -->
 <nav>
-  <a href="/" class="logo-svg"><img src="logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
+  <a href="/" class="logo-svg"><img src="/logo-horizantal.png" alt="GorkhaTV" class="nav-logo-img"></a>
 
   <ul class="nav-links">
     <li><a href="/" class="active">Home</a></li>
-    <li><a href="pages/browse.html">Browse</a></li>
-    <li><a href="pages/feed.html">Shorts</a></li>
+    <li><a href="/pages/browse.html">Browse</a></li>
+    <li><a href="/pages/feed.html">Shorts</a></li>
   </ul>
 
-  <a href="pages/submit-channel.html" class="nav-creator-link">🎬 Creator</a>
+  <a href="/pages/submit-channel.html" class="nav-creator-link">🎬 Creator</a>
 
   <div class="search-wrap" style="margin-left:auto;">
     <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input').value.trim(); window.location.href = v ? 'pages/search.html?q='+encodeURIComponent(v) : 'pages/search.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="search-input" placeholder="Search videos, creators..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'pages/search.html?q='+encodeURIComponent(v):'pages/search.html';}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="cursor:pointer;" onclick="const v=document.getElementById('search-input').value.trim(); window.location.href = v ? '/pages/search.html?q='+encodeURIComponent(v) : '/pages/search.html';"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="search-input" placeholder="Search videos, creators..." onkeydown="if(event.key==='Enter'){const v=this.value.trim();window.location.href=v?'/pages/search.html?q='+encodeURIComponent(v):'/pages/search.html';}">
     </div>
   </div>
 
@@ -157,7 +158,7 @@
     <h2 class="creator-banner-title">🎬 Are You a Darjeeling-Region Creator?</h2>
     <p class="creator-banner-subtitle">Submit your YouTube channel and get discovered by the region.</p>
     <div class="creator-buttons">
-      <a href="pages/submit-channel.html" class="creator-btn">🚀 Submit Your Channel</a>
+      <a href="/pages/submit-channel.html" class="creator-btn">🚀 Submit Your Channel</a>
       <a href="https://wa.me/917557051046" target="_blank" class="creator-btn creator-btn-secondary">💬 Ask Questions</a>
     </div>
   </div>
@@ -191,7 +192,7 @@
 <div class="row">
   <div class="row-header">
     <h2 class="row-title">🆕 Latest Videos</h2>
-    <a href="pages/browse.html" class="see-all">See all →</a>
+    <a href="/pages/browse.html" class="see-all">See all →</a>
   </div>
   <div class="cards-scroll" id="latest-row"><div class="loading"><div class="spinner"></div></div></div>
 </div>
@@ -206,7 +207,7 @@
 <div class="row" id="creators-row-section" style="display:none;">
   <div class="row-header">
     <h2 class="row-title">⭐ Featured Creators</h2>
-    <a href="pages/browse.html" class="see-all">See all →</a>
+    <a href="/pages/browse.html" class="see-all">See all →</a>
   </div>
   <div class="cards-scroll" id="creators-row"></div>
 </div>
@@ -265,7 +266,7 @@
         <li><a href="/location/Sikkim">Sikkim</a></li>
         <li><a href="/location/Mirik">Mirik</a></li>
         <li><a href="/location/Siliguri">Siliguri</a></li>
-        <li><a href="pages/browse.html">All Videos</a></li>
+        <li><a href="/pages/browse.html">All Videos</a></li>
       </ul>
     </div>
 
@@ -287,7 +288,7 @@
     <div class="footer-col">
       <h4>For Creators</h4>
       <ul>
-        <li><a href="pages/submit-channel.html">📹 Submit Your Channel</a></li>
+        <li><a href="/pages/submit-channel.html">📹 Submit Your Channel</a></li>
         <li><a href="https://wa.me/917557051046" target="_blank">💬 Contact Us</a></li>
       </ul>
     </div>
@@ -305,10 +306,10 @@
     <div class="footer-col">
       <h4>Legal</h4>
       <ul>
-        <li><a href="pages/about.html">About Us</a></li>
-        <li><a href="pages/terms.html">Terms of Service</a></li>
-        <li><a href="pages/privacy.html">Privacy Policy</a></li>
-        <li><a href="pages/contact.html">Contact Us</a></li>
+        <li><a href="/pages/about.html">About Us</a></li>
+        <li><a href="/pages/terms.html">Terms of Service</a></li>
+        <li><a href="/pages/privacy.html">Privacy Policy</a></li>
+        <li><a href="/pages/contact.html">Contact Us</a></li>
       </ul>
     </div>
   </div>
@@ -321,8 +322,8 @@
 
 <div id="mobile-nav-root"></div>
 
-<script type="module" src="js/home.js"></script>
-<script type="module" src="js/mobileNav.js"></script>
+<script type="module" src="/js/home.js"></script>
+<script type="module" src="/js/mobileNav.js"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
