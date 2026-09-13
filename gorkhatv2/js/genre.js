@@ -1,4 +1,4 @@
-import { apiFetch, videoCardHTML, numberedCardHTML, escapeHtml } from './api.js';
+import { apiFetch, videoCardHTML, numberedCardHTML, escapeHtml, creatorUrl, formatCount } from './api.js';
 import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
 
@@ -124,6 +124,8 @@ async function loadTop10Top100(genre) {
     primaryRow.innerHTML = `<div class="genre-empty">Couldn't load the chart right now — please try again shortly.</div>`;
   }
 
+  loadTopArtists();
+
   // Region rows aren't in /chart's response (it's an all-region Top 100),
   // so this is a second, small request — same /genre/:category route every
   // other genre page uses, just ignoring its trending/latest fields here.
@@ -134,6 +136,36 @@ async function loadTop10Top100(genre) {
     // Region rows are a bonus on this page (the Top 10/Top 100 above is the
     // main content) — fail silently rather than showing a second error.
   }
+}
+
+// Top 20 Artists — ranked by total engagement across each artist's whole
+// music catalog (see /api/top-artists), not just their single best song.
+async function loadTopArtists() {
+  const section = document.getElementById('genre-artists-section');
+  const list = document.getElementById('genre-artists-list');
+  try {
+    const { artists } = await apiFetch('/top-artists');
+    if (!artists || !artists.length) return; // stays hidden — nothing to show yet
+    section.style.display = '';
+    list.innerHTML = artists.map((a, i) => artistRowHTML(a, i + 1)).join('');
+  } catch (err) {
+    // Bonus section, same as the region rows below — fail silently.
+  }
+}
+
+function artistRowHTML(a, rank) {
+  const stats = [`${formatCount(a.video_count)} songs`, a.total_engagement ? `${formatCount(a.total_engagement)} engagement` : null]
+    .filter(Boolean)
+    .join(' · ');
+  return `
+    <a class="artist-row" href="${creatorUrl(a)}">
+      <div class="artist-rank">${rank}</div>
+      <img class="artist-avatar" src="${escapeHtml(a.thumbnail_url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+      <div class="artist-info">
+        <div class="artist-name">${escapeHtml(a.channel_name || '')}</div>
+        <div class="artist-stats">${escapeHtml(stats)}</div>
+      </div>
+    </a>`;
 }
 
 if (document.readyState === 'loading') {
