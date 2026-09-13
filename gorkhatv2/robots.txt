@@ -3,17 +3,19 @@ Allow: /
 Allow: /pages/browse.html
 Allow: /pages/search.html
 Allow: /pages/feed.html
+Allow: /pages/chart.html
 Allow: /watch/
 Allow: /shorts
+Allow: /genre/
 Allow: /creator/
 Allow: /category/
 Allow: /location/
 
-Disallow: /pages/admin.html
-Disallow: /pages/admin-videos.html
-Disallow: /pages/admin-creators.html
-Disallow: /pages/admin-categories.html
-Disallow: /pages/admin-claims.html
+# Prefix match (not enumerated per-file) so a newly-added admin page is
+# disallowed automatically — enumerating each one by name is exactly what
+# let admin-analytics.html/admin-comments.html/admin-featured.html slip
+# through unblocked after this file was last updated.
+Disallow: /pages/admin
 Disallow: /pages/my-favourites.html
 Disallow: /pages/edit-profile.html
 

@@ -10,23 +10,36 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const origin = new URL(request.url).origin;
 
+  // GorkhaTV Talkies/Beats/Diaries/Bulletin/Laughs — the branded genre
+  // pages (functions/genre/[slug].js), the newest and most-invested-in
+  // discovery surface on the site. Music/GorkhaTV Beats' "See all" already
+  // points at chart.html, which needs its own sitemap entry too.
+  const GENRE_SLUGS = ['movies', 'music', 'vlogs', 'news', 'comedy'];
+
   const urls = [
     { loc: `${origin}/`, changefreq: 'hourly', priority: '1.0' },
     { loc: `${origin}/pages/browse.html`, changefreq: 'daily', priority: '0.8' },
     { loc: `${origin}/shorts`, changefreq: 'hourly', priority: '0.9' },
     { loc: `${origin}/pages/feed.html`, changefreq: 'hourly', priority: '0.8' },
+    { loc: `${origin}/pages/chart.html`, changefreq: 'daily', priority: '0.7' },
     { loc: `${origin}/pages/search.html`, changefreq: 'weekly', priority: '0.4' },
     { loc: `${origin}/pages/submit-channel.html`, changefreq: 'monthly', priority: '0.5' },
     { loc: `${origin}/pages/about.html`, changefreq: 'monthly', priority: '0.3' },
     { loc: `${origin}/pages/contact.html`, changefreq: 'monthly', priority: '0.3' },
     { loc: `${origin}/pages/terms.html`, changefreq: 'monthly', priority: '0.2' },
     { loc: `${origin}/pages/privacy.html`, changefreq: 'monthly', priority: '0.2' },
+    ...GENRE_SLUGS.map((slug) => ({ loc: `${origin}/genre/${slug}`, changefreq: 'daily', priority: '0.8' })),
   ];
 
   try {
+    // Google's own single-sitemap cap is 50,000 URLs — 20,000 here is
+    // generous headroom over today's ~4,600 published videos, not a limit
+    // chosen to match Google's. Revisit only if the catalog grows enough to
+    // approach 20k (a <sitemapindex> splitting into multiple files would be
+    // the next step, well before ever nearing Google's real ceiling).
     const [{ results: videos }, { results: creators }, { results: categories }] = await Promise.all([
-      env.DB.prepare(`SELECT youtube_video_id, content_type, updated_at FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 2000`).all(),
-      env.DB.prepare(`SELECT slug, updated_at FROM channels WHERE status = 'approved' AND slug IS NOT NULL LIMIT 500`).all(),
+      env.DB.prepare(`SELECT youtube_video_id, content_type, updated_at FROM videos WHERE status = 'published' ORDER BY published_at DESC LIMIT 20000`).all(),
+      env.DB.prepare(`SELECT slug, updated_at FROM channels WHERE status = 'approved' AND slug IS NOT NULL LIMIT 2000`).all(),
       env.DB.prepare(`SELECT slug FROM categories WHERE active = 1`).all(),
     ]);
 

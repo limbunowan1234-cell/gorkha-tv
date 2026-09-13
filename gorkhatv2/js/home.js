@@ -276,24 +276,23 @@ function rowHTML(id, row) {
     </div>`;
 }
 
+// Real <a href> pills, not click-delegated <div>s — every category becomes
+// a genuine crawlable internal link from the homepage (SEO/discovery: a
+// crawler that never runs JS still finds every /category/:slug page this
+// way, and ctrl/middle-click "open in new tab" now works too).
 function initCategoryPills() {
   const bar = document.getElementById('cats-bar');
   if (!bar) return;
   apiFetch('/categories')
     .then(({ categories }) => {
       const pills = [{ slug: '', label: 'All' }, ...categories.map((c) => ({ slug: c.slug, label: c.label }))];
-      bar.innerHTML = pills.map((p) => `<div class="cat-pill ${p.slug === '' ? 'active' : ''}" data-slug="${p.slug}">${escapeHtml(p.label)}</div>`).join('');
+      bar.innerHTML = pills
+        .map((p) => `<a class="cat-pill ${p.slug === '' ? 'active' : ''}" href="${p.slug ? categoryUrl(p.slug) : '/'}">${escapeHtml(p.label)}</a>`)
+        .join('');
     })
     .catch(() => {
       bar.innerHTML = '';
     });
-
-  bar.addEventListener('click', (e) => {
-    const pill = e.target.closest('.cat-pill');
-    if (!pill) return;
-    const slug = pill.dataset.slug;
-    window.location.href = slug ? categoryUrl(slug) : '/';
-  });
 }
 
 function initSearch() {

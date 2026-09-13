@@ -53,8 +53,8 @@ async function runSearch(q) {
 
 function creatorMiniHTML(c) {
   return `
-    <div class="creator-mini" onclick="window.location.href='${creatorUrl(c)}'">
+    <a class="creator-mini" href="${creatorUrl(c)}">
       ${c.thumbnail_url ? `<img src="${escapeHtml(c.thumbnail_url)}" alt="${escapeHtml(c.channel_name)}" loading="lazy">` : `<div style="width:64px;height:64px;border-radius:50%;background:var(--surface2);margin:0 auto 8px;"></div>`}
       <div class="name">${escapeHtml(c.channel_name)}</div>
-    </div>`;
+    </a>`;
 }

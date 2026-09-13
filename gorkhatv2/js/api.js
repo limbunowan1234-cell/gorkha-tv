@@ -59,7 +59,7 @@ export function escapeHtml(str) {
 export function videoCardHTML(v) {
   const thumb = ytThumb(v);
   return `
-    <div class="card" onclick="window.location.href='${watchUrl(v)}'">
+    <a class="card" href="${watchUrl(v)}">
       <div class="card-thumb">
         <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
         <div class="card-play-overlay">
@@ -72,7 +72,7 @@ export function videoCardHTML(v) {
         <div class="card-title">${escapeHtml(v.title || '')}</div>
         <div class="card-sub">${escapeHtml(v.channel_name || '')}${v.location ? ' · ' + escapeHtml(v.location) : ''}</div>
       </div>
-    </div>`;
+    </a>`;
 }
 
 // "Continue Watching" card — same .card shape as videoCardHTML plus a thin
@@ -82,7 +82,7 @@ export function continueWatchingCardHTML(v) {
   const thumb = ytThumb(v);
   const pct = v.duration_seconds ? Math.min(100, Math.round((v.progress_seconds / v.duration_seconds) * 100)) : 0;
   return `
-    <div class="card" onclick="window.location.href='${watchUrl(v)}'">
+    <a class="card" href="${watchUrl(v)}">
       <div class="card-thumb">
         <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
         <div class="card-play-overlay">
@@ -94,7 +94,7 @@ export function continueWatchingCardHTML(v) {
         <div class="card-title">${escapeHtml(v.title || '')}</div>
         <div class="card-sub">${escapeHtml(v.channel_name || '')}${v.location ? ' · ' + escapeHtml(v.location) : ''}</div>
       </div>
-    </div>`;
+    </a>`;
 }
 
 // Netflix-style "Top 10" numbered row — .num-card/.num-big/.num-card-img
@@ -104,18 +104,18 @@ export function continueWatchingCardHTML(v) {
 export function numberedCardHTML(v, rank) {
   const thumb = ytThumb(v);
   return `
-    <div class="num-card" onclick="window.location.href='${watchUrl(v)}'">
+    <a class="num-card" href="${watchUrl(v)}">
       <div class="num-big">${rank}</div>
       <div class="num-card-img">
         <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
       </div>
-    </div>`;
+    </a>`;
 }
 
 export function creatorCardHTML(c) {
   const thumb = c.thumbnail_url || '';
   return `
-    <div class="card" onclick="window.location.href='${creatorUrl(c)}'">
+    <a class="card" href="${creatorUrl(c)}">
       <div class="card-thumb" style="background:var(--surface2);">
         ${thumb ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(c.channel_name)}" loading="lazy">` : ''}
       </div>
@@ -123,7 +123,7 @@ export function creatorCardHTML(c) {
         <div class="card-title">${escapeHtml(c.channel_name || '')}</div>
         <div class="card-sub">${escapeHtml(c.category || '')}${c.location ? ' · ' + escapeHtml(c.location) : ''}</div>
       </div>
-    </div>`;
+    </a>`;
 }
 
 export function showToast(msg) {

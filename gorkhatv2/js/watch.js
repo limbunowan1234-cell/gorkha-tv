@@ -344,13 +344,13 @@ async function loadRelated(id) {
     el.innerHTML = related
       .map(
         (r) => `
-      <div class="related-item" onclick="window.location.href='${watchUrl(r)}'">
+      <a class="related-item" href="${watchUrl(r)}">
         <div class="related-thumb"><img src="${escapeHtml(ytThumb(r))}" loading="lazy" alt="" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(r.youtube_video_id)}/default.jpg'"></div>
         <div>
           <div class="related-title">${escapeHtml(r.title)}</div>
           <div class="related-sub">${escapeHtml(r.channel_name || '')}</div>
         </div>
-      </div>`
+      </a>`
       )
       .join('');
   } catch {

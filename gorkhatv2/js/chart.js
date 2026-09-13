@@ -20,14 +20,14 @@ function chartRowHTML(v, rank) {
   const thumb = ytThumb(v);
   const sub = [v.channel_name, v.view_count ? formatViews(v.view_count) : null].filter(Boolean).join(' · ');
   return `
-    <div class="chart-row" onclick="window.location.href='${watchUrl(v)}'">
+    <a class="chart-row" href="${watchUrl(v)}">
       <div class="chart-rank">${rank}</div>
       <div class="chart-thumb"><img src="${escapeHtml(thumb)}" loading="lazy" alt="" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'"></div>
       <div class="chart-info">
         <div class="chart-row-title">${escapeHtml(v.title)}</div>
         <div class="chart-row-sub">${escapeHtml(sub)}</div>
       </div>
-    </div>`;
+    </a>`;
 }
 
 init();
