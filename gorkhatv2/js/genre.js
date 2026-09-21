@@ -30,12 +30,12 @@ function applyTheme(genre) {
   document.getElementById('genre-label').textContent = genre.label;
 
   const subEl = document.getElementById('genre-sub');
-  // GorkhaTV Bulletin is editorially credited to Khabar Darjeeling (a real,
-  // already-approved channel — /khabardarjeeling) — same credit already
-  // shown on /category/news (see browse.js's updateTitle()), just linked
-  // here too instead of left as plain text.
+  // GorkhaTV Bulletin is editorially credited to Khabar Darjeeling — links
+  // out to their real site (khabardarjeeling.in), not just the internal
+  // GorkhaTV profile, same credit shown on /category/news (see browse.js's
+  // updateTitle()).
   if (genre.slug === 'news') {
-    subEl.innerHTML = 'Breaking news and updates from the Darjeeling hills — powered by <a href="/khabardarjeeling" style="color:inherit;text-decoration:underline;">Khabar Darjeeling</a>.';
+    subEl.innerHTML = 'Breaking news and updates from the Darjeeling hills — powered by <a href="https://www.khabardarjeeling.in/" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Khabar Darjeeling</a>.';
   } else {
     subEl.textContent = genre.tagline || '';
   }

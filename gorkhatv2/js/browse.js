@@ -33,7 +33,9 @@ function updateTitle() {
   if (state.category === 'news') {
     titleEl.textContent = '📰 Gorkha TV News';
     if (subEl) {
-      subEl.innerHTML = 'Powered by <a href="/khabardarjeeling">Khabar Darjeeling</a>';
+      // Links out to their real site (khabardarjeeling.in), not just the
+      // internal GorkhaTV profile — a genuine cross-promotion credit.
+      subEl.innerHTML = 'Powered by <a href="https://www.khabardarjeeling.in/" target="_blank" rel="noopener">Khabar Darjeeling</a>';
       subEl.style.display = 'block';
     }
     return;
