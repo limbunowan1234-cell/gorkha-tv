@@ -114,14 +114,26 @@ export async function onRequestGet(context) {
       (byCategory[row.category] ||= []).push(row);
     }
 
-    return cacheableJson({
-      hero,
-      trending: trendingRes.results,
-      latest: latestRes.results,
-      byLocation,
-      byCategory,
-      featuredCreators: creatorsRes.results,
-    });
+    // byLocation/byCategory alone read ~12,000 rows each (verified directly
+    // against production D1 — window-function ranking genuinely has to see
+    // every candidate in a group before it can rank it, there's no index
+    // shortcut for that). This is the single most-visited route on the
+    // site, so cache duration is the real lever, not the query shape —
+    // bumped from the 60s/300s default to 600s/3000s (10min/50min edge),
+    // matching /api/chart and /api/top-artists' existing convention. The
+    // underlying content only changes via the 6-hourly sync anyway, so
+    // this costs no meaningful freshness.
+    return cacheableJson(
+      {
+        hero,
+        trending: trendingRes.results,
+        latest: latestRes.results,
+        byLocation,
+        byCategory,
+        featuredCreators: creatorsRes.results,
+      },
+      600
+    );
   } catch (err) {
     // The homepage must never go blank just because D1 hiccupped — return an
     // empty-but-well-formed payload so the frontend renders its empty states.

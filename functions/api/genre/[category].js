@@ -70,7 +70,12 @@ export async function onRequestGet(context) {
       (byLocation[row.location] ||= []).push(row);
     }
 
-    return cacheableJson({ trending: trendingRes.results, latest: latestRes.results, byLocation });
+    // byLocation is a window-function rank-per-group query, same story as
+    // functions/api/home.js's byLocation/byCategory — genuinely has to scan
+    // every video in the category to rank it (verified: forcing the
+    // category index didn't reduce rows_read at all). Bumped to 600s/3000s
+    // to match home.js/chart.js/top-artists.js's cache convention.
+    return cacheableJson({ trending: trendingRes.results, latest: latestRes.results, byLocation }, 600);
   } catch (err) {
     return json({ trending: [], latest: [], byLocation: {}, error: 'Genre content is temporarily unavailable.' }, { status: 200 });
   }
