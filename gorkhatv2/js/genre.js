@@ -2,6 +2,7 @@ import { apiFetch, videoCardHTML, numberedCardHTML, escapeHtml, creatorUrl, form
 import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
 import { setQueue } from './queue.js';
+import { navigate } from './router.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
@@ -134,7 +135,12 @@ async function loadTop10Top100(genre) {
         if (index === -1) return;
         e.preventDefault();
         setQueue(chart, index);
-        window.location.href = watchUrl(chart[index], { autoplay: true });
+        // /genre/music is inside the Beats router's triangle — this goes
+        // through it (fetch+swap, keeps the player bar alive) rather than a
+        // real navigation; router.js's own transitionTo() already falls
+        // back to a real navigation on its own if anything about the
+        // destination page looks wrong, so this is safe on every genre.
+        navigate(watchUrl(chart[index], { autoplay: true }));
       });
     }
   } catch (err) {

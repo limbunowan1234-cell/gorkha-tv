@@ -3,6 +3,8 @@ import { initAuthNav, getCurrentUser } from './auth.js';
 import { loadYouTubeApi } from './youtubeApi.js';
 import { initComments } from './comments.js';
 import { syncQueuePosition, upcomingQueueItems } from './queue.js';
+import { registerTeardown, navigate } from './router.js';
+import { playTrack } from './playerBar.js';
 
 // GorkhaTV Beats' pink — same value as js/genres.js / functions/genre/
 // [slug].js's GENRE_CONFIG.music, duplicated here per this codebase's
@@ -71,6 +73,24 @@ function getVideoIdFromPath() {
 }
 
 async function init() {
+  // This module is re-imported fresh on every Beats-router transition (see
+  // js/router.js's entryScriptFor()), not just on a real page load — so
+  // anything from a PREVIOUS instance that outlives its own module (a
+  // setInterval id, a document/window-level listener) must be explicitly
+  // torn down here, first, or it silently keeps running forever alongside
+  // whatever this fresh instance sets up next.
+  clearInterval(progressSyncTimer);
+  clearInterval(autoplayCountdownTimer);
+  if (window.__gtvVisibilityHandler) document.removeEventListener('visibilitychange', window.__gtvVisibilityHandler);
+  window.__gtvVisibilityHandler = () => {
+    if (document.visibilityState === 'hidden') syncProgress();
+  };
+  document.addEventListener('visibilitychange', window.__gtvVisibilityHandler);
+  registerTeardown(() => {
+    clearInterval(progressSyncTimer);
+    clearInterval(autoplayCountdownTimer);
+  });
+
   await initAuthNav();
 
   const id = getVideoIdFromPath();
@@ -88,10 +108,34 @@ async function init() {
     initAutoplayToggle();
     loadRelated(id);
     recordView(id);
-    initPlayer(video);
+    // GorkhaTV Beats hands actual playback off to the persistent player bar
+    // (js/playerBar.js) instead of creating its own throwaway YT.Player —
+    // that's the one thing that lets the track keep playing if the viewer
+    // then navigates to the chart or back to /genre/music. Every other
+    // category keeps today's exact behavior (its own player, dies on
+    // navigation like before — the router doesn't intercept those pages at
+    // all, so there's nothing to hand off to).
+    if (video.category === 'music') {
+      renderBeatsPlayerArea(video);
+      playTrack(video);
+    } else {
+      initPlayer(video);
+    }
   } catch (err) {
     renderNotFound();
   }
+}
+
+// Static album-art image in the "big player" slot — GorkhaTV Beats' one
+// real, live YT.Player always lives in the persistent bar (js/playerBar.js),
+// not duplicated here; see that file's own header comment for why (avoids
+// either destroying/recreating an iframe on every navigation, or
+// reparenting a live one between DOM positions — both meaningfully riskier
+// for a first version than one player that's always in one place).
+function renderBeatsPlayerArea(v) {
+  const mount = document.getElementById('watch-player');
+  if (!mount) return;
+  mount.innerHTML = `<img src="${escapeHtml(ytThumb(v))}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
 }
 
 // GorkhaTV Beats gets Spotify-style "now playing" chrome (square album-art-
@@ -238,7 +282,7 @@ function maybeShowAutoplayOverlay() {
 
   document.getElementById('autoplay-card').onclick = (e) => {
     if (e.target.closest('#autoplay-cancel-btn')) return;
-    window.location.href = watchUrl(next, { autoplay: true });
+    navigate(watchUrl(next, { autoplay: true }));
   };
   document.getElementById('autoplay-cancel-btn').onclick = hideAutoplayOverlay;
 
@@ -248,7 +292,7 @@ function maybeShowAutoplayOverlay() {
     if (countdownEl) countdownEl.textContent = secondsLeft;
     if (secondsLeft <= 0) {
       clearInterval(autoplayCountdownTimer);
-      window.location.href = watchUrl(next, { autoplay: true });
+      navigate(watchUrl(next, { autoplay: true }));
     }
   }, 1000);
 }
@@ -258,12 +302,6 @@ function hideAutoplayOverlay() {
   const overlay = document.getElementById('autoplay-overlay');
   if (overlay) overlay.style.display = 'none';
 }
-
-// Flushes progress on tab-hide/navigation-away — onStateChange only catches
-// an explicit pause/end, not the viewer just closing the tab mid-playback.
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') syncProgress();
-});
 
 function renderVideo(v) {
   document.title = `${v.title} | GorkhaTV`;

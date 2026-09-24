@@ -15,7 +15,7 @@
   <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
   <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js" defer></script>
 
-  <style>
+  <style id="page-style">
     .watch-wrap { max-width: 1400px; margin: 0 auto; padding: 24px 48px 60px; }
     .watch-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start; }
     /* YT.Player replaces the #watch-player div with the actual <iframe> in
@@ -139,6 +139,7 @@
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
+<div id="page-content">
 <!-- BREADCRUMB-PLACEHOLDER --><!-- filled server-side by functions/watch/[id].js, see shared/http.js's breadcrumbHTML; empty on a direct static hit -->
 
 <div class="watch-wrap">
@@ -202,9 +203,14 @@
     <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
   </div>
 </footer>
+</div>
+
+<div class="player-bar" id="player-bar-root" style="display:none;"></div>
 
 <div id="mobile-nav-root"></div>
 
+<script type="module" src="/js/router.js"></script>
+<script type="module" src="/js/playerBar.js"></script>
 <script type="module" src="/js/watch.js"></script>
 <script type="module" src="/js/mobileNav.js"></script>
 </body>

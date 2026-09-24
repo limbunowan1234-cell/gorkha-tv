@@ -222,6 +222,48 @@ nav {
   body:not(.mobile-nav-overlay) { padding-bottom: 56px; }
 }
 
+/* ── PERSISTENT PLAYER BAR (GorkhaTV Beats) ── */
+/* Fixed bottom "now playing" bar — js/playerBar.js's root DOM node, which
+   js/router.js's page-swap never touches (it lives outside #page-content in
+   every router-participating template), so its YouTube iframe — and the
+   audio it's playing — survives an in-app navigation. Height (64px) is a
+   small shared constant with body.gtv-player-active's padding-bottom below —
+   keep the two in sync if this changes. */
+.player-bar {
+  display: none; /* toggled to flex by playerBar.js's render() once a track starts */
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 210; /* above .mobile-nav's 200 */
+  align-items: center; gap: 12px; height: 64px; padding: 0 14px;
+  background: #0a0a0a; border-top: 1px solid rgba(255,255,255,0.08);
+}
+.player-bar-progress {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: rgba(255,255,255,0.08);
+}
+.player-bar-progress-fill { height: 100%; width: 0%; background: #E0479E; }
+.player-bar-thumb {
+  width: 44px; height: 44px; border-radius: 4px; flex-shrink: 0;
+  background-size: cover; background-position: center; background-color: var(--surface2);
+}
+.player-bar-info { min-width: 0; flex: 1; }
+.player-bar-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-bar-artist { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.player-bar-playpause {
+  flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: none;
+  background: #E0479E; color: #000; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+/* The real YT.Player mount — kept off-screen-tiny (not display:none, which
+   can break some iframe players) since Beats is audio-first chrome, not a
+   second visible video frame in the bar. */
+.player-bar-yt { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+@media (max-width: 700px) {
+  .player-bar { bottom: 56px; } /* stacks above .mobile-nav, never overlaps it */
+}
+body.gtv-player-active { padding-bottom: 64px; }
+@media (max-width: 700px) {
+  body.gtv-player-active:not(.mobile-nav-overlay) { padding-bottom: 120px; } /* 64px bar + 56px mobile-nav */
+}
+
 /* ── HERO ── */
 .hero { position: relative; height: 580px; overflow: hidden; background: var(--surface); }
 .hero-bg {
