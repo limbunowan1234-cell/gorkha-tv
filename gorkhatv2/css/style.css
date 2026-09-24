@@ -162,6 +162,34 @@ nav {
   .breadcrumb { padding: 10px 20px; font-size: 11px; }
 }
 
+/* ── GORKHATV BEATS "NOW PLAYING" CHROME ── */
+/* Applied only to music watch pages — js/watch.js toggles .beats-mode on
+   .watch-wrap when the loaded video's category is 'music', and retints
+   --red to Beats' pink (#E0479E) the same way genre.js already does for
+   the genre pages, so this reads as the same brand everywhere. Lives here
+   (shared style.css), not watch.html's own inline <style>, because a
+   future persistent mini-player bar (Phase B) reuses this same visual
+   language across every page, not just /watch/:id. */
+.watch-wrap.beats-mode .watch-grid { grid-template-columns: 1fr 1fr; }
+.watch-wrap.beats-mode .watch-player-wrap {
+  max-width: 440px; margin-left: auto; margin-right: auto;
+}
+.watch-wrap.beats-mode .watch-player {
+  aspect-ratio: 1 / 1; border-radius: 16px;
+  box-shadow: 0 16px 56px rgba(224,71,158,0.28);
+}
+.watch-wrap.beats-mode .watch-title { text-align: center; margin-top: 22px; font-size: 26px; }
+.watch-wrap.beats-mode .watch-meta { justify-content: center; }
+.watch-wrap.beats-mode .watch-channel {
+  justify-content: center; border: none; padding: 10px 0 18px;
+}
+.watch-wrap.beats-mode .watch-actions { margin-left: 0; }
+.watch-wrap.beats-mode .watch-desc { max-width: 440px; margin: 0 auto; text-align: center; }
+.watch-wrap.beats-mode .watch-desc-toggle { display: block; margin-left: auto; margin-right: auto; }
+@media (max-width: 900px) {
+  .watch-wrap.beats-mode .watch-grid { grid-template-columns: 1fr; }
+}
+
 /* ── MOBILE BOTTOM NAV ── */
 /* Desktop-hidden, phone-only tab bar — Shorts needs to be a one-tap primary
    destination on mobile, not buried behind the horizontally-cramped top nav.

@@ -1,6 +1,7 @@
-import { apiFetch, videoCardHTML, numberedCardHTML, escapeHtml, creatorUrl, formatCount } from './api.js';
+import { apiFetch, videoCardHTML, numberedCardHTML, escapeHtml, creatorUrl, formatCount, watchUrl } from './api.js';
 import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
+import { setQueue } from './queue.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
@@ -119,6 +120,22 @@ async function loadTop10Top100(genre) {
       primaryRow.innerHTML = `<div class="genre-empty">No chart data yet — check back once more music has synced.</div>`;
     } else {
       primaryRow.innerHTML = chart.slice(0, 10).map((v, i) => numberedCardHTML(v, i + 1)).join('');
+      // Queue-seed from the FULL Top 100, not just the 10 rendered cards —
+      // a listener starting here still gets the whole chart behind them,
+      // same as starting from /pages/chart.html itself. numberedCardHTML
+      // is shared with non-Beats homepage rows (api.js) so it's left
+      // untouched — this click handler is scoped to this one container and
+      // intercepts navigation itself (preventDefault + explicit
+      // ?autoplay=1) rather than changing the shared card markup.
+      primaryRow.addEventListener('click', (e) => {
+        const card = e.target.closest('.num-card');
+        if (!card) return;
+        const index = [...primaryRow.children].indexOf(card);
+        if (index === -1) return;
+        e.preventDefault();
+        setQueue(chart, index);
+        window.location.href = watchUrl(chart[index], { autoplay: true });
+      });
     }
   } catch (err) {
     primaryRow.innerHTML = `<div class="genre-empty">Couldn't load the chart right now — please try again shortly.</div>`;

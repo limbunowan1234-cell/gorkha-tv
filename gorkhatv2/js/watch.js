@@ -2,11 +2,19 @@ import { apiFetch, ytThumb, watchUrl, creatorUrl, formatViews, escapeHtml, showT
 import { initAuthNav, getCurrentUser } from './auth.js';
 import { loadYouTubeApi } from './youtubeApi.js';
 import { initComments } from './comments.js';
+import { syncQueuePosition, upcomingQueueItems } from './queue.js';
+
+// GorkhaTV Beats' pink — same value as js/genres.js / functions/genre/
+// [slug].js's GENRE_CONFIG.music, duplicated here per this codebase's
+// existing convention of small constants living per-file rather than a
+// shared import for a single color value.
+const BEATS_COLOR = '#E0479E';
 
 let ytPlayer = null;
 let currentVideo = null;
 let progressSyncTimer = null;
-let relatedVideos = []; // populated by loadRelated(); relatedVideos[0] doubles as the autoplay "up next" candidate
+let relatedVideos = []; // populated by loadRelated(); doubles as the autoplay "up next" candidate list when there's no active queue
+let queueActive = false; // true only when the current video actually belongs to a stored gtv_queue (see js/queue.js)
 let autoplayCountdownTimer = null;
 
 const AUTOPLAY_STORAGE_KEY = 'gtv_autoplay';
@@ -69,6 +77,7 @@ async function init() {
   if (!id) return renderNotFound();
 
   addToAutoplayHistory(id);
+  queueActive = syncQueuePosition(id);
 
   try {
     const { video } = await apiFetch(`/videos/${encodeURIComponent(id)}`);
@@ -83,6 +92,17 @@ async function init() {
   } catch (err) {
     renderNotFound();
   }
+}
+
+// GorkhaTV Beats gets Spotify-style "now playing" chrome (square album-art-
+// style player, centered title/artist, pink theme) — every other category
+// keeps today's plain video-watch layout unchanged. Same --red retinting
+// trick js/genre.js already uses for the genre pages, so this reads as the
+// same brand rather than a one-off.
+function applyBeatsChrome(v) {
+  if (v.category !== 'music') return;
+  document.querySelector('.watch-wrap')?.classList.add('beats-mode');
+  document.documentElement.style.setProperty('--red', BEATS_COLOR);
 }
 
 // Real on-site view signal for the homepage Trending row (functions/api/home.js)
@@ -191,9 +211,15 @@ function initAutoplayToggle() {
 // ring) — matches this codebase's existing plain-CSS, no-heavy-animation
 // style elsewhere (the analytics chart, the stat cards).
 function maybeShowAutoplayOverlay() {
-  if (!isAutoplayOn() || !relatedVideos.length) return;
+  if (!isAutoplayOn()) return;
   const history = getAutoplayHistory();
-  const next = relatedVideos.find((v) => !history.includes(v.youtube_video_id));
+  // A GorkhaTV Beats queue (chart/Top-10 click) takes priority over the
+  // generic related-videos list — this is what makes "up next" actually
+  // play through the ranked list a viewer started from, not just whatever
+  // else happens to be related to the current song. Falls back to
+  // relatedVideos once the queue runs out, same as loadRelated()'s sidebar.
+  const queueNext = queueActive ? upcomingQueueItems().find((v) => !history.includes(v.youtube_video_id)) : null;
+  const next = queueNext || relatedVideos.find((v) => !history.includes(v.youtube_video_id));
   if (!next) return;
   const overlay = document.getElementById('autoplay-overlay');
   if (!overlay) return;
@@ -241,6 +267,7 @@ document.addEventListener('visibilitychange', () => {
 
 function renderVideo(v) {
   document.title = `${v.title} | GorkhaTV`;
+  applyBeatsChrome(v);
 
   document.getElementById('watch-title').textContent = v.title || '';
 
@@ -334,28 +361,45 @@ function setFavouriteButtonState(btn, isFavourited) {
 
 async function loadRelated(id) {
   const el = document.getElementById('related-list');
+
+  // A track played from GorkhaTV Beats' chart/Top-10 (js/queue.js's stored
+  // gtv_queue) takes over the sidebar as a real "Up Next" list — still
+  // fetches relatedVideos below so autoplay has something to fall back to
+  // once the queue runs out, but doesn't show "More like this" while a
+  // queue is actively driving the session.
+  if (queueActive) {
+    const upcoming = upcomingQueueItems();
+    if (upcoming.length) {
+      const heading = document.getElementById('related-heading');
+      if (heading) heading.textContent = 'Up Next';
+      el.innerHTML = upcoming.map((r) => relatedItemHTML(r)).join('');
+    }
+  }
+
   try {
     const { related } = await apiFetch(`/videos/${encodeURIComponent(id)}/related`);
-    relatedVideos = related; // doubles as the autoplay "up next" queue — see maybeShowAutoplayOverlay()
+    relatedVideos = related; // autoplay's fallback "up next" source once the queue (if any) is exhausted — see maybeShowAutoplayOverlay()
+    if (queueActive && upcomingQueueItems().length) return; // Up Next is already showing, above — don't overwrite it
+
     if (!related.length) {
       el.innerHTML = `<div style="color:var(--muted);font-size:13px;">No related videos yet.</div>`;
       return;
     }
-    el.innerHTML = related
-      .map(
-        (r) => `
-      <a class="related-item" href="${watchUrl(r)}">
-        <div class="related-thumb"><img src="${escapeHtml(ytThumb(r))}" loading="lazy" alt="" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(r.youtube_video_id)}/default.jpg'"></div>
-        <div>
-          <div class="related-title">${escapeHtml(r.title)}</div>
-          <div class="related-sub">${escapeHtml(r.channel_name || '')}</div>
-        </div>
-      </a>`
-      )
-      .join('');
+    el.innerHTML = related.map((r) => relatedItemHTML(r)).join('');
   } catch {
-    el.innerHTML = '';
+    if (!queueActive) el.innerHTML = '';
   }
+}
+
+function relatedItemHTML(r) {
+  return `
+    <a class="related-item" href="${watchUrl(r)}">
+      <div class="related-thumb"><img src="${escapeHtml(ytThumb(r))}" loading="lazy" alt="" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(r.youtube_video_id)}/default.jpg'"></div>
+      <div>
+        <div class="related-title">${escapeHtml(r.title)}</div>
+        <div class="related-sub">${escapeHtml(r.channel_name || '')}</div>
+      </div>
+    </a>`;
 }
 
 function renderNotFound() {
