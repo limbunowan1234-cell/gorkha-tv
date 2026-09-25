@@ -4,7 +4,7 @@ import { loadYouTubeApi } from './youtubeApi.js';
 import { initComments } from './comments.js';
 import { syncQueuePosition, upcomingQueueItems } from './queue.js';
 import { registerTeardown, navigate } from './router.js';
-import { playTrack } from './playerBar.js';
+import { playTrack, dockInto, undockToMini } from './playerBar.js';
 
 // GorkhaTV Beats' pink — same value as js/genres.js / functions/genre/
 // [slug].js's GENRE_CONFIG.music, duplicated here per this codebase's
@@ -92,6 +92,11 @@ async function init() {
   registerTeardown(() => {
     clearInterval(progressSyncTimer);
     clearInterval(autoplayCountdownTimer);
+    // No-op if this page never docked the iframe big (e.g. a non-music
+    // video) — always registered unconditionally, same as the timers above,
+    // so the iframe is guaranteed to never be a descendant of #page-content
+    // at the moment the NEXT transition's innerHTML swap runs.
+    undockToMini();
   });
 
   await initAuthNav();
@@ -119,8 +124,9 @@ async function init() {
     // navigation like before — the router doesn't intercept those pages at
     // all, so there's nothing to hand off to).
     if (video.category === 'music') {
-      renderBeatsPlayerArea(video);
-      playTrack(video);
+      renderBeatsPlayerArea(video); // thumbnail placeholder, shown immediately
+      await playTrack(video); // awaited so the iframe element exists before docking
+      dockInto('watch-player');
     } else {
       initPlayer(video);
     }
@@ -129,12 +135,11 @@ async function init() {
   }
 }
 
-// Static album-art image in the "big player" slot — GorkhaTV Beats' one
-// real, live YT.Player always lives in the persistent bar (js/playerBar.js),
-// not duplicated here; see that file's own header comment for why (avoids
-// either destroying/recreating an iframe on every navigation, or
-// reparenting a live one between DOM positions — both meaningfully riskier
-// for a first version than one player that's always in one place).
+// Brief loading placeholder for the big player slot, shown immediately while
+// playTrack() (async — loads the YT API if needed) resolves; dockInto()
+// swaps the real, live iframe in right after, moved here from its home in
+// the persistent bar (js/playerBar.js) rather than a second player being
+// created — see that file's own header comment.
 function renderBeatsPlayerArea(v) {
   const mount = document.getElementById('watch-player');
   if (!mount) return;

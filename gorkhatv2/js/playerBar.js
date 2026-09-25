@@ -6,14 +6,18 @@
 // iframe is never removed from the document, so playback simply continues
 // through a page "transition."
 //
-// Deliberately a single, ALWAYS-small fixed bar — it does not grow into a
-// second "big" player on /watch/:id (that would mean either destroying and
-// recreating the iframe on every navigation, defeating the whole point, or
-// reparenting a live iframe between DOM positions, which is real added risk
-// for a first version). The watch page shows a static album-art image
-// instead of a second live video frame; the real player + controls always
-// live in this one bar. A real YT.Player still exists and plays audio the
-// whole time — this is a layout choice, not a compliance shortcut.
+// A Beats watch page shows the REAL live video (not a static album-art
+// image) via dockInto()/undockToMini() below — the same iframe (found by id,
+// never recreated) is appendChild()-moved between its mini-bar home and the
+// watch page's big player slot. This was originally shipped as an
+// always-small bar specifically to avoid that reparenting, but it's since
+// been confirmed safe directly against production: moving the live iframe
+// mid-playback produced zero new network requests and the video kept
+// playing continuously through the move (see the Phase Q plan section for
+// the full empirical trace). js/watch.js owns the dock/undock decision
+// (it knows "which page am I on"; this module only knows tracks/queue) and
+// registers the undock as a router teardown so the iframe is never a
+// descendant of #page-content at the moment a swap runs.
 import { loadYouTubeApi } from './youtubeApi.js';
 import { ytThumb, escapeHtml, watchUrl } from './api.js';
 import { syncQueuePosition, upcomingQueueItems } from './queue.js';
@@ -57,6 +61,32 @@ export function initPlayerBar() {
     if (currentTrack) navigate(watchUrl(currentTrack));
   };
   render();
+}
+
+// Moves the SAME live iframe (found by id, never recreated) into `targetId`'s
+// element and switches it to fill that container — the exact appendChild-
+// based move confirmed safe against production (see this module's own header
+// comment). Idempotent — safe to call again if already docked there.
+export function dockInto(targetId) {
+  const target = document.getElementById(targetId);
+  const ytEl = document.getElementById('player-bar-yt');
+  if (!target || !ytEl || ytEl.parentElement === target) return;
+  target.innerHTML = ''; // clears watch.js's static-thumbnail loading placeholder
+  target.appendChild(ytEl);
+  ytEl.classList.add('docked-big');
+}
+
+// Moves the iframe back to its home in the mini bar. appendChild always
+// appends at the end, which is already #player-bar-yt's natural last-child
+// position in the bar's own flex row (see initPlayerBar()'s markup above) —
+// no explicit position bookkeeping needed. Idempotent — safe to call even if
+// never docked.
+export function undockToMini() {
+  const bar = root();
+  const ytEl = document.getElementById('player-bar-yt');
+  if (!bar || !ytEl || ytEl.parentElement === bar) return;
+  ytEl.classList.remove('docked-big');
+  bar.appendChild(ytEl);
 }
 
 export function isActive() {
