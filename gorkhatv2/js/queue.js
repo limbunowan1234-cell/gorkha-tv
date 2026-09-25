@@ -55,6 +55,14 @@ export function upcomingQueueItems() {
   return q ? q.items.slice(q.index + 1) : [];
 }
 
+// The track immediately before the current position — null if there's no
+// active queue, or the current position is already the first item. Powers
+// the lock-screen/OS media-control "previous track" button (js/playerBar.js).
+export function previousQueueItem() {
+  const q = readQueue();
+  return q && q.index > 0 ? q.items[q.index - 1] : null;
+}
+
 // Call when a track actually starts playing (i.e. the watch page for that
 // video has loaded) so the stored position tracks reality — matters when a
 // viewer skips ahead in the "Up Next" list rather than just letting one

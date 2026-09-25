@@ -20,7 +20,7 @@
 // descendant of #page-content at the moment a swap runs.
 import { loadYouTubeApi } from './youtubeApi.js';
 import { ytThumb, escapeHtml, watchUrl } from './api.js';
-import { syncQueuePosition, upcomingQueueItems } from './queue.js';
+import { syncQueuePosition, upcomingQueueItems, previousQueueItem } from './queue.js';
 import { navigate } from './router.js';
 
 const BEATS_COLOR = '#E0479E';
@@ -60,7 +60,38 @@ export function initPlayerBar() {
     e.preventDefault();
     if (currentTrack) navigate(watchUrl(currentTrack));
   };
+  initMediaSession();
   render();
+}
+
+// Lock-screen / OS-level media controls (Android notification shade, desktop
+// OS media keys) — registered once, since the handlers themselves don't
+// change per track, only the metadata (set in render()) and playback state
+// (set in onPlayerStateChange()) do. Untested on iOS: the actual audio
+// decodes inside a cross-origin YouTube iframe, which this page can't claim
+// Media Session ownership over the way it could for its own <video>/<audio>
+// element — this is registered on the (reasonable) chance it still helps on
+// Android/desktop, not a guarantee it survives a fully backgrounded mobile
+// browser. See this session's own conversation for the full reasoning.
+function initMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  navigator.mediaSession.setActionHandler('play', () => {
+    if (ytPlayer && typeof ytPlayer.playVideo === 'function') ytPlayer.playVideo();
+  });
+  navigator.mediaSession.setActionHandler('pause', () => {
+    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') ytPlayer.pauseVideo();
+  });
+  navigator.mediaSession.setActionHandler('nexttrack', advanceToNextInQueue);
+  navigator.mediaSession.setActionHandler('previoustrack', goToPreviousInQueue);
+}
+
+function updateMediaSessionMetadata() {
+  if (!('mediaSession' in navigator) || !currentTrack) return;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: currentTrack.title || '',
+    artist: currentTrack.channel_name || '',
+    artwork: [{ src: ytThumb(currentTrack), sizes: '480x360', type: 'image/jpeg' }],
+  });
 }
 
 // Moves the SAME live iframe (found by id, never recreated) into `targetId`'s
@@ -141,12 +172,14 @@ function onPlayerStateChange(e) {
   const btn = document.getElementById('player-bar-playpause');
   if (e.data === YT.PlayerState.PLAYING) {
     if (btn) btn.textContent = '⏸';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
     clearInterval(progressPollTimer);
     progressPollTimer = setInterval(updateProgressBar, PROGRESS_POLL_MS);
     clearInterval(progressSyncTimer);
     progressSyncTimer = setInterval(syncProgressToServer, 20000);
   } else {
     if (btn) btn.textContent = '▶';
+    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     clearInterval(progressPollTimer);
     if (e.data === YT.PlayerState.PAUSED) {
       clearInterval(progressSyncTimer);
@@ -189,6 +222,17 @@ function advanceToNextInQueue() {
   if (window.location.pathname.startsWith('/watch/')) navigate(watchUrl(next));
 }
 
+// Mirrors advanceToNextInQueue() exactly, one position earlier — the
+// lock-screen/OS "previous track" control's only handler (js/queue.js's
+// previousQueueItem()). No-op (button simply does nothing) if there's no
+// active queue or we're already at its first item.
+function goToPreviousInQueue() {
+  const prev = previousQueueItem();
+  if (!prev) return;
+  playTrack(prev);
+  if (window.location.pathname.startsWith('/watch/')) navigate(watchUrl(prev));
+}
+
 function togglePlayPause() {
   if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') return;
   const YT = window.YT;
@@ -213,6 +257,7 @@ function render() {
   thumbLink.style.backgroundImage = `url(${escapeHtml(ytThumb(currentTrack))})`;
   document.getElementById('player-bar-title').textContent = currentTrack.title || '';
   document.getElementById('player-bar-artist').textContent = currentTrack.channel_name || '';
+  updateMediaSessionMetadata();
 }
 
 // Self-invokes once per real page load, same convention as js/mobileNav.js
