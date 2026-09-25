@@ -3,8 +3,15 @@ import { initAuthNav } from './auth.js';
 import { setQueue } from './queue.js';
 
 let chartItems = [];
+// Sitewide default --red (css/style.css's :root) — the chart page has no
+// theme of its own, but a genre/watch page arriving via the router (see
+// js/router.js) may have left --red overridden on <html>, which the
+// #page-content swap never resets by itself. Duplicated per-file constant,
+// same convention as BEATS_COLOR elsewhere.
+const DEFAULT_RED = '#E8192C';
 
 async function init() {
+  document.documentElement.style.setProperty('--red', DEFAULT_RED);
   initAuthNav();
   const list = document.getElementById('chart-list');
   try {

@@ -2,6 +2,12 @@ import { apiFetch, escapeHtml, videoCardHTML, showToast, formatCount } from './a
 import { initAuthNav, getCurrentUser } from './auth.js';
 
 let currentChannel = null;
+// Sitewide default --red (css/style.css's :root) — a creator page has no
+// theme of its own, but a Beats/genre page arriving via the router (see
+// js/router.js) may have left --red overridden on <html>, which the
+// #page-content swap never resets by itself. Duplicated per-file constant,
+// same convention as BEATS_COLOR elsewhere.
+const DEFAULT_RED = '#E8192C';
 
 // This script only ever loads on a page functions/[slug].js served — the
 // site's root-level channel profile route — so the first (only) path
@@ -12,6 +18,7 @@ function getChannelIdFromPath() {
 }
 
 async function init() {
+  document.documentElement.style.setProperty('--red', DEFAULT_RED);
   await initAuthNav();
   const id = getChannelIdFromPath();
   if (!id) return renderNotFound();

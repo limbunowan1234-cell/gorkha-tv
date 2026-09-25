@@ -1,33 +1,55 @@
 // GorkhaTV Beats' client-side navigation — the first (and, deliberately,
-// only) router in this codebase, scoped tightly to keep the persistent
-// player bar (js/playerBar.js) alive across "page changes." Every other
-// page on the site is still a real, separate navigation, exactly as
-// before — this only intercepts clicks between the three Beats pages:
-// /pages/chart.html, /genre/music, and /watch/:id (any video — a click
-// from within the Beats triangle to a watch page is intercepted even if
-// that video turns out not to be music; a real navigation from a watch
-// page to somewhere outside the triangle, e.g. Home, ends persistence,
-// which is the correct, documented degradation).
+// only) router in this codebase, scoped to keep the persistent player bar
+// (js/playerBar.js) alive across "page changes." Every other page on the
+// site is still a real, separate navigation, exactly as before — this only
+// intercepts clicks between the 5 participating templates: home (/),
+// /pages/chart.html, /genre/:slug (any genre, not just music), /watch/:id
+// (any video), and a root-level creator profile (/:slug, e.g.
+// /adharlimbu — see functions/[slug].js). A real navigation from a
+// participating page to somewhere outside this set (Browse, Search,
+// Shorts, admin, etc.) ends persistence, which is the correct, documented
+// degradation.
 //
 // Why this exists at all: a real page navigation destroys every live
 // iframe and all JS state — confirmed there is no service-worker or other
 // hook that can keep audio playing across one. The only way to keep the
-// player bar's iframe alive is to stop doing real navigations for these
-// three pages: fetch the destination's HTML, swap only the page-specific
+// player bar's iframe alive is to stop doing real navigations between
+// these pages: fetch the destination's HTML, swap only the page-specific
 // #page-content region, and leave #player-bar-root (and everything else
 // outside #page-content — <nav>, #mobile-nav-root) untouched.
 
-const TRIANGLE_PATTERNS = [/^\/pages\/chart\.html$/, /^\/genre\/music$/, /^\/watch\/[^/?#]+$/];
+// Every top-level, fixed-prefix route that is NOT a creator profile — a
+// creator's slug is whatever single root-level path segment is left over
+// once these are excluded (functions/[slug].js's own catch-all does the
+// same exclusion server-side; RESERVED_ROOT_SLUGS is duplicated here per
+// this codebase's small-per-file-constant convention, not imported, since
+// shared/constants.js isn't part of the deployed static bundle browsers
+// can fetch).
+const RESERVED_ROOT_SLUGS = new Set([
+  'watch', 'creator', 'category', 'location', 'shorts', 'genre', 'api',
+  'css', 'icons', 'js', 'pages', 'templates',
+  'sitemap.xml', 'robots.txt', 'manifest.json', 'sw.js', 'ads.txt',
+  'logo-circle.png', 'logo-horizantal.png', '_headers', '_redirects',
+]);
 
-function isTrianglePath(pathname) {
-  return TRIANGLE_PATTERNS.some((re) => re.test(pathname));
+// A false positive here (treating some non-creator single-segment path as
+// a creator profile) is still safe: transitionTo() falls back to a real
+// navigation whenever the fetched page turns out not to have
+// #page-content, so this only risks one wasted fetch, never a broken page.
+function isParticipatingPath(pathname) {
+  if (pathname === '/' || pathname === '/pages/chart.html') return true;
+  if (/^\/watch\/[^/?#]+$/.test(pathname)) return true;
+  if (/^\/genre\/[^/?#]+$/.test(pathname)) return true;
+  const seg = pathname.slice(1);
+  return !!seg && !seg.includes('/') && !RESERVED_ROOT_SLUGS.has(seg);
 }
 
 function entryScriptFor(pathname) {
+  if (pathname === '/') return '/js/home.js';
   if (pathname === '/pages/chart.html') return '/js/chart.js';
-  if (pathname === '/genre/music') return '/js/genre.js';
+  if (/^\/genre\//.test(pathname)) return '/js/genre.js';
   if (pathname.startsWith('/watch/')) return '/js/watch.js';
-  return null;
+  return '/js/creator.js'; // the only other shape isParticipatingPath() allows through
 }
 
 let teardownFns = [];
@@ -113,8 +135,12 @@ async function transitionTo(url, { push }) {
   if (entry) {
     try {
       await import(/* @vite-ignore */ `${entry}?t=${Date.now()}`);
-    } catch {
-      /* a broken re-import shouldn't strand the viewer on dead markup — worst case this page's own JS just doesn't run */
+    } catch (err) {
+      // Logged (not just silently swallowed) — a broken re-import shouldn't
+      // strand the viewer on dead markup, but it's worth being able to spot
+      // in the wild (e.g. transient CDN propagation lag right after a
+      // deploy) rather than debugging blind next time.
+      console.error('[router] entry script re-import failed', entry, err);
     }
   }
 
@@ -142,7 +168,7 @@ function isEligibleClick(e, anchor) {
     return false;
   }
   if (dest.origin !== window.location.origin) return false;
-  if (!isTrianglePath(window.location.pathname) || !isTrianglePath(dest.pathname)) return false;
+  if (!isParticipatingPath(window.location.pathname) || !isParticipatingPath(dest.pathname)) return false;
   return dest;
 }
 

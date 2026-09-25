@@ -135,7 +135,7 @@ async function loadTop10Top100(genre) {
         if (index === -1) return;
         e.preventDefault();
         setQueue(chart, index);
-        // /genre/music is inside the Beats router's triangle — this goes
+        // /genre/music is a router-participating page — this goes
         // through it (fetch+swap, keeps the player bar alive) rather than a
         // real navigation; router.js's own transitionTo() already falls
         // back to a real navigation on its own if anything about the

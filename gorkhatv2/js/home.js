@@ -1,6 +1,7 @@
 import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, numberedCardHTML, continueWatchingCardHTML, creatorCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
+import { registerTeardown, navigate } from './router.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
@@ -19,12 +20,30 @@ const CATEGORY_LABEL_OVERRIDES = { webseries: 'Web Series', shortfilms: 'Short F
 // the generic category browse grid — every other category still uses
 // categoryUrl(slug) as normal.
 const CATEGORY_LINK_OVERRIDES = { music: '/pages/chart.html' };
+// Duplicated per-file constant, same convention as BEATS_COLOR elsewhere.
+const DEFAULT_RED = '#E8192C';
 
 let heroItems = [];
 let heroIndex = 0;
 let heroTimer = null;
 
 function initApp() {
+  // This module is re-imported fresh on every router transition landing on
+  // "/" (see js/router.js's entryScriptFor()), not just on a real page
+  // load — heroTimer is a module-level setInterval whose id lives only in
+  // THIS instance's closure, so the NEXT instance's own heroTimer variable
+  // can never clear it directly. Registering the clear here, inside the
+  // same closure that owns heroTimer, is what lets the router actually
+  // stop it when the viewer navigates away (same pattern js/watch.js uses
+  // for its own timers).
+  registerTeardown(() => clearInterval(heroTimer));
+
+  // Home has no theme of its own — a Beats/genre page arriving via the
+  // router may have left --red overridden on <html>, which the
+  // #page-content swap alone never resets (see js/chart.js's own comment
+  // on the same fix).
+  document.documentElement.style.setProperty('--red', DEFAULT_RED);
+
   loadHome();
   renderGenrePills();
   initCategoryPills();
@@ -144,8 +163,8 @@ function renderHero() {
 
   const playBtn = document.getElementById('hero-play-btn');
   const moreBtn = document.getElementById('hero-more-btn');
-  if (playBtn) playBtn.onclick = () => (window.location.href = watchUrl(item));
-  if (moreBtn) moreBtn.onclick = () => (window.location.href = watchUrl(item));
+  if (playBtn) playBtn.onclick = () => navigate(watchUrl(item));
+  if (moreBtn) moreBtn.onclick = () => navigate(watchUrl(item));
 
   const dotsEl = document.getElementById('hero-dots');
   if (dotsEl) {

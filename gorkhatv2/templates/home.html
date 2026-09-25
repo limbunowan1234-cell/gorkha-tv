@@ -35,7 +35,7 @@
   <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
   <script type="text/javascript" src="https://resources.infolinks.com/js/infolinks_main.js" defer></script>
 
-  <style>
+  <style id="page-style">
     .nav-creator-link {
       background: var(--red) !important; color: white !important; padding: 8px 14px !important;
       border-radius: 4px !important; font-weight: 700 !important; font-size: 13px !important; transition: all 0.2s !important;
@@ -119,6 +119,7 @@
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
+<div id="page-content">
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg" id="hero-bg"></div>
@@ -319,9 +320,14 @@
     <span>Videos are hosted and played on YouTube. GorkhaTV indexes public metadata only.</span>
   </div>
 </footer>
+</div>
+
+<div class="player-bar" id="player-bar-root" style="display:none;"></div>
 
 <div id="mobile-nav-root"></div>
 
+<script type="module" src="/js/router.js"></script>
+<script type="module" src="/js/playerBar.js"></script>
 <script type="module" src="/js/home.js"></script>
 <script type="module" src="/js/mobileNav.js"></script>
 <script>

@@ -11,6 +11,9 @@ import { playTrack } from './playerBar.js';
 // existing convention of small constants living per-file rather than a
 // shared import for a single color value.
 const BEATS_COLOR = '#E0479E';
+// Sitewide default --red (css/style.css's :root) — duplicated here per this
+// codebase's small-per-file-constant convention, same as BEATS_COLOR above.
+const DEFAULT_RED = '#E8192C';
 
 let ytPlayer = null;
 let currentVideo = null;
@@ -142,11 +145,15 @@ function renderBeatsPlayerArea(v) {
 // style player, centered title/artist, pink theme) — every other category
 // keeps today's plain video-watch layout unchanged. Same --red retinting
 // trick js/genre.js already uses for the genre pages, so this reads as the
-// same brand rather than a one-off.
+// same brand rather than a one-off. Always sets --red (to pink, or back to
+// the sitewide default) rather than only ever overriding it — since the
+// router (js/router.js) can land here right after a pink Beats page, and
+// <html> itself is never swapped, a non-music video needs this to actively
+// reset the theme, not just skip touching it.
 function applyBeatsChrome(v) {
-  if (v.category !== 'music') return;
-  document.querySelector('.watch-wrap')?.classList.add('beats-mode');
-  document.documentElement.style.setProperty('--red', BEATS_COLOR);
+  const isMusic = v.category === 'music';
+  document.querySelector('.watch-wrap')?.classList.toggle('beats-mode', isMusic);
+  document.documentElement.style.setProperty('--red', isMusic ? BEATS_COLOR : DEFAULT_RED);
 }
 
 // Real on-site view signal for the homepage Trending row (functions/api/home.js)
@@ -326,7 +333,7 @@ function renderVideo(v) {
     img.onerror = () => (img.style.display = 'none');
     channelEl.onclick = (e) => {
       if (e.target.closest('.watch-actions')) return;
-      window.location.href = creatorUrl({ youtube_channel_id: v.youtube_channel_id });
+      navigate(creatorUrl({ youtube_channel_id: v.youtube_channel_id, slug: v.channel_slug }));
     };
     channelEl.style.cursor = 'pointer';
   }
