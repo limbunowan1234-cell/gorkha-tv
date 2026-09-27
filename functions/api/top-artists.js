@@ -3,7 +3,7 @@ import { cacheableJson } from '../../shared/http.js';
 const NOT_SHORT = "(content_type IS NULL OR content_type != 'short')";
 const PREMIUM = "(duration_seconds IS NULL OR duration_seconds >= 30) AND (LENGTH(title) - LENGTH(REPLACE(title, '#', ''))) <= 5";
 
-// "Top Artists" — GorkhaTV Beats' companion to the Top 100 Hills Hits song
+// "Top Artists" — SWARA's companion to the Top 100 Hills Hits song
 // chart (see /api/chart): same engagement signal (view_count + likes*10),
 // summed per artist (channel) across their whole music catalog instead of
 // ranked per song — so a prolific artist with many solid songs ranks

@@ -29,7 +29,7 @@ export async function onRequestGet(context) {
   const pageUrl = `${url.origin}/pages/chart.html`;
   const breadcrumbTrail = [
     { name: 'Home', url: url.origin },
-    { name: 'GorkhaTV Beats', url: `${url.origin}/genre/music` },
+    { name: 'SWARA', url: `${url.origin}/genre/music` },
     { name: 'Top 100 Hills Hits', url: pageUrl },
   ];
 
@@ -44,7 +44,7 @@ export async function onRequestGet(context) {
     const itemListJsonLd = safeJsonLd({
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      name: 'Top 100 Hills Hits — GorkhaTV Beats',
+      name: 'Top 100 Hills Hits — SWARA',
       description: "The Darjeeling hills and Sikkim's music, ranked by real engagement.",
       numberOfItems: results.length,
       itemListElement: results.map((v, i) => ({

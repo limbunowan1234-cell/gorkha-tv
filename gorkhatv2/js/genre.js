@@ -22,6 +22,7 @@ function init() {
   applyTheme(genre);
 
   if (genre.kind === 'top10_top100') loadTop10Top100(genre);
+  else if (genre.kind === 'multi_trending_latest') loadMultiTrendingLatest(genre);
   else loadTrendingLatest(genre);
 }
 
@@ -50,10 +51,14 @@ function applyTheme(genre) {
 function renderLocationRows(genre, byLocation) {
   const wrap = document.getElementById('genre-location-rows');
   if (!wrap) return;
+  // CHIMAL spans several categories (genre.categories, no single genre.category)
+  // — there's no one-category "see all" link that fits, so its rows link to
+  // an unfiltered location browse instead of a category-scoped one.
+  const seeAllQuery = genre.category ? `category=${encodeURIComponent(genre.category)}&location=` : 'location=';
   const rows = LOCATIONS.filter((loc) => (byLocation[loc] || []).length).map((loc) => ({
     loc,
     title: `${LOCATION_EMOJI[loc] || ''} Top 10 ${loc}`,
-    link: `../pages/browse.html?category=${encodeURIComponent(genre.category)}&location=${encodeURIComponent(loc)}`,
+    link: `../pages/browse.html?${seeAllQuery}${encodeURIComponent(loc)}`,
     items: byLocation[loc],
   }));
   wrap.innerHTML = rows
@@ -106,7 +111,61 @@ async function loadTrendingLatest(genre) {
   }
 }
 
-// Music ("GorkhaTV Beats") — a themed Top 10 preview instead of Trending/
+// CHIMAL — merges several single-category /api/genre/:category responses
+// client-side into one feed (no dedicated multi-category API route exists;
+// each category's own route stays untouched and is still used directly by
+// KHABAR/SWARA). Trending merges by trend_score, latest by published_at,
+// byLocation unions per region then re-sorts by the same engagement signal
+// the single-category route already ranks by — mirrors the merge approach
+// the CHIMAL mobile app's own FeedScreen uses.
+async function loadMultiTrendingLatest(genre) {
+  const primaryTitle = document.getElementById('genre-primary-title');
+  const primaryRow = document.getElementById('genre-primary-row');
+  const primarySection = document.getElementById('genre-primary-section');
+  const secondaryTitle = document.getElementById('genre-secondary-title');
+  const secondaryRow = document.getElementById('genre-secondary-row');
+
+  primaryTitle.textContent = `🔥 Trending on ${genre.label}`;
+  secondaryTitle.textContent = `🆕 Latest on ${genre.label}`;
+
+  try {
+    const results = await Promise.all(genre.categories.map((cat) => apiFetch(`/genre/${cat}`).catch(() => ({ trending: [], latest: [], byLocation: {} }))));
+
+    const trending = results.flatMap((r) => r.trending || []).sort((a, b) => (b.trend_score || 0) - (a.trend_score || 0)).slice(0, 20);
+    const latest = results.flatMap((r) => r.latest || []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at)).slice(0, 20);
+
+    if (trending.length) {
+      primarySection.style.display = '';
+      primaryRow.innerHTML = trending.map(videoCardHTML).join('');
+    } else {
+      primarySection.style.display = 'none';
+    }
+
+    if (latest.length) {
+      secondaryRow.innerHTML = latest.map(videoCardHTML).join('');
+    } else {
+      secondaryRow.innerHTML = `<div class="genre-empty">No videos here yet — check back soon.</div>`;
+    }
+
+    const byLocation = {};
+    for (const r of results) {
+      for (const [loc, items] of Object.entries(r.byLocation || {})) {
+        (byLocation[loc] ||= []).push(...items);
+      }
+    }
+    for (const loc of Object.keys(byLocation)) {
+      byLocation[loc] = byLocation[loc]
+        .sort((a, b) => (b.view_count + (b.like_count || 0) * 10) - (a.view_count + (a.like_count || 0) * 10) || new Date(b.published_at) - new Date(a.published_at))
+        .slice(0, 10);
+    }
+    renderLocationRows(genre, byLocation);
+  } catch (err) {
+    primarySection.style.display = 'none';
+    secondaryRow.innerHTML = `<div class="genre-empty">Couldn't load this section right now — please try again shortly.</div>`;
+  }
+}
+
+// Music ("SWARA") — a themed Top 10 preview instead of Trending/
 // Latest, with a "See All 100" CTA pointing at the full ranked chart
 // (pages/chart.html, already built) rather than duplicating that list here.
 async function loadTop10Top100(genre) {

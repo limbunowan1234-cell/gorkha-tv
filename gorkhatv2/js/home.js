@@ -52,8 +52,8 @@ function initApp() {
   initHeroSwipe();
 }
 
-// The 6 branded genre destinations (GorkhaTV Talkies/Beats/Diaries/Bulletin/
-// Laughs/Flash) — static, no API call needed, so this renders instantly
+// The 4 Gorkha TV products (CHIMAL/KHABAR/SWARA/UKAALI) — static, no API
+// call needed, so this renders instantly
 // rather than waiting on loadHome(). Each pill is tinted with its own color
 // via the --pill-color CSS var (see index.html's .genre-pill rule).
 function renderGenrePills() {
