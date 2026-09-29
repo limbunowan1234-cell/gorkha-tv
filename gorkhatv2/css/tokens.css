@@ -1,0 +1,169 @@
+/* ==========================================================================
+   GORKHA TV BRAND TOKENS v1.0  -  one file for all five brands
+   Usage: <html data-brand="chimal|khabar|swara|ukaali|gorkhatv"> and use var(--brand-*)
+   Vendored as-is from GorkhaTV-Brand-Pack-v1.zip — see Phase U's own plan
+   section for how this is wired into the site alongside the existing
+   style.css (which keeps its own --red-retargeting mechanism; this file's
+   [data-brand] tokens are additive, for future work and the pack's own
+   .pill/.badge/.card utility classes).
+   ========================================================================== */
+
+/* @import below is redundant with the real <link> each page already loads
+   right before this file (same fonts, same weights) — harmless, browsers
+   dedupe identical font requests, left in so this file matches the pack's
+   own shipped source exactly. */
+@import url('https://fonts.googleapis.com/css2?family=Anek+Latin:wght@600;700;800&family=Anek+Devanagari:wght@600;700;800&family=Mukta:wght@400;500;700&display=swap');
+
+:root {
+  /* master palette */
+  --gtv-red: #E63946;  /* Gorkha Red */
+  --gtv-red-rgb: 230 57 70;
+  --gtv-red-deep: #B81D2B;  /* Ember */
+  --gtv-red-deep-rgb: 184 29 43;
+  --gtv-night: #101216;  /* Night */
+  --gtv-night-rgb: 16 18 22;
+  --gtv-slate: #1B1F26;  /* Slate */
+  --gtv-slate-rgb: 27 31 38;
+  --gtv-ridge: #2A3039;  /* Ridge */
+  --gtv-ridge-rgb: 42 48 57;
+  --gtv-mist: #A3AAB5;  /* Mist */
+  --gtv-mist-rgb: 163 170 181;
+  --gtv-stone: #5B6370;  /* Stone */
+  --gtv-stone-rgb: 91 99 112;
+  --gtv-snow: #F4F1EA;  /* Snow */
+  --gtv-snow-rgb: 244 241 234;
+  --gtv-ink: #15171C;  /* Ink */
+  --gtv-ink-rgb: 21 23 28;
+
+  /* product accents: accent (on dark) / deep (text + icons on light) / tint (surfaces on dark) */
+  --chimal-accent: #E8A62A;  /* Cinema Amber */
+  --chimal-deep: #8F5E00;  /* Reel Brown */
+  --chimal-tint: #2A2114;  /* Amber Dusk */
+  --khabar-accent: #3183F2;  /* Signal Blue */
+  --khabar-deep: #1656B8;  /* Press Blue */
+  --khabar-tint: #0E1A2A;  /* Night Wire */
+  --swara-accent: #E6479D;  /* Raga Pink */
+  --swara-deep: #A81F6B;  /* Deep Raga */
+  --swara-tint: #24111E;  /* Velvet */
+  --ukaali-accent: #2BD19B;  /* Tea Mint */
+  --ukaali-deep: #0B7A57;  /* Tea Leaf */
+  --ukaali-tint: #10261F;  /* Hill Shade */
+
+  /* semantic defaults (dark-first) */
+  --bg: var(--gtv-night);
+  --surface: var(--gtv-slate);
+  --border: var(--gtv-ridge);
+  --text: var(--gtv-snow);
+  --text-2: var(--gtv-mist);
+  --brand-accent: var(--gtv-red);
+  --brand-deep: var(--gtv-red-deep);
+  --brand-tint: #2A1418;
+  --live: var(--gtv-red);
+
+  /* type */
+  --font-display: "Anek Latin", "Anek Devanagari", system-ui, sans-serif;
+  --font-body: "Mukta", "Anek Devanagari", system-ui, sans-serif;
+  --font-deva: "Anek Devanagari", "Mukta", sans-serif;
+  --fs-display: clamp(2.5rem, 6vw, 4.5rem);  /* hero titles, Anek 800 */
+  --fs-h1: clamp(2rem, 4vw, 3rem);           /* Anek 800 */
+  --fs-h2: 1.5rem;                           /* Anek 700 */
+  --fs-h3: 1.125rem;                         /* Anek 700 */
+  --fs-body: 1rem;                           /* Mukta 400, line-height 1.55 */
+  --fs-small: 0.875rem;                      /* Mukta 500 */
+  --fs-label: 0.75rem;                       /* Anek 700, uppercase, tracking .08em */
+  --lh-tight: 1.05; --lh-body: 1.55;
+  --track-label: 0.08em; --track-endorse: 0.14em;
+
+  /* shape + space (4px base) */
+  --r-chip: 999px; --r-sm: 8px; --r-md: 12px; --r-lg: 20px; --r-card: 14px;
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+
+  /* motion */
+  --ease-rise: cubic-bezier(.2, .8, .2, 1);    /* default: quick out, soft landing */
+  --ease-settle: cubic-bezier(.3, 0, .1, 1);   /* reveals */
+  --t-micro: 160ms; --t-ui: 280ms; --t-reveal: 480ms; --t-logo: 900ms;
+}
+
+/* light mode (Snow) */
+[data-theme="light"] { --bg: var(--gtv-snow); --surface: #FFFFFF; --border: #E3DED3; --text: var(--gtv-ink); --text-2: var(--gtv-stone); --brand-accent: var(--brand-deep); }
+
+[data-brand="chimal"] { --brand-accent: var(--chimal-accent); --brand-deep: var(--chimal-deep); --brand-tint: var(--chimal-tint); }
+[data-theme="light"][data-brand="chimal"], [data-theme="light"] [data-brand="chimal"] { --brand-accent: var(--chimal-deep); }
+[data-brand="khabar"] { --brand-accent: var(--khabar-accent); --brand-deep: var(--khabar-deep); --brand-tint: var(--khabar-tint); }
+[data-theme="light"][data-brand="khabar"], [data-theme="light"] [data-brand="khabar"] { --brand-accent: var(--khabar-deep); }
+[data-brand="swara"] { --brand-accent: var(--swara-accent); --brand-deep: var(--swara-deep); --brand-tint: var(--swara-tint); }
+[data-theme="light"][data-brand="swara"], [data-theme="light"] [data-brand="swara"] { --brand-accent: var(--swara-deep); }
+[data-brand="ukaali"] { --brand-accent: var(--ukaali-accent); --brand-deep: var(--ukaali-deep); --brand-tint: var(--ukaali-tint); }
+[data-theme="light"][data-brand="ukaali"], [data-theme="light"] [data-brand="ukaali"] { --brand-accent: var(--ukaali-deep); }
+
+/* ---------- base ---------- */
+body { background: var(--bg); color: var(--text); font: 400 var(--fs-body)/var(--lh-body) var(--font-body); }
+h1, h2, h3, .display { font-family: var(--font-display); line-height: var(--lh-tight); letter-spacing: -0.005em; }
+h1 { font-weight: 800; font-size: var(--fs-h1); } h2 { font-weight: 700; font-size: var(--fs-h2); } h3 { font-weight: 700; font-size: var(--fs-h3); }
+.label { font: 700 var(--fs-label)/1 var(--font-display); letter-spacing: var(--track-label); text-transform: uppercase; }
+:lang(ne) { font-family: var(--font-deva); line-height: 1.7; }  /* Devanagari needs extra line-height for matras */
+
+/* ---------- product pills (as on gorkhatv.site nav) ---------- */
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: var(--r-chip);
+  font: 800 0.8125rem/1 var(--font-display); letter-spacing: var(--track-label); text-transform: uppercase;
+  color: var(--brand-accent); background: var(--brand-tint); border: 1.5px solid var(--brand-accent);
+  transition: background var(--t-ui) var(--ease-rise), color var(--t-ui) var(--ease-rise); }
+.pill:hover, .pill[aria-current="true"] { background: var(--brand-accent); color: var(--gtv-night); }
+.pill svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* ---------- badges ---------- */
+.badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 6px;
+  font: 800 0.6875rem/1 var(--font-display); letter-spacing: var(--track-label); text-transform: uppercase; }
+.badge--live { background: var(--live); color: #fff; }
+.badge--live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: gtv-blink 1.2s steps(2) infinite; }
+.badge--breaking { background: var(--khabar-deep); color: #fff; }
+.badge--premiere { background: var(--chimal-accent); color: var(--gtv-night); }
+.badge--new { background: var(--swara-accent); color: var(--gtv-night); }
+.badge--trending { background: var(--ukaali-accent); color: var(--gtv-night); }
+.badge--category { background: var(--brand-tint); color: var(--brand-accent); box-shadow: inset 0 0 0 1px var(--brand-accent); }
+.verified { width: 16px; height: 16px; border-radius: 50%; background: var(--gtv-red); display: inline-grid; place-items: center; }
+.verified::after { content: ""; width: 7px; height: 4px; border: solid #fff; border-width: 0 0 2px 2px; transform: translateY(-1px) rotate(-45deg); }
+/* creator tiers: verified (red check, all apps) | verified artist (Swara pink) | rising creator (Ukaali mint) | original (Chimal amber) | verified reporter (Khabar blue) */
+
+/* ---------- cards ---------- */
+.card { background: var(--surface); border-radius: var(--r-card); overflow: hidden; transition: transform var(--t-ui) var(--ease-rise); }
+.card:hover { transform: translateY(-4px); }
+.card:focus-visible, .pill:focus-visible { outline: 2px solid var(--brand-accent); outline-offset: 3px; }
+
+/* ---------- motion: logo intros + loaders ---------- */
+.mark { width: 72px; height: 72px; overflow: visible; }
+.mark .s { fill: none; stroke: var(--brand-accent); stroke-width: 12; stroke-linecap: round; stroke-linejoin: round; }
+.mark .f { fill: var(--brand-accent); }
+.mark .pulse { fill: none; stroke: none; }
+
+/* intro (play once, 900ms) */
+.intro .s { stroke-dasharray: 1; stroke-dashoffset: 1; animation: gtv-draw var(--t-logo) var(--ease-rise) forwards; }
+.intro .s + .s { animation-delay: 180ms; } .intro .s + .s + .s { animation-delay: 300ms; }
+.intro .f { opacity: 0; transform-box: fill-box; transform-origin: center; animation: gtv-pop var(--t-reveal) var(--ease-rise) 520ms forwards; }
+[data-brand="chimal"] .intro .bloom { transform-box: fill-box; transform-origin: center; animation: gtv-bloom var(--t-logo) var(--ease-settle) both; }
+[data-brand="chimal"] .intro .bars { animation: gtv-letterbox var(--t-logo) var(--ease-settle) both; }
+
+/* loaders (loop) */
+.loader[data-brand="gorkhatv"] .ring { stroke-dasharray: 1; animation: gtv-orbit 1.4s var(--ease-rise) infinite; }
+.loader[data-brand="chimal"] .bloom { transform-box: fill-box; transform-origin: 50% 52%; animation: gtv-iris 1.6s var(--ease-settle) infinite; }
+.loader[data-brand="khabar"] .dot { transform-box: fill-box; transform-origin: center; animation: gtv-beat 1.1s var(--ease-rise) infinite; }
+.loader[data-brand="khabar"] .pulse { fill: none; stroke: var(--brand-accent); stroke-width: 3; transform-box: fill-box; transform-origin: center; animation: gtv-ping 1.1s var(--ease-rise) infinite; }
+.loader[data-brand="swara"] .s { stroke-dasharray: .22 .08; animation: gtv-flow 1.2s linear infinite; }
+.loader[data-brand="ukaali"] .s { stroke-dasharray: .28 .72; animation: gtv-climb 1.3s var(--ease-rise) infinite; }
+.loader[data-brand="ukaali"] .f { animation: gtv-pop 1.3s var(--ease-rise) infinite; transform-box: fill-box; transform-origin: center; }
+
+@keyframes gtv-draw { to { stroke-dashoffset: 0; } }
+@keyframes gtv-pop { 0% { opacity: 0; transform: translate(-6px, 6px) scale(.6); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes gtv-bloom { 0% { opacity: 0; transform: rotate(-36deg) scale(.7); } 100% { opacity: 1; transform: none; } }
+@keyframes gtv-letterbox { 0% { clip-path: inset(50% 0 50% 0); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes gtv-orbit { 0% { stroke-dashoffset: 1; } 50% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@keyframes gtv-iris { 0%, 20% { transform: rotate(0) scale(1); } 60% { transform: rotate(72deg) scale(.9); } 100% { transform: rotate(72deg) scale(1); } }
+@keyframes gtv-beat { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.35); } }
+@keyframes gtv-ping { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(3.2); } }
+@keyframes gtv-flow { to { stroke-dashoffset: -.3; } }
+@keyframes gtv-climb { 0% { stroke-dashoffset: .28; } 100% { stroke-dashoffset: -1; } }
+@keyframes gtv-blink { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro *, .loader * { animation: none !important; stroke-dashoffset: 0 !important; opacity: 1 !important; }
+}

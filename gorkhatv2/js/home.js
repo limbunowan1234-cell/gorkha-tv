@@ -21,7 +21,7 @@ const CATEGORY_LABEL_OVERRIDES = { webseries: 'Web Series', shortfilms: 'Short F
 // categoryUrl(slug) as normal.
 const CATEGORY_LINK_OVERRIDES = { music: '/pages/chart.html' };
 // Duplicated per-file constant, same convention as BEATS_COLOR elsewhere.
-const DEFAULT_RED = '#E8192C';
+const DEFAULT_RED = '#E63946';
 
 let heroItems = [];
 let heroIndex = 0;
@@ -43,6 +43,7 @@ function initApp() {
   // #page-content swap alone never resets (see js/chart.js's own comment
   // on the same fix).
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
+  document.documentElement.dataset.brand = 'gorkhatv';
 
   loadHome();
   renderGenrePills();

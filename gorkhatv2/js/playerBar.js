@@ -23,7 +23,7 @@ import { ytThumb, escapeHtml, watchUrl } from './api.js';
 import { syncQueuePosition, upcomingQueueItems, previousQueueItem } from './queue.js';
 import { navigate } from './router.js';
 
-const BEATS_COLOR = '#E0479E';
+const BEATS_COLOR = '#E6479D';
 const PROGRESS_POLL_MS = 500;
 
 let ytPlayer = null;

@@ -10,10 +10,10 @@ import { playTrack, dockInto, undockToMini } from './playerBar.js';
 // [slug].js's GENRE_CONFIG.music, duplicated here per this codebase's
 // existing convention of small constants living per-file rather than a
 // shared import for a single color value.
-const BEATS_COLOR = '#E0479E';
+const BEATS_COLOR = '#E6479D';
 // Sitewide default --red (css/style.css's :root) — duplicated here per this
 // codebase's small-per-file-constant convention, same as BEATS_COLOR above.
-const DEFAULT_RED = '#E8192C';
+const DEFAULT_RED = '#E63946';
 
 let ytPlayer = null;
 let currentVideo = null;
@@ -159,6 +159,7 @@ function applyBeatsChrome(v) {
   const isMusic = v.category === 'music';
   document.querySelector('.watch-wrap')?.classList.toggle('beats-mode', isMusic);
   document.documentElement.style.setProperty('--red', isMusic ? BEATS_COLOR : DEFAULT_RED);
+  document.documentElement.dataset.brand = isMusic ? 'swara' : 'gorkhatv';
 }
 
 // Real on-site view signal for the homepage Trending row (functions/api/home.js)

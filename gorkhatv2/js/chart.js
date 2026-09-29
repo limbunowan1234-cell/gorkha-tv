@@ -8,10 +8,11 @@ let chartItems = [];
 // js/router.js) may have left --red overridden on <html>, which the
 // #page-content swap never resets by itself. Duplicated per-file constant,
 // same convention as BEATS_COLOR elsewhere.
-const DEFAULT_RED = '#E8192C';
+const DEFAULT_RED = '#E63946';
 
 async function init() {
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
+  document.documentElement.dataset.brand = 'swara'; // this page is SWARA's own Top 100 Hills Hits chart
   initAuthNav();
   const list = document.getElementById('chart-list');
   try {

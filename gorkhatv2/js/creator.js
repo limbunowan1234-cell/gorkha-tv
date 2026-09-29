@@ -7,7 +7,7 @@ let currentChannel = null;
 // js/router.js) may have left --red overridden on <html>, which the
 // #page-content swap never resets by itself. Duplicated per-file constant,
 // same convention as BEATS_COLOR elsewhere.
-const DEFAULT_RED = '#E8192C';
+const DEFAULT_RED = '#E63946';
 
 // This script only ever loads on a page functions/[slug].js served — the
 // site's root-level channel profile route — so the first (only) path
@@ -19,6 +19,7 @@ function getChannelIdFromPath() {
 
 async function init() {
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
+  document.documentElement.dataset.brand = 'gorkhatv'; // a creator page has no single fixed product
   await initAuthNav();
   const id = getChannelIdFromPath();
   if (!id) return renderNotFound();

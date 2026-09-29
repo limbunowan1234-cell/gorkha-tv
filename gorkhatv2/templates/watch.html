@@ -8,7 +8,8 @@
   <link rel="icon" type="image/png" href="/logo-circle.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@600;700;800&family=Anek+Devanagari:wght@600;700;800&family=Mukta:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/css/tokens.css">
   <link rel="stylesheet" href="/css/style.css">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
@@ -44,13 +45,13 @@
     .autoplay-cancel-btn {
       background: var(--surface2); color: var(--text); border: 1px solid var(--border);
       padding: 7px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;
-      font-family: 'Inter', sans-serif; flex-shrink: 0;
+      font-family: 'Mukta', 'Anek Devanagari', sans-serif; flex-shrink: 0;
     }
     .autoplay-cancel-btn:hover { border-color: var(--text); }
     .autoplay-toggle-btn {
       background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
       padding: 9px 18px; border-radius: 4px; font-size: 13px; font-weight: 600;
-      cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+      cursor: pointer; font-family: 'Mukta', 'Anek Devanagari', sans-serif; transition: all 0.2s;
     }
     .autoplay-toggle-btn:hover { border-color: var(--text); }
     .autoplay-toggle-btn.active { color: var(--text); border-color: var(--red); background: rgba(232,25,44,0.1); }
@@ -59,7 +60,7 @@
       .autoplay-thumb { width: 90px; }
       .autoplay-cancel-btn { margin-left: auto; }
     }
-    .watch-title { font-family: 'Teko', sans-serif; font-size: 32px; font-weight: 600; margin-bottom: 10px; line-height: 1.1; }
+    .watch-title { font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 32px; font-weight: 600; margin-bottom: 10px; line-height: 1.1; }
     .watch-meta { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--muted); margin-bottom: 16px; }
     .watch-meta .dot { width: 3px; height: 3px; background: var(--muted); border-radius: 50%; }
     .watch-channel { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 16px; }
@@ -67,15 +68,15 @@
     .watch-channel-name { font-weight: 600; font-size: 14px; }
     .watch-channel-sub { font-size: 12px; color: var(--muted); }
     .watch-actions { margin-left: auto; display: flex; gap: 10px; }
-    .btn-yt { background: var(--red); color: #fff; border: none; padding: 9px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-yt { background: var(--red); color: #fff; border: none; padding: 9px 18px; border-radius: 4px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Mukta', 'Anek Devanagari', sans-serif; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
     .watch-desc { font-size: 14px; color: rgba(240,240,240,0.75); line-height: 1.75; white-space: pre-wrap; }
     .watch-desc.clamped { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
     .watch-desc-toggle {
       background: none; border: none; color: var(--text); font-weight: 700; font-size: 13px;
-      cursor: pointer; padding: 8px 0 0; font-family: 'Inter', sans-serif;
+      cursor: pointer; padding: 8px 0 0; font-family: 'Mukta', 'Anek Devanagari', sans-serif;
     }
     .watch-desc-toggle:hover { text-decoration: underline; }
-    .watch-side-title { font-family: 'Teko', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 14px; }
+    .watch-side-title { font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 14px; }
     .related-list { display: flex; flex-direction: column; gap: 10px; }
     .related-item { display: flex; gap: 10px; cursor: pointer; padding: 6px; border-radius: 6px; transition: background 0.15s; }
     .related-item:hover { background: var(--surface2); }
@@ -87,7 +88,7 @@
     .comment-composer { display: flex; gap: 12px; margin-bottom: 20px; }
     .comment-composer textarea {
       flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text);
-      font-family: 'Inter', sans-serif; font-size: 13px; padding: 10px 12px; resize: vertical; min-height: 44px;
+      font-family: 'Mukta', 'Anek Devanagari', sans-serif; font-size: 13px; padding: 10px 12px; resize: vertical; min-height: 44px;
     }
     .comment-composer-signedout {
       background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px;
@@ -100,13 +101,13 @@
     .comment-date { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 6px; }
     .comment-text { font-size: 13px; line-height: 1.5; margin: 4px 0 6px; white-space: pre-wrap; word-break: break-word; }
     .comment-row-actions { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
-    .comment-row-actions button { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; font-family: 'Inter', sans-serif; }
+    .comment-row-actions button { background: none; border: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; font-family: 'Mukta', 'Anek Devanagari', sans-serif; }
     .comment-row-actions button:hover { color: var(--text); }
     .comment-replies { margin-top: 12px; padding-left: 20px; border-left: 2px solid var(--border); }
     .reply-composer { display: none; gap: 10px; margin-top: 10px; }
-    .reply-composer textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 12px; padding: 8px 10px; resize: vertical; min-height: 36px; }
+    .reply-composer textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'Mukta', 'Anek Devanagari', sans-serif; font-size: 12px; padding: 8px 10px; resize: vertical; min-height: 36px; }
     .comment-submit-btn, .comment-reply-submit-btn, .comment-load-more-btn {
-      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+      font-family: 'Mukta', 'Anek Devanagari', sans-serif; font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;
     }
     .comment-submit-btn { background: var(--red); color: #fff; border: none; padding: 8px 18px; margin-top: 6px; }
     .comment-submit-btn:hover { opacity: 0.85; }

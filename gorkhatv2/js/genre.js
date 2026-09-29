@@ -28,8 +28,11 @@ function init() {
 
 // Every accent on the page reads off --red (see genre.html's own comment) —
 // retinting it here is enough to theme the whole page in one place.
+const DATA_BRAND = { chimal: 'chimal', news: 'khabar', music: 'swara' };
+
 function applyTheme(genre) {
   document.documentElement.style.setProperty('--red', genre.color);
+  document.documentElement.dataset.brand = DATA_BRAND[genre.slug] || '';
   document.getElementById('genre-label').textContent = genre.label;
 
   const subEl = document.getElementById('genre-sub');

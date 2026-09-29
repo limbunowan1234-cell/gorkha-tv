@@ -13,8 +13,8 @@
 // a separate dimension with its own existing destination (pages/feed.html,
 // see mobileNav.js) — so its entry here is just a themed link, no genre page.
 export const GENRES = [
-  { slug: 'chimal', categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs'], label: 'CHIMAL', color: '#D4A017', kind: 'multi_trending_latest', href: '/genre/chimal' },
-  { slug: 'news', category: 'news', label: 'KHABAR', color: '#1D7AE0', kind: 'trending_latest', href: '/genre/news' },
-  { slug: 'music', category: 'music', label: 'SWARA', color: '#E0479E', kind: 'top10_top100', href: '/genre/music' },
-  { slug: 'shorts', category: null, label: 'UKAALI', color: '#FF9F1C', kind: 'external', href: '/pages/feed.html' },
+  { slug: 'chimal', categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', href: '/genre/chimal' },
+  { slug: 'news', category: 'news', label: 'KHABAR', color: '#3183F2', kind: 'trending_latest', href: '/genre/news' },
+  { slug: 'music', category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', href: '/genre/music' },
+  { slug: 'shorts', category: null, label: 'UKAALI', color: '#2BD19B', kind: 'external', href: '/pages/feed.html' },
 ];
