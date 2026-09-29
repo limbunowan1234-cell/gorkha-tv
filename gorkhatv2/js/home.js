@@ -56,14 +56,17 @@ function initApp() {
 }
 
 // The 4 Gorkha TV products (CHIMAL/KHABAR/SWARA/UKAALI) — static, no API
-// call needed, so this renders instantly
-// rather than waiting on loadHome(). Each pill is tinted with its own color
-// via the --pill-color CSS var (see index.html's .genre-pill rule).
+// call needed, so this renders instantly rather than waiting on loadHome().
+// Each button is one of the real Gorkha TV Brand Pack hero banners
+// (gorkhatv2/images/menu-banners/*.jpg) — GENRES' own slugs don't match the
+// product names 1:1 (news->khabar, music->swara, shorts->ukaali), hence
+// this small explicit map rather than deriving the filename from g.slug.
+const BANNER_IMAGE = { chimal: 'chimal', news: 'khabar', music: 'swara', shorts: 'ukaali' };
 function renderGenrePills() {
   const bar = document.getElementById('genre-pills');
   if (!bar) return;
   bar.innerHTML = GENRES.map(
-    (g) => `<a class="genre-pill" style="--pill-color:${g.color}" href="${g.href}">${escapeHtml(g.label)}</a>`
+    (g) => `<a class="genre-banner" href="${g.href}"><img src="/images/menu-banners/${BANNER_IMAGE[g.slug]}.jpg" alt="${escapeHtml(g.label)}" loading="lazy"></a>`
   ).join('');
 }
 
