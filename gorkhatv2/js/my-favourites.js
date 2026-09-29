@@ -1,4 +1,4 @@
-import { apiFetch, ytThumb, watchUrl, creatorUrl, escapeHtml, showToast } from './api.js';
+import { apiFetch, ytThumb, watchUrl, creatorUrl, escapeHtml, showToast, tierBadgeHTML } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 
 async function init() {
@@ -99,7 +99,7 @@ function followCardHTML(c) {
         <button class="card-like-btn liked" data-unfollow="${c.id}" title="Unfollow">✕ Unfollow</button>
       </div>
       <div class="card-body">
-        <div class="card-title">${escapeHtml(c.channel_name || '')}${c.verified ? ' <span class="verified-tick" title="Verified">✓</span>' : ''}</div>
+        <div class="card-title">${escapeHtml(c.channel_name || '')}${c.verified ? ' <span class="verified" title="Verified"></span>' : ''}${tierBadgeHTML(c.tier)}</div>
         <div class="card-sub">${escapeHtml(c.category || '')}${c.location ? ' · ' + escapeHtml(c.location) : ''}</div>
       </div>
     </div>`;

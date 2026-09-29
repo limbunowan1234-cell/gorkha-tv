@@ -414,6 +414,10 @@ body.gtv-player-active { padding-bottom: 64px; }
   text-transform: uppercase; letter-spacing: 0.8px;
 }
 
+/* Stacked below .card-cat-badge — tokens.css's own .badge/.badge--* rules
+   (Gorkha TV Brand Pack v1.0) supply the actual color/shape per type. */
+.card-status-badge { position: absolute; top: 30px; left: 6px; }
+
 /* Like button on card */
 .card-like-btn {
   position: absolute; top: 6px; right: 6px;
@@ -443,11 +447,12 @@ body.gtv-player-active { padding-bottom: 64px; }
   margin-right: -22px; flex-shrink: 0; z-index: 1; user-select: none;
 }
 .num-card-img {
-  width: 180px; height: 101px; border-radius: 4px; flex-shrink: 0;
+  position: relative; width: 180px; height: 101px; border-radius: 4px; flex-shrink: 0;
   overflow: hidden; transition: transform 0.3s; background: var(--surface2);
 }
 .num-card:hover .num-card-img { transform: scale(1.06); }
 .num-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.num-card-badge { position: absolute; top: 4px; left: 4px; }
 
 /* ── MODAL ── */
 .modal-overlay {
@@ -527,12 +532,21 @@ body.gtv-player-active { padding-bottom: 64px; }
 .follow-btn.following { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 .follow-btn.following:hover { border-color: var(--text); }
 
-.verified { display: inline-flex; align-items: center; gap: 4px; background: rgba(200,150,42,0.15); color: var(--gold); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(200,150,42,0.3); text-transform: uppercase; letter-spacing: 0.5px; }
-
 /* ── LOADING / EMPTY ── */
 .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--muted); gap: 12px; }
 .spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
-.empty { text-align: center; padding: 80px 24px; color: var(--muted); }
+
+/* ── BRANDED LOADER ── (Gorkha TV Brand Pack v1.0's animated per-brand
+   mark — js/loader.js supplies the markup, css/tokens.css's own
+   .loader[data-brand] rules drive the animation; this is just sizing,
+   since tokens.css's own .mark is built for its 72px motion.html demo. ) */
+.gtv-loader { width: 32px; height: 32px; flex-shrink: 0; }
+.gtv-loader svg { width: 100%; height: 100%; }
+/* --terrace-pattern is set per page alongside --red/data-brand (genre.js's
+   applyTheme(), each entry script's reset block) — a per-brand seamless
+   contour pattern from the Gorkha TV Brand Pack, colour/opacity already
+   baked into the SVG itself. Falls back to plain var(--surface) if unset. */
+.empty { text-align: center; padding: 80px 24px; color: var(--muted); background-image: var(--terrace-pattern, none); background-repeat: repeat; }
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
 .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
 

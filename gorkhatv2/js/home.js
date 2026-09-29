@@ -2,6 +2,7 @@ import { apiFetch, ytThumb, watchUrl, categoryUrl, escapeHtml, videoCardHTML, nu
 import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
 import { registerTeardown, navigate } from './router.js';
+import { loaderHTML } from './loader.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉' };
@@ -44,6 +45,7 @@ function initApp() {
   // on the same fix).
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
   document.documentElement.dataset.brand = 'gorkhatv';
+  document.documentElement.style.setProperty('--terrace-pattern', 'url(/patterns/gorkhatv-terrace-pattern.svg)');
 
   loadHome();
   renderGenrePills();
@@ -292,7 +294,7 @@ function rowHTML(id, row) {
         <h2 class="row-title">${row.title}</h2>
         <a href="${row.link}" class="see-all">See all →</a>
       </div>
-      <div class="cards-scroll" id="${id}"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="cards-scroll" id="${id}"><div class="loading">${loaderHTML()}</div></div>
     </div>`;
 }
 

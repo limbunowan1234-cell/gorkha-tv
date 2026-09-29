@@ -94,11 +94,11 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Video</th><th>Channel</th><th>Category</th><th>Location</th><th>Type</th><th>Score</th><th>Status</th><th>Published</th><th class="actions-col">Actions</th>
+            <th>Video</th><th>Channel</th><th>Category</th><th>Location</th><th>Type</th><th>Badge</th><th>Score</th><th>Status</th><th>Published</th><th class="actions-col">Actions</th>
           </tr>
         </thead>
         <tbody id="videos-tbody">
-          <tr><td colspan="9" class="admin-loading">Loading…</td></tr>
+          <tr><td colspan="10" class="admin-loading">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -130,6 +130,18 @@
     ];
     return opts.map(([v, label]) => `<option value="${v}" ${v === (current || '') ? 'selected' : ''}>${label}</option>`).join('');
   }
+  // Gorkha TV Brand Pack status badge (see Phase V's plan) — LIVE/BREAKING/
+  // PREMIERE are editorial judgment calls, so this is a plain admin toggle,
+  // not automated detection.
+  function statusBadgeOptionsHTML(current) {
+    const opts = [
+      ['', '— none —'],
+      ['premiere', '🟠 Premiere'],
+      ['breaking', '🔵 Breaking'],
+      ['live', '🔴 Live'],
+    ];
+    return opts.map(([v, label]) => `<option value="${v}" ${v === (current || '') ? 'selected' : ''}>${label}</option>`).join('');
+  }
 
   let state = {
     status: new URLSearchParams(location.search).get('status') || '',
@@ -156,6 +168,7 @@
         <td><select class="inline-select" data-field="category" title="Change category">${categoryOptionsHTML(v.category)}</select></td>
         <td><select class="inline-select" data-field="location" title="Change location">${locationOptionsHTML(v.location)}</select></td>
         <td><select class="inline-select" data-field="contentType" title="Short vs regular video — auto-classified, override if wrong">${contentTypeOptionsHTML(v.content_type)}</select></td>
+        <td><select class="inline-select" data-field="statusBadge" title="Editorial status badge">${statusBadgeOptionsHTML(v.status_badge)}</select></td>
         <td>${v.relevance_score ?? '—'}</td>
         <td>${statusBadge(v.status)}${v.featured ? ' <span class="badge badge-featured">Featured</span>' : ''}</td>
         <td>${v.published_at ? new Date(v.published_at).toLocaleDateString() : '—'}</td>
@@ -173,7 +186,7 @@
 
   async function loadVideos() {
     const tbody = document.getElementById('videos-tbody');
-    tbody.innerHTML = `<tr><td colspan="9" class="admin-loading">Loading…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" class="admin-loading">Loading…</td></tr>`;
     try {
       const params = new URLSearchParams();
       if (state.status) params.set('status', state.status);
@@ -184,7 +197,7 @@
 
       const data = await adminFetch(`/videos?${params.toString()}`);
       if (!data.videos.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="admin-empty">No videos match this filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="admin-empty">No videos match this filter.</td></tr>`;
       } else {
         tbody.innerHTML = data.videos.map(renderRow).join('');
       }
@@ -193,7 +206,7 @@
       document.getElementById('pagination').innerHTML =
         totalPages > 1 ? `Page ${state.page} of ${totalPages} (${data.total} total)` : `${data.total} video${data.total === 1 ? '' : 's'}`;
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="9" class="admin-empty">Couldn't load videos: ${escapeHtml(err.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10" class="admin-empty">Couldn't load videos: ${escapeHtml(err.message)}</td></tr>`;
     }
   }
 
@@ -279,7 +292,7 @@
       select.disabled = true;
       try {
         await adminFetch(`/videos/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
-        const fieldLabel = { category: 'Category', location: 'Location', contentType: 'Type' }[field] || 'Field';
+        const fieldLabel = { category: 'Category', location: 'Location', contentType: 'Type', statusBadge: 'Badge' }[field] || 'Field';
         toast(`${fieldLabel} updated.`);
       } catch (err) {
         toast(err.message);

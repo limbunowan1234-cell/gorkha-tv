@@ -1,7 +1,7 @@
 import { cacheableJson, errorResponse } from '../../../shared/http.js';
 
 const VIDEO_COLUMNS =
-  'v.id, v.youtube_video_id, v.title, v.description, v.thumbnail_url, v.channel_name, v.channel_handle, v.youtube_channel_id, v.published_at, v.category, v.location, v.tags, v.duration_seconds, v.view_count, v.featured, v.trending, c.slug AS channel_slug';
+  'v.id, v.youtube_video_id, v.title, v.description, v.thumbnail_url, v.channel_name, v.channel_handle, v.youtube_channel_id, v.published_at, v.category, v.location, v.tags, v.duration_seconds, v.view_count, v.featured, v.trending, v.status_badge, c.slug AS channel_slug';
 
 // :id is the YOUTUBE video ID (matches the public /watch/:id URL scheme, not
 // our internal uuid) — a video that exists but isn't 'published' 404s here

@@ -89,10 +89,10 @@
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr><th>Channel</th><th>Location</th><th>Category</th><th>Status</th><th>Monitoring</th><th>Last checked</th><th class="actions-col">Actions</th></tr>
+          <tr><th>Channel</th><th>Location</th><th>Category</th><th>Tier</th><th>Status</th><th>Monitoring</th><th>Last checked</th><th class="actions-col">Actions</th></tr>
         </thead>
         <tbody id="creators-tbody">
-          <tr><td colspan="7" class="admin-loading">Loading…</td></tr>
+          <tr><td colspan="8" class="admin-loading">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -109,6 +109,19 @@
     return `<span class="badge badge-${status}">${status}</span>`;
   }
 
+  // Gorkha TV Brand Pack creator-verification tiers (see Phase V's plan) —
+  // independent of the plain `verified` boolean.
+  function tierOptionsHTML(current) {
+    const opts = [
+      ['', '— none —'],
+      ['verified_artist', 'Verified Artist (SWARA)'],
+      ['rising_creator', 'Rising Creator (UKAALI)'],
+      ['chimal_original', 'CHIMAL Original'],
+      ['verified_reporter', 'Verified Reporter (KHABAR)'],
+    ];
+    return opts.map(([v, label]) => `<option value="${v}" ${v === (current || '') ? 'selected' : ''}>${label}</option>`).join('');
+  }
+
   function renderRow(c) {
     return `
       <tr data-id="${c.id}">
@@ -118,6 +131,7 @@
         </td>
         <td>${escapeHtml(c.location || '—')}</td>
         <td>${escapeHtml(c.category || '—')}</td>
+        <td><select class="inline-select" data-field="tier" title="Verification tier">${tierOptionsHTML(c.tier)}</select></td>
         <td>${statusBadge(c.status)}</td>
         <td>${c.monitoring_enabled ? '✅' : '—'}</td>
         <td>${c.last_checked_at ? new Date(c.last_checked_at).toLocaleString() : 'never'}</td>
@@ -133,15 +147,15 @@
 
   async function loadCreators() {
     const tbody = document.getElementById('creators-tbody');
-    tbody.innerHTML = `<tr><td colspan="7" class="admin-loading">Loading…</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="admin-loading">Loading…</td></tr>`;
     try {
       const params = state.status ? `?status=${encodeURIComponent(state.status)}` : '';
       const data = await adminFetch(`/creators${params}`);
       tbody.innerHTML = data.channels.length
         ? data.channels.map(renderRow).join('')
-        : `<tr><td colspan="7" class="admin-empty">No channels match this filter.</td></tr>`;
+        : `<tr><td colspan="8" class="admin-empty">No channels match this filter.</td></tr>`;
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="7" class="admin-empty">Couldn't load channels: ${escapeHtml(err.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="admin-empty">Couldn't load channels: ${escapeHtml(err.message)}</td></tr>`;
     }
   }
 
@@ -185,6 +199,25 @@
       const btn = e.target.closest('button[data-action]');
       if (!btn) return;
       handleRowAction(btn.closest('tr').dataset.id, btn.dataset.action);
+    });
+
+    // Inline tier fix — saves instantly on change, same pattern as
+    // admin-videos.html's inline category/location/badge selects.
+    document.getElementById('creators-tbody').addEventListener('change', async (e) => {
+      const select = e.target.closest('.inline-select');
+      if (!select) return;
+      const id = select.closest('tr').dataset.id;
+      const field = select.dataset.field;
+      const value = select.value || null;
+      select.disabled = true;
+      try {
+        await adminFetch(`/creators/${id}`, { method: 'PATCH', body: JSON.stringify({ [field]: value }) });
+        toast('Tier updated.');
+      } catch (err) {
+        toast(err.message);
+      } finally {
+        select.disabled = false;
+      }
     });
 
     document.getElementById('toggle-add-form').addEventListener('click', () => {

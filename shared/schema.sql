@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS channels (
   status                   TEXT NOT NULL DEFAULT 'pending'
                               CHECK (status IN ('pending','approved','rejected','suspended')),
   verified                 INTEGER NOT NULL DEFAULT 0,
+  tier                     TEXT,   -- 'verified_artist' | 'rising_creator' | 'chimal_original' | 'verified_reporter' | NULL (see shared/migrations/020)
   featured                 INTEGER NOT NULL DEFAULT 0,
   monitoring_enabled       INTEGER NOT NULL DEFAULT 1,
   uploads_playlist_id      TEXT,   -- cached from channels.list, avoids refetching every sync
@@ -58,6 +59,7 @@ CREATE TABLE IF NOT EXISTS videos (
   ai_labels                  TEXT,   -- reserved, unused in v1 (JSON)
   content_type               TEXT CHECK (content_type IN ('short','video')),   -- classified via YouTube's own /shorts/ redirect signal, see shared/migrations/005
   hero_order                  INTEGER,   -- admin-controlled hero-carousel rank; NULL = unranked, falls back to published_at DESC (see shared/migrations/016)
+  status_badge                TEXT,   -- 'premiere' | 'breaking' | 'live' | NULL, admin-set (see shared/migrations/019)
   discovered_at              TEXT,
   approved_at                 TEXT,
   created_at                TEXT NOT NULL,

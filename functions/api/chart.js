@@ -1,7 +1,7 @@
 import { cacheableJson } from '../../shared/http.js';
 
 const VIDEO_COLUMNS =
-  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count';
+  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count, trending, status_badge';
 
 // Same constants as functions/api/home.js — redefined here rather than
 // shared, matching this codebase's existing per-route-constant convention

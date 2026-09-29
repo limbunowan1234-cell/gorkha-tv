@@ -3,7 +3,7 @@ import { json, cacheableJson, errorResponse } from '../../../../shared/http.js';
 // Includes like_count/youtube_channel_id for internal ranking — stripped
 // from the final response below to keep the same public shape as before.
 const VIDEO_COLUMNS_SQL =
-  'id, youtube_video_id, title, thumbnail_url, channel_name, published_at, category, location, duration_seconds, view_count, like_count, youtube_channel_id';
+  'id, youtube_video_id, title, thumbnail_url, channel_name, published_at, category, location, duration_seconds, view_count, like_count, youtube_channel_id, trending, status_badge';
 
 // Landscape only — this list doubles as the autoplay "up next" queue
 // (gorkhatv2/js/watch.js's relatedVideos[0]), so a Short landing here would

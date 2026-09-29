@@ -2,8 +2,8 @@ import { cacheableJson, errorResponse } from '../../../shared/http.js';
 import { getFollowerCount } from '../../../shared/db.js';
 
 const CREATOR_COLUMNS =
-  'id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, banner_url, description, location, category, verified, featured, submitted_by_user_id, slug';
-const VIDEO_COLUMNS = 'id, youtube_video_id, title, thumbnail_url, published_at, category, location, duration_seconds, view_count';
+  'id, youtube_channel_id, channel_name, channel_handle, channel_url, thumbnail_url, banner_url, description, location, category, verified, tier, featured, submitted_by_user_id, slug';
+const VIDEO_COLUMNS = 'id, youtube_video_id, title, thumbnail_url, published_at, category, location, duration_seconds, view_count, trending, status_badge';
 
 // :id is either the channel's root-level slug (the public /:slug URL scheme)
 // or, for back-compat, its raw YouTube channel ID — never ambiguous, since a

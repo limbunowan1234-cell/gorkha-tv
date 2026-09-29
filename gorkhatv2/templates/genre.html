@@ -27,7 +27,8 @@
        overrides needed. */
     .genre-hero {
       padding: 48px 24px 28px; text-align: center; border-bottom: 1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+      background-image: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%), var(--terrace-pattern, none);
+      background-repeat: no-repeat, repeat;
     }
     .genre-hero-label { font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 42px; font-weight: 700; color: var(--red); letter-spacing: 0.5px; }
     .genre-hero-sub { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 520px; margin-left: auto; margin-right: auto; }
@@ -38,7 +39,7 @@
       padding: 12px 28px; border-radius: 4px; transition: opacity 0.2s;
     }
     .genre-cta-btn:hover { opacity: 0.85; }
-    .genre-empty { color: var(--muted); font-size: 13px; padding: 40px 48px; text-align: center; }
+    .genre-empty { color: var(--muted); font-size: 13px; padding: 40px 48px; text-align: center; background-image: var(--terrace-pattern, none); background-repeat: repeat; }
 
     /* TOP ARTISTS — a compact rank list (round avatar, not a 16:9 thumb —
        this ranks people/channels, not individual videos), 2 columns on
@@ -95,14 +96,14 @@
     <div class="row-header">
       <h2 class="row-title" id="genre-primary-title">Loading</h2>
     </div>
-    <div class="cards-scroll" id="genre-primary-row"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="cards-scroll" id="genre-primary-row"><div class="loading"><div class="gtv-loader loader" data-brand="gorkhatv"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-0.00 0.00)"><path class="s ring" pathLength="1" d="M86.0 50.0 A36 36 0 1 1 70.6 20.5"/><path class="s" pathLength="1" d="M86 52 L70 52 L61 39 L52 52"/></g></svg></div></div></div>
   </div>
 
   <div class="row" id="genre-secondary-section">
     <div class="row-header">
       <h2 class="row-title" id="genre-secondary-title">🆕 Latest</h2>
     </div>
-    <div class="cards-scroll" id="genre-secondary-row"><div class="loading"><div class="spinner"></div></div></div>
+    <div class="cards-scroll" id="genre-secondary-row"><div class="loading"><div class="gtv-loader loader" data-brand="gorkhatv"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-0.00 0.00)"><path class="s ring" pathLength="1" d="M86.0 50.0 A36 36 0 1 1 70.6 20.5"/><path class="s" pathLength="1" d="M86 52 L70 52 L61 39 L52 52"/></g></svg></div></div></div>
   </div>
 
   <div class="genre-cta-wrap" id="genre-cta-wrap" style="display:none;">

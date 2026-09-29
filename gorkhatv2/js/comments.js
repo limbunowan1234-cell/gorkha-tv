@@ -4,6 +4,7 @@
 // escapeHtml() before touching innerHTML.
 import { apiFetch, escapeHtml, showToast } from './api.js';
 import { getCurrentUser } from './auth.js';
+import { loaderHTML } from './loader.js';
 
 const PAGE_LIMIT = 20;
 let youtubeVideoId = null;
@@ -129,7 +130,7 @@ async function submitComment(parentCommentId, textarea) {
 
 async function loadReplies(commentId) {
   const el = document.getElementById(`replies-${commentId}`);
-  el.innerHTML = `<div class="loading" style="padding:10px;"><div class="spinner"></div></div>`;
+  el.innerHTML = `<div class="loading" style="padding:10px;">${loaderHTML()}</div>`;
   el.style.display = '';
   try {
     const { replies } = await apiFetch(`/videos/${encodeURIComponent(youtubeVideoId)}/native-comments/${encodeURIComponent(commentId)}/replies`);

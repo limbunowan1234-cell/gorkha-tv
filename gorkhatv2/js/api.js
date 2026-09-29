@@ -11,6 +11,39 @@ export async function apiFetch(path) {
   return data;
 }
 
+// Status badges from the Gorkha TV Brand Pack's badge system — each type's
+// color is FIXED (not the current page's product), matching tokens.css's
+// own .badge--* rules exactly, which is why these are literal class names
+// applied straight from tokens.css rather than reading --brand-accent.
+// LIVE/BREAKING/PREMIERE are admin-set (videos.status_badge); TRENDING and
+// NEW RELEASE are computed here from data that already exists.
+function statusBadgeHTML(v) {
+  if (v.status_badge === 'live') return `<span class="badge badge--live">LIVE</span>`;
+  if (v.status_badge === 'breaking') return `<span class="badge badge--breaking">BREAKING</span>`;
+  if (v.status_badge === 'premiere') return `<span class="badge badge--premiere">PREMIERE</span>`;
+  if (v.category === 'music' && isWithinDays(v.published_at, 7)) return `<span class="badge badge--new">NEW RELEASE</span>`;
+  if (v.trending) return `<span class="badge badge--trending">TRENDING</span>`;
+  return '';
+}
+
+function isWithinDays(isoDate, days) {
+  if (!isoDate) return false;
+  return Date.now() - new Date(isoDate).getTime() < days * 24 * 60 * 60 * 1000;
+}
+
+// Creator verification tiers from the Gorkha TV Brand Pack — independent of
+// the plain `verified` boolean (a channel can be verified with no tier, or
+// hold both). Uses tokens.css's .badge--category tint/border/text treatment
+// inline since the color is keyed by a runtime tier, not a static class.
+const TIER_LABEL = { verified_artist: 'Verified Artist', rising_creator: 'Rising Creator', chimal_original: 'CHIMAL Original', verified_reporter: 'Verified Reporter' };
+const TIER_BRAND = { verified_artist: 'swara', rising_creator: 'ukaali', chimal_original: 'chimal', verified_reporter: 'khabar' };
+
+export function tierBadgeHTML(tier) {
+  if (!tier || !TIER_LABEL[tier]) return '';
+  const brand = TIER_BRAND[tier];
+  return ` <span class="badge" style="background:var(--${brand}-tint);color:var(--${brand}-accent);box-shadow:inset 0 0 0 1px var(--${brand}-accent);">${TIER_LABEL[tier]}</span>`;
+}
+
 export function ytThumb(video) {
   if (video.thumbnail_url) return video.thumbnail_url;
   if (video.youtube_video_id) return `https://img.youtube.com/vi/${video.youtube_video_id}/hqdefault.jpg`;
@@ -66,6 +99,7 @@ export function videoCardHTML(v) {
           <div class="play-circle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
         ${v.category ? `<span class="card-cat-badge">${escapeHtml(v.category)}</span>` : ''}
+        ${statusBadgeHTML(v) ? `<span class="card-status-badge">${statusBadgeHTML(v)}</span>` : ''}
         ${v.view_count ? `<span class="card-like-count">${escapeHtml(formatViews(v.view_count))}</span>` : ''}
       </div>
       <div class="card-body">
@@ -108,6 +142,7 @@ export function numberedCardHTML(v, rank) {
       <div class="num-big">${rank}</div>
       <div class="num-card-img">
         <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(v.youtube_video_id)}/default.jpg'">
+        ${statusBadgeHTML(v) ? `<span class="num-card-badge">${statusBadgeHTML(v)}</span>` : ''}
       </div>
     </a>`;
 }
@@ -120,7 +155,7 @@ export function creatorCardHTML(c) {
         ${thumb ? `<img src="${escapeHtml(thumb)}" alt="${escapeHtml(c.channel_name)}" loading="lazy">` : ''}
       </div>
       <div class="card-body">
-        <div class="card-title">${escapeHtml(c.channel_name || '')}</div>
+        <div class="card-title">${escapeHtml(c.channel_name || '')}${c.verified ? ' <span class="verified" title="Verified"></span>' : ''}${tierBadgeHTML(c.tier)}</div>
         <div class="card-sub">${escapeHtml(c.category || '')}${c.location ? ' · ' + escapeHtml(c.location) : ''}</div>
       </div>
     </a>`;

@@ -32,7 +32,9 @@ const DATA_BRAND = { chimal: 'chimal', news: 'khabar', music: 'swara' };
 
 function applyTheme(genre) {
   document.documentElement.style.setProperty('--red', genre.color);
+  const brand = DATA_BRAND[genre.slug] || 'gorkhatv';
   document.documentElement.dataset.brand = DATA_BRAND[genre.slug] || '';
+  document.documentElement.style.setProperty('--terrace-pattern', `url(/patterns/${brand}-terrace-pattern.svg)`);
   document.getElementById('genre-label').textContent = genre.label;
 
   const subEl = document.getElementById('genre-sub');

@@ -1,7 +1,7 @@
 import { cacheableJson, errorResponse } from '../../../shared/http.js';
 
 const VIDEO_COLUMNS =
-  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count, featured, trending';
+  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count, featured, trending, status_badge';
 
 const SORTS = {
   latest: 'published_at DESC',

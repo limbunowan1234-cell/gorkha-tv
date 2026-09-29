@@ -5,6 +5,7 @@
 // and CSS, this module just drives it. Call initCommentsDrawer() once on
 // page load, then openComments(item) from wherever a "Comments" button lives.
 import { apiFetch, escapeHtml } from './api.js';
+import { loaderHTML } from './loader.js';
 
 let commentsBackdrop, commentsSheet, commentsList;
 let commentsRequestToken = 0;
@@ -22,7 +23,7 @@ export function initCommentsDrawer() {
 export async function openComments(item) {
   commentsBackdrop.classList.add('open');
   commentsSheet.classList.add('open');
-  commentsList.innerHTML = `<div class="loading" style="padding:24px 0;"><div class="spinner"></div></div>`;
+  commentsList.innerHTML = `<div class="loading" style="padding:24px 0;">${loaderHTML()}</div>`;
 
   const requestToken = ++commentsRequestToken;
   try {

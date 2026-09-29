@@ -13,6 +13,7 @@ const DEFAULT_RED = '#E63946';
 async function init() {
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
   document.documentElement.dataset.brand = 'swara'; // this page is SWARA's own Top 100 Hills Hits chart
+  document.documentElement.style.setProperty('--terrace-pattern', 'url(/patterns/swara-terrace-pattern.svg)');
   initAuthNav();
   const list = document.getElementById('chart-list');
   try {

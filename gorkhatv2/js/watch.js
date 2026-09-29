@@ -160,6 +160,7 @@ function applyBeatsChrome(v) {
   document.querySelector('.watch-wrap')?.classList.toggle('beats-mode', isMusic);
   document.documentElement.style.setProperty('--red', isMusic ? BEATS_COLOR : DEFAULT_RED);
   document.documentElement.dataset.brand = isMusic ? 'swara' : 'gorkhatv';
+  document.documentElement.style.setProperty('--terrace-pattern', `url(/patterns/${isMusic ? 'swara' : 'gorkhatv'}-terrace-pattern.svg)`);
 }
 
 // Real on-site view signal for the homepage Trending row (functions/api/home.js)

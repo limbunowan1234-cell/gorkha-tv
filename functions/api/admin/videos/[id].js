@@ -33,6 +33,12 @@ export async function onRequestPatch(context) {
     extra.contentType = body.contentType;
   }
   if (body.heroOrder !== undefined) extra.heroOrder = body.heroOrder;
+  if (body.statusBadge !== undefined) {
+    if (body.statusBadge !== null && !['premiere', 'breaking', 'live'].includes(body.statusBadge)) {
+      return errorResponse("statusBadge must be 'premiere', 'breaking', 'live', or null.", 400);
+    }
+    extra.statusBadge = body.statusBadge;
+  }
 
   await updateVideoStatus(env.DB, params.id, body.status || video.status, extra);
   return json({ ok: true });

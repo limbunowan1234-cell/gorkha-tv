@@ -16,6 +16,10 @@ export async function onRequestPatch(context) {
   const body = await readJsonBody(request);
   if (!body) return errorResponse('Invalid request body.', 400);
 
+  if (body.tier !== undefined && body.tier !== null && !['verified_artist', 'rising_creator', 'chimal_original', 'verified_reporter'].includes(body.tier)) {
+    return errorResponse("tier must be 'verified_artist', 'rising_creator', 'chimal_original', 'verified_reporter', or null.", 400);
+  }
+
   await updateChannelFields(env.DB, params.id, body);
   return json({ ok: true });
 }

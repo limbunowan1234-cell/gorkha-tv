@@ -1,5 +1,6 @@
 import { apiFetch, escapeHtml, videoCardHTML } from './api.js';
 import { initAuthNav } from './auth.js';
+import { loaderHTML } from './loader.js';
 
 const LIMIT = 24;
 const params = new URLSearchParams(window.location.search);
@@ -90,7 +91,7 @@ function wireToolbar() {
 
 async function loadVideos() {
   const grid = document.getElementById('browse-grid');
-  grid.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+  grid.innerHTML = `<div class="loading">${loaderHTML()}</div>`;
 
   try {
     const qp = new URLSearchParams();

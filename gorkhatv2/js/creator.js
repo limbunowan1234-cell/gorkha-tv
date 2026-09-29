@@ -1,4 +1,4 @@
-import { apiFetch, escapeHtml, videoCardHTML, showToast, formatCount } from './api.js';
+import { apiFetch, escapeHtml, videoCardHTML, showToast, formatCount, tierBadgeHTML } from './api.js';
 import { initAuthNav, getCurrentUser } from './auth.js';
 
 let currentChannel = null;
@@ -20,6 +20,7 @@ function getChannelIdFromPath() {
 async function init() {
   document.documentElement.style.setProperty('--red', DEFAULT_RED);
   document.documentElement.dataset.brand = 'gorkhatv'; // a creator page has no single fixed product
+  document.documentElement.style.setProperty('--terrace-pattern', 'url(/patterns/gorkhatv-terrace-pattern.svg)');
   await initAuthNav();
   const id = getChannelIdFromPath();
   if (!id) return renderNotFound();
@@ -66,7 +67,7 @@ function renderCreator(c, videos) {
   document.getElementById('creator-hero').innerHTML = `
     ${c.thumbnail_url ? `<img src="${escapeHtml(c.thumbnail_url)}" alt="${escapeHtml(c.channel_name)}">` : `<div style="width:96px;height:96px;border-radius:50%;background:var(--surface2);"></div>`}
     <div>
-      <div class="creator-name">${escapeHtml(c.channel_name)}${c.verified ? ' <span class="verified-tick" title="Verified">✓</span>' : ''}</div>
+      <div class="creator-name">${escapeHtml(c.channel_name)}${c.verified ? ' <span class="verified" title="Verified"></span>' : ''}${tierBadgeHTML(c.tier)}</div>
       <div class="creator-meta">${meta.join(' · ')}</div>
       <div class="creator-stats"><span id="follower-count" data-count="${c.followerCount}">${formatCount(c.followerCount)}</span> follower${c.followerCount === 1 ? '' : 's'}</div>
       ${c.description ? `<p class="creator-desc">${escapeHtml(c.description)}</p>` : ''}

@@ -134,6 +134,7 @@ const CHANNEL_EDITABLE_FIELDS = {
   category: 'category',
   featured: 'featured',
   verified: 'verified',
+  tier: 'tier',
   contactName: 'contact_name',
   contactEmail: 'contact_email',
 };
@@ -247,6 +248,10 @@ export async function updateVideoStatus(db, id, status, extra = {}) {
   if ('heroOrder' in extra) {
     fields.push('hero_order = ?');
     values.push(extra.heroOrder === null || extra.heroOrder === undefined ? null : Number(extra.heroOrder));
+  }
+  if ('statusBadge' in extra) {
+    fields.push('status_badge = ?');
+    values.push(extra.statusBadge || null);
   }
   values.push(id);
   await db.prepare(`UPDATE videos SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
@@ -426,7 +431,7 @@ export async function removeFollow(db, userId, channelId) {
 export async function listFollowedChannels(db, userId) {
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.youtube_channel_id, c.channel_name, c.channel_handle, c.thumbnail_url, c.category, c.location, c.verified, c.slug
+      `SELECT c.id, c.youtube_channel_id, c.channel_name, c.channel_handle, c.thumbnail_url, c.category, c.location, c.verified, c.tier, c.slug
        FROM follows f JOIN channels c ON c.id = f.channel_id
        WHERE f.user_id = ? AND c.status = 'approved' ORDER BY f.created_at DESC`
     )

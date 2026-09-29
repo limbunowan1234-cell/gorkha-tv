@@ -1,5 +1,6 @@
 import { apiFetch, escapeHtml, videoCardHTML, creatorUrl } from './api.js';
 import { initAuthNav } from './auth.js';
+import { loaderHTML } from './loader.js';
 
 initAuthNav();
 
@@ -26,7 +27,7 @@ async function runSearch(q) {
     return;
   }
 
-  resultsEl.innerHTML = `<div class="loading"><div class="spinner"></div></div>`;
+  resultsEl.innerHTML = `<div class="loading">${loaderHTML()}</div>`;
 
   try {
     const { videos, creators } = await apiFetch(`/search?q=${encodeURIComponent(q)}`);

@@ -1,7 +1,7 @@
 import { json, cacheableJson } from '../../../shared/http.js';
 
 const VIDEO_COLUMNS =
-  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count';
+  'id, youtube_video_id, title, description, thumbnail_url, channel_name, channel_handle, youtube_channel_id, published_at, category, location, duration_seconds, view_count, trending, status_badge';
 
 const NOT_SHORT = "(content_type IS NULL OR content_type != 'short')";
 const PREMIUM = "(duration_seconds IS NULL OR duration_seconds >= 30) AND (LENGTH(title) - LENGTH(REPLACE(title, '#', ''))) <= 5";
