@@ -7,8 +7,8 @@
 import { stripDefaultSeoTags, breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
 const GENRE_CONFIG = {
-  chimal: { categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', tagline: 'Movies, short films, comedy and entertainment from across the Darjeeling hills.' },
-  music: { category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', tagline: "The hills' music, ranked by real engagement." },
+  chimal: { categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', tagline: 'The home of Gorkha entertainment.' },
+  music: { category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', tagline: 'The home for all songs of Gorkha.' },
   news: { category: 'news', label: 'KHABAR', color: '#3183F2', kind: 'trending_latest', tagline: 'Breaking news and updates from the Darjeeling hills, powered by Khabar Darjeeling.' },
 };
 

@@ -178,18 +178,35 @@ nav {
    future persistent mini-player bar (Phase B) reuses this same visual
    language across every page, not just /watch/:id. */
 .watch-wrap.beats-mode .watch-grid { grid-template-columns: 1fr 1fr; }
+/* Padded + patterned like the brand pack's own SWARA music-cover template
+   (brand-pack/10-social/swara-music-cover-3000): the "photo" box (here, the
+   real live video — kept from Phase Q rather than reverted to a static
+   image) sits inset with the tea-terrace pattern showing in the margin
+   around it. --terrace-pattern is already set to the swara pattern here by
+   js/watch.js's applyBeatsChrome(). */
 .watch-wrap.beats-mode .watch-player-wrap {
   max-width: 440px; margin-left: auto; margin-right: auto;
+  padding: 16px; border-radius: 20px;
+  background-image: var(--terrace-pattern, none); background-repeat: repeat;
 }
 .watch-wrap.beats-mode .watch-player {
   aspect-ratio: 1 / 1; border-radius: 16px;
   box-shadow: 0 16px 56px rgba(230,71,157,0.28);
 }
-.watch-wrap.beats-mode .watch-title { text-align: center; margin-top: 22px; font-size: 26px; }
+/* Song title / artist name, same typographic treatment as the music cover:
+   title bold Anek white, artist name in Raga Pink with the SWARA Ridge Wave
+   mark beside it. No avatar/handle — the template doesn't show one. */
+.watch-wrap.beats-mode .watch-title { text-align: center; margin-top: 22px; font-size: 26px; font-weight: 800; }
 .watch-wrap.beats-mode .watch-meta { justify-content: center; }
 .watch-wrap.beats-mode .watch-channel {
-  justify-content: center; border: none; padding: 10px 0 18px;
+  justify-content: center; border: none; padding: 10px 0 18px; flex-wrap: wrap;
 }
+.watch-wrap.beats-mode .watch-channel img { display: none; }
+.watch-wrap.beats-mode .watch-channel-sub { display: none; }
+.watch-wrap.beats-mode .watch-channel-name { color: #E6479D; font-size: 15px; }
+.watch-channel-name-row { display: flex; align-items: center; gap: 6px; }
+.watch-swara-mark { display: none; width: 18px; height: 18px; flex-shrink: 0; }
+.watch-wrap.beats-mode .watch-swara-mark { display: inline-block; }
 .watch-wrap.beats-mode .watch-actions { margin-left: 0; }
 .watch-wrap.beats-mode .watch-desc { max-width: 440px; margin: 0 auto; text-align: center; }
 .watch-wrap.beats-mode .watch-desc-toggle { display: block; margin-left: auto; margin-right: auto; }
@@ -252,8 +269,11 @@ nav {
   background-size: cover; background-position: center; background-color: var(--surface2);
 }
 .player-bar-info { min-width: 0; flex: 1; }
-.player-bar-title { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.player-bar-artist { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+/* Song title / artist name — matches the Gorkha TV Brand Pack's SWARA
+   music-cover template (brand-pack/10-social/swara-music-cover-3000):
+   bold Anek title, artist name in Raga Pink underneath. */
+.player-bar-title { font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 13px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player-bar-artist { font-size: 11px; color: #E6479D; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
 .player-bar-playpause {
   flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: none;
   background: #E6479D; color: #000; font-size: 13px; cursor: pointer;
