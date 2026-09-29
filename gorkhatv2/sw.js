@@ -2,7 +2,7 @@
 // Cache-first for static app shell assets; everything else (the /api/*
 // backend, YouTube embeds, dynamic SSR pages) goes straight to network.
 
-const CACHE_NAME = "gorkhatv-shell-20260927T171112Z";
+const CACHE_NAME = "gorkhatv-shell-20260929T170737Z";
 
 // Every local JS/CSS file is listed here (not just the ones directly
 // <script>/<link>-tagged in HTML) — most are only ever reached via a
@@ -26,6 +26,7 @@ const SHELL_ASSETS = [
   // AUTO-GENERATED-ASSETS-START
   "/css/admin.css",
   "/css/style.css",
+  "/css/tokens.css",
   "/js/admin-analytics.js",
   "/js/admin-chart.js",
   "/js/admin-common.js",
