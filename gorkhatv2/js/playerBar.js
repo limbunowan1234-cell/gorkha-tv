@@ -43,6 +43,18 @@ function root() {
 // state (ytPlayer, currentTrack, the timers) is safe from the re-import
 // leak risk router.js's registerTeardown exists to solve for the others.
 export function initPlayerBar() {
+  // Fire-and-forget, started as early as the page loads rather than on the
+  // first click — loadYouTubeApi() does a real network fetch the first time
+  // (the external iframe_api script), and if that fetch is still in flight
+  // when playTrack() later does `new YT.Player(...)`, the click's brief
+  // "user activation" window can expire while awaiting it — which is
+  // exactly what unmuted autoplay needs, so only the FIRST track played in
+  // a session would silently fail to autoplay. Warming it here means by the
+  // time anyone actually clicks play, window.YT is already resolved and
+  // loadYouTubeApi() returns synchronously, keeping the click's gesture
+  // intact all the way to player creation.
+  loadYouTubeApi();
+
   const el = root();
   if (!el) return;
   el.innerHTML = `
