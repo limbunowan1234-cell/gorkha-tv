@@ -41,6 +41,31 @@
     .genre-cta-btn:hover { opacity: 0.85; }
     .genre-empty { color: var(--muted); font-size: 13px; padding: 40px 48px; text-align: center; background-image: var(--terrace-pattern, none); background-repeat: repeat; }
 
+    /* Sticky quick-jump menu — sits right under the main <nav> (which is
+       itself sticky at top:0, height 64px), so top:64px here stacks the two
+       rather than overlapping. Same-page items (Trending/Latest/Top
+       Artists/By Region) scroll to an anchor and get their .active state
+       toggled by an IntersectionObserver in genre.js; cross-page items
+       (Top 100, CHIMAL's per-category links) are plain links with no
+       active-tracking, since navigating away makes that moot. */
+    .genre-subnav {
+      position: sticky; top: 64px; z-index: 90;
+      display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none;
+      padding: 0 48px; background: rgba(8,8,8,0.98); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .genre-subnav::-webkit-scrollbar { display: none; }
+    .genre-subnav a {
+      flex-shrink: 0; padding: 14px 14px; font-size: 13px; font-weight: 700;
+      color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .genre-subnav a.active, .genre-subnav a:hover { color: var(--text); border-color: var(--red); }
+    @media (max-width: 700px) {
+      .genre-subnav { padding: 0 20px; top: 64px; }
+      .genre-subnav a { padding: 12px 10px; font-size: 12px; }
+    }
+
     /* TOP ARTISTS — a compact rank list (round avatar, not a 16:9 thumb —
        this ranks people/channels, not individual videos), 2 columns on
        desktop so 20 entries don't turn into one very long scroll. */
@@ -90,6 +115,8 @@
   <div class="genre-hero-label" id="genre-label">Loading…</div>
   <p class="genre-hero-sub" id="genre-sub"></p>
 </div>
+
+<nav class="genre-subnav" id="genre-subnav"></nav>
 
 <div class="genre-wrap">
   <div class="row" id="genre-primary-section">

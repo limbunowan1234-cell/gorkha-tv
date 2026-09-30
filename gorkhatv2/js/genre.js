@@ -20,6 +20,7 @@ function init() {
   }
 
   applyTheme(genre);
+  renderSubnav(genre);
 
   if (genre.kind === 'top10_top100') loadTop10Top100(genre);
   else if (genre.kind === 'multi_trending_latest') loadMultiTrendingLatest(genre);
@@ -48,6 +49,78 @@ function applyTheme(genre) {
     subEl.textContent = genre.tagline || '';
   }
   document.title = `${genre.label} | GorkhaTV`;
+}
+
+// CHIMAL's 5 underlying categories, for its subnav's per-category links —
+// matches genres.js's GENRES[0].categories exactly.
+const CATEGORY_LABEL = { movies: 'Movies', shortfilms: 'Short Films', comedy: 'Comedy', entertainment: 'Entertainment', vlogs: 'Vlogs' };
+
+// Sticky quick-jump menu (genre.html's #genre-subnav) — same-page items
+// (data-anchor) scroll to an existing section and get their active state
+// tracked by an IntersectionObserver; cross-page items (Top 100, CHIMAL's
+// per-category links to the existing /category/:slug browse route) are
+// plain links with no active-tracking, since navigating away makes that
+// moot. Item set depends on genre.kind, same branching loadTop10Top100()/
+// loadMultiTrendingLatest()/loadTrendingLatest() already use.
+function renderSubnav(genre) {
+  const nav = document.getElementById('genre-subnav');
+  if (!nav) return;
+
+  const items = [];
+  if (genre.kind === 'top10_top100') {
+    items.push({ label: '🎵 Top 10', anchor: '#genre-primary-section' });
+    items.push({ label: '💯 Top 100', href: '../pages/chart.html' });
+    items.push({ label: '🏆 Top Artists', anchor: '#genre-artists-section' });
+    items.push({ label: '🌍 By Region', anchor: '#genre-location-rows' });
+  } else {
+    items.push({ label: '🔥 Trending', anchor: '#genre-primary-section' });
+    items.push({ label: '🆕 Latest', anchor: '#genre-secondary-section' });
+    items.push({ label: '🌍 By Region', anchor: '#genre-location-rows' });
+    if (genre.kind === 'multi_trending_latest') {
+      for (const cat of genre.categories) {
+        items.push({ label: CATEGORY_LABEL[cat] || cat, href: `../category/${cat}` });
+      }
+    }
+  }
+
+  nav.innerHTML = items
+    .map((it) =>
+      it.anchor
+        ? `<a href="${it.anchor}" data-anchor="${it.anchor}">${escapeHtml(it.label)}</a>`
+        : `<a href="${it.href}">${escapeHtml(it.label)}</a>`
+    )
+    .join('');
+
+  setupSubnavScrollSpy();
+}
+
+// Highlights whichever same-page section is currently in view. rootMargin's
+// large negative bottom value means a section only has to clear the sticky
+// nav+subnav header (their combined ~110px height) to count as "current" —
+// without it, a short section (e.g. Top Artists) could satisfy the default
+// 100%-visible threshold at the same time as its neighbor, fighting for
+// which link lights up.
+function setupSubnavScrollSpy() {
+  const links = [...document.querySelectorAll('#genre-subnav a[data-anchor]')];
+  if (!links.length) return;
+  const sections = links.map((link) => ({ link, el: document.querySelector(link.dataset.anchor) })).filter((s) => s.el);
+  if (!sections.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const match = sections.find((s) => s.el === entry.target);
+        if (match) {
+          links.forEach((l) => l.classList.remove('active'));
+          match.link.classList.add('active');
+        }
+      }
+    },
+    { rootMargin: '-110px 0px -70% 0px' }
+  );
+  sections.forEach((s) => observer.observe(s.el));
+  links[0].classList.add('active'); // sensible default before any scroll/intersection fires
 }
 
 // Region-wise Top 10s, within this genre only — every genre page gets these
