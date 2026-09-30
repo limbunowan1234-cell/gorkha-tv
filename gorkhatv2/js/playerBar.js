@@ -30,6 +30,20 @@ let ytPlayer = null;
 let currentTrack = null;
 let progressPollTimer = null;
 let progressSyncTimer = null;
+// Set by watch.js's music branch (js/watch.js's own YouTube-style "up next"
+// countdown overlay reuses maybeShowAutoplayOverlay(), unchanged, the exact
+// same one regular videos already use) whenever a SWARA watch page is
+// actively showing the big player — this module only knows tracks/queue,
+// not "is a watch page currently visible with a countdown UI to show", so
+// ended-track handling defers to whoever registered themselves as owning
+// that decision, falling back to this module's own immediate-advance
+// behavior (correct when the track ends while browsing some other page,
+// where no countdown UI could be shown anyway). Reset to null by watch.js's
+// own router teardown when navigating away from a music watch page.
+let onEndedOverride = null;
+export function setOnEndedHandler(fn) {
+  onEndedOverride = fn;
+}
 
 function root() {
   return document.getElementById('player-bar-root');
@@ -200,7 +214,8 @@ function onPlayerStateChange(e) {
     if (e.data === YT.PlayerState.ENDED) {
       clearInterval(progressSyncTimer);
       syncProgressToServer();
-      advanceToNextInQueue();
+      if (onEndedOverride) onEndedOverride();
+      else advanceToNextInQueue();
     }
   }
 }

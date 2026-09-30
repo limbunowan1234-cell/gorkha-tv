@@ -4,7 +4,7 @@ import { loadYouTubeApi } from './youtubeApi.js';
 import { initComments } from './comments.js';
 import { syncQueuePosition, upcomingQueueItems } from './queue.js';
 import { registerTeardown, navigate } from './router.js';
-import { playTrack, dockInto, undockToMini } from './playerBar.js';
+import { playTrack, dockInto, undockToMini, setOnEndedHandler } from './playerBar.js';
 
 // GorkhaTV Beats' pink — same value as js/genres.js / functions/genre/
 // [slug].js's GENRE_CONFIG.music, duplicated here per this codebase's
@@ -97,6 +97,10 @@ async function init() {
     // so the iframe is guaranteed to never be a descendant of #page-content
     // at the moment the NEXT transition's innerHTML swap runs.
     undockToMini();
+    // Hands ended-track handling back to playerBar.js's own default
+    // (immediate advance, no countdown UI) — correct the instant this page
+    // is no longer showing the big player to put a countdown overlay over.
+    setOnEndedHandler(null);
   });
 
   await initAuthNav();
@@ -127,6 +131,12 @@ async function init() {
       renderBeatsPlayerArea(video); // thumbnail placeholder, shown immediately
       await playTrack(video); // awaited so the iframe element exists before docking
       dockInto('watch-player');
+      // Same YouTube-style "up next" countdown regular videos already get
+      // (maybeShowAutoplayOverlay(), completely unchanged) — it already
+      // prefers the shared queue over relatedVideos, so this just needed
+      // triggering on ENDED, which playerBar.js's own player now defers to
+      // this page for while it's the one showing the big player.
+      setOnEndedHandler(() => maybeShowAutoplayOverlay());
     } else {
       initPlayer(video);
     }
