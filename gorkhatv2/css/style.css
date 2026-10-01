@@ -214,6 +214,66 @@ nav {
   .watch-wrap.beats-mode .watch-grid { grid-template-columns: 1fr; }
 }
 
+/* ── CHIMAL / KHABAR "KEY ART" + WATCH CHROME ── */
+/* Brief branded moment over the player while it loads, styled after the
+   brand pack's own 10-social templates (chimal-movie-poster-2000x3000,
+   khabar-breaking-news-1920x1080) — adapted, not reproduced pixel-for-
+   pixel, since those are a 2:3 poster and a true 16:9 card while this
+   slot is always 16:9. js/watch.js's renderKeyArt()/hideKeyArt() own the
+   lifecycle; this is purely the visual layer. */
+.watch-keyart {
+  position: absolute; inset: 0; z-index: 5; border-radius: 8px; overflow: hidden;
+  background-size: cover; background-position: center;
+  opacity: 1; transition: opacity 0.6s ease; pointer-events: none;
+}
+.watch-keyart.fade-out { opacity: 0; }
+.keyart-mark { position: absolute; top: 14px; right: 14px; width: 26px; height: 26px; z-index: 1; }
+.keyart-title {
+  font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-weight: 800; color: #F4F1EA;
+  line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* CHIMAL — full-bleed key art with a bottom scrim (dark-to-transparent,
+   matching the poster template's own gradient treatment), amber eyebrow
+   tag + title + byline. */
+.keyart-scrim {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(16,18,22,0.95) 0%, rgba(16,18,22,0.55) 38%, transparent 68%);
+}
+.keyart-chimal-body { position: absolute; left: 24px; right: 24px; bottom: 20px; }
+.keyart-eyebrow {
+  font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 12px; font-weight: 800;
+  letter-spacing: 1.5px; color: #E8A62A; margin-bottom: 6px;
+}
+.keyart-chimal-body .keyart-title { font-size: 22px; margin-bottom: 6px; }
+.keyart-byline { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #A3AAB5; text-transform: uppercase; }
+
+/* KHABAR — bottom black bar with the template's own blue top rule + red
+   BREAKING pill, sized as a proportion of the 16:9 frame (the template's
+   own bar is 250/1080 = ~23% of its height). */
+.keyart-khabar-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 32%;
+  background: rgba(16,18,22,0.94); border-top: 3px solid #3183F2;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 0 24px;
+}
+.keyart-khabar-tag {
+  display: inline-block; align-self: flex-start;
+  background: #E63946; color: #fff; font-family: 'Anek Latin', 'Anek Devanagari', sans-serif;
+  font-size: 11px; font-weight: 800; letter-spacing: 1px; padding: 5px 12px; border-radius: 4px;
+}
+.keyart-khabar-bar .keyart-title { font-size: 18px; }
+
+/* Persistent chrome (after the key art fades) — CHIMAL gets a cinematic
+   amber-glow frame, KHABAR a blue "broadcast" top rule, each with a small
+   eyebrow pill above the title (reusing tokens.css's own .pill, which
+   already auto-colors from --brand-accent/--brand-tint once data-brand is
+   set — see js/watch.js's applyProductChrome()). */
+.watch-wrap.chimal-mode .watch-player { box-shadow: 0 16px 56px rgba(232,166,42,0.22); }
+.watch-wrap.khabar-mode .watch-player-wrap { border-top: 3px solid #3183F2; border-radius: 8px; overflow: hidden; }
+.watch-eyebrow-pill { display: none; margin-bottom: 10px; height: 28px; padding: 0 12px; font-size: 0.7rem; }
+.watch-wrap.chimal-mode .watch-eyebrow-pill,
+.watch-wrap.khabar-mode .watch-eyebrow-pill { display: inline-flex; }
+
 /* ── MOBILE BOTTOM NAV ── */
 /* Desktop-hidden, phone-only tab bar — Shorts needs to be a one-tap primary
    destination on mobile, not buried behind the horizontally-cramped top nav.

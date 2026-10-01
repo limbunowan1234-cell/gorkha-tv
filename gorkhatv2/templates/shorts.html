@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@600;700;800&family=Anek+Devanagari:wght@600;700;800&family=Mukta:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="/css/tokens.css?v=muof1o2c">
-  <link rel="stylesheet" href="/css/style.css?v=muof1o2c">
+  <link rel="stylesheet" href="/css/tokens.css?v=muprkpve">
+  <link rel="stylesheet" href="/css/style.css?v=muprkpve">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
   <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
@@ -126,6 +126,17 @@
       position: absolute; left: 16px; right: 92px; bottom: 22px; z-index: 6;
       color: #fff;
     }
+    /* UKAALI reskin, after the brand pack's own ukaali-reel-cover-1080x1920
+       template: a rounded dark card behind the creator/title text (the
+       template's own bottom card) and a mint lightning-mark watermark
+       top-right — the template's own real vector art (01-symbols), colors
+       inlined directly since this page isn't a single-category data-brand
+       context the way watch.js's pages are. */
+    .shorts-info-card {
+      display: inline-block; max-width: 100%;
+      background: rgba(16,18,22,0.72); border-radius: 18px; padding: 10px 16px 12px;
+    }
+    .shorts-ukaali-mark { position: absolute; top: 18px; right: 18px; z-index: 6; width: 26px; height: 26px; opacity: 0.95; }
     .shorts-creator {
       display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700;
       cursor: pointer; margin-bottom: 6px;
@@ -143,7 +154,7 @@
       font-size: 20px; cursor: pointer; backdrop-filter: blur(4px); transition: background 0.15s, transform 0.15s;
     }
     .shorts-action-btn:active { transform: scale(0.9); }
-    .shorts-action-btn.liked { background: var(--red); }
+    .shorts-action-btn.liked { background: #2BD19B; }
     .shorts-action-label { font-size: 10px; color: #fff; margin-top: 3px; text-align: center; }
 
     .shorts-loading, .shorts-empty {
@@ -253,7 +264,7 @@
 
 <div id="mobile-nav-root"></div>
 
-<script type="module" src="/js/shorts.js?v=muof1o2c"></script>
-<script type="module" src="/js/mobileNav.js?v=muof1o2c"></script>
+<script type="module" src="/js/shorts.js?v=muprkpve"></script>
+<script type="module" src="/js/mobileNav.js?v=muprkpve"></script>
 </body>
 </html>

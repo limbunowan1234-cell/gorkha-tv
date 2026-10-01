@@ -96,12 +96,15 @@ function renderSlide(item, index) {
     <div class="shorts-tap-catcher" data-action="tap-catcher"></div>
     <div class="shorts-mute-flash" data-mute-flash>🔇</div>
     <div class="shorts-scrim"></div>
+    <svg class="shorts-ukaali-mark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(5.57 -5.71)"><path d="M18 86 L54 86 A11 11 0 0 0 54 64 L36 64 A11 11 0 0 1 36 42 L50 42 L60 34" fill="none" stroke="#2BD19B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M47.0 23.5 L78.9 18.5 L67.0 48.5 Z" fill="#2BD19B" stroke="#2BD19B" stroke-width="7" stroke-linejoin="round"/></g></svg>
     <div class="shorts-info">
-      <div class="shorts-creator" data-action="open-creator">
-        <span>📺 ${escapeHtml(item.channel_name || 'Unknown creator')}</span>
+      <div class="shorts-info-card">
+        <div class="shorts-creator" data-action="open-creator">
+          <span>📺 ${escapeHtml(item.channel_name || 'Unknown creator')}</span>
+        </div>
+        <div class="shorts-title">${escapeHtml(item.title || '')}</div>
+        ${item.location ? `<div class="shorts-meta"><span>${escapeHtml(item.location)}</span></div>` : ''}
       </div>
-      <div class="shorts-title">${escapeHtml(item.title || '')}</div>
-      ${item.location ? `<div class="shorts-meta"><span>${escapeHtml(item.location)}</span></div>` : ''}
     </div>
     <div class="shorts-actions">
       <div>
