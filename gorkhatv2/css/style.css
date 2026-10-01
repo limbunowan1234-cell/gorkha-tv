@@ -283,10 +283,15 @@ nav {
    can break some iframe players) since Beats is audio-first chrome, not a
    second visible video frame in the bar. */
 .player-bar-yt { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
-/* Docked into a watch page's big player slot (js/playerBar.js's dockInto())
-   — same iframe element as the mini bar's, just filling its new container
-   instead of the normal 1x1/invisible mini styling above. */
-.player-bar-yt.docked-big { position: static; width: 100%; height: 100%; opacity: 1; pointer-events: auto; }
+/* Visually docked into a watch page's big player slot (js/playerBar.js's
+   dockInto()) — the iframe itself never leaves #player-bar-root (moving it
+   in the DOM broke the YT.Player control channel, confirmed directly — see
+   playerBar.js's header comment); this just switches it to `position:
+   fixed` with left/top/width/height kept in sync every frame by
+   syncDockPosition() to track the target slot's on-screen position. z-index
+   sits below .mobile-nav (200) and .player-bar (210) — the big player never
+   needs to render above either. */
+.player-bar-yt.docked-big { position: fixed; opacity: 1; pointer-events: auto; z-index: 50; }
 @media (max-width: 700px) {
   .player-bar { bottom: 56px; } /* stacks above .mobile-nav, never overlaps it */
 }

@@ -93,9 +93,11 @@ async function init() {
     clearInterval(progressSyncTimer);
     clearInterval(autoplayCountdownTimer);
     // No-op if this page never docked the iframe big (e.g. a non-music
-    // video) — always registered unconditionally, same as the timers above,
-    // so the iframe is guaranteed to never be a descendant of #page-content
-    // at the moment the NEXT transition's innerHTML swap runs.
+    // video) — always registered unconditionally, same as the timers above.
+    // Stops the CSS-position sync loop and resets the iframe to its normal
+    // tiny mini-bar styling; the iframe was never a descendant of
+    // #page-content in the first place (see playerBar.js's header comment),
+    // so this is cleanup, not a survival requirement.
     undockToMini();
     // Hands ended-track handling back to playerBar.js's own default
     // (immediate advance, no countdown UI) — correct the instant this page
@@ -129,8 +131,12 @@ async function init() {
     // all, so there's nothing to hand off to).
     if (video.category === 'music') {
       renderBeatsPlayerArea(video); // thumbnail placeholder, shown immediately
-      await playTrack(video); // awaited so the iframe element exists before docking
+      // dockInto() just starts a CSS-position sync loop over this slot — the
+      // iframe itself never moves in the DOM (see playerBar.js's header
+      // comment for why that matters), so there's no meaningful ordering
+      // constraint against playTrack() here.
       dockInto('watch-player');
+      await playTrack(video);
       // Same YouTube-style "up next" countdown regular videos already get
       // (maybeShowAutoplayOverlay(), completely unchanged) — it already
       // prefers the shared queue over relatedVideos, so this just needed
@@ -145,11 +151,12 @@ async function init() {
   }
 }
 
-// Brief loading placeholder for the big player slot, shown immediately while
-// playTrack() (async — loads the YT API if needed) resolves; dockInto()
-// swaps the real, live iframe in right after, moved here from its home in
-// the persistent bar (js/playerBar.js) rather than a second player being
-// created — see that file's own header comment.
+// Brief loading placeholder for the big player slot — dockInto() (see
+// js/playerBar.js) visually covers this exact element with the persistent
+// bar's own live iframe via position:fixed coordinates once it's ready; the
+// iframe itself always stays a child of #player-bar-root, never a
+// descendant of this mount, so this placeholder is purely cosmetic filler
+// for the brief gap before that overlay positions itself.
 function renderBeatsPlayerArea(v) {
   const mount = document.getElementById('watch-player');
   if (!mount) return;
