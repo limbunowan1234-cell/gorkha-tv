@@ -18,7 +18,7 @@
 // winning over the server-injected window.__GENRE meant the tagline never
 // reached the page before, since this array never carried the field).
 export const GENRES = [
-  { slug: 'chimal', categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', href: '/genre/chimal', tagline: 'The home of Gorkha entertainment.' },
+  { slug: 'chimal', categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs', 'magic'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', href: '/genre/chimal', tagline: 'The home of Gorkha entertainment.' },
   { slug: 'news', category: 'news', label: 'KHABAR', color: '#3183F2', kind: 'trending_latest', href: '/genre/news', tagline: 'Breaking news and updates from the Darjeeling hills, powered by Khabar Darjeeling.' },
   { slug: 'music', category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', href: '/genre/music', tagline: 'The home for all songs of Gorkha.' },
   { slug: 'shorts', category: null, label: 'UKAALI', color: '#2BD19B', kind: 'external', href: '/pages/feed.html' },

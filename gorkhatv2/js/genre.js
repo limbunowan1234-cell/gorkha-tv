@@ -53,7 +53,7 @@ function applyTheme(genre) {
 
 // CHIMAL's 5 underlying categories, for its subnav's per-category links —
 // matches genres.js's GENRES[0].categories exactly.
-const CATEGORY_LABEL = { movies: 'Movies', shortfilms: 'Short Films', comedy: 'Comedy', entertainment: 'Entertainment', vlogs: 'Vlogs' };
+const CATEGORY_LABEL = { movies: 'Movies', shortfilms: 'Short Films', comedy: 'Comedy', entertainment: 'Entertainment', vlogs: 'Vlogs', magic: 'Magic' };
 
 // Sticky quick-jump menu (genre.html's #genre-subnav) — same-page items
 // (data-anchor) scroll to an existing section and get their active state

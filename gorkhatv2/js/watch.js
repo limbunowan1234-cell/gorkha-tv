@@ -22,7 +22,7 @@ const DEFAULT_RED = '#E63946';
 // category name (only 'news'/'music' actually match a known brand below —
 // any other value lands on the 'gorkhatv' default, same as today).
 const CATEGORY_BRAND = {
-  movies: 'chimal', shortfilms: 'chimal', comedy: 'chimal', entertainment: 'chimal', vlogs: 'chimal',
+  movies: 'chimal', shortfilms: 'chimal', comedy: 'chimal', entertainment: 'chimal', vlogs: 'chimal', magic: 'chimal',
   news: 'khabar',
   music: 'swara',
 };

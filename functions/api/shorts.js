@@ -13,6 +13,7 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const cursor = url.searchParams.get('cursor'); // ISO published_at of the last item the client already has
   const excludeId = url.searchParams.get('exclude'); // youtube_video_id already shown first (deep link), don't repeat it
+  const category = (url.searchParams.get('category') || '').trim().toLowerCase(); // optional, e.g. 'magic' — the native UKAALI app's category chips
   const limit = Math.min(20, Math.max(1, Number(url.searchParams.get('limit')) || 10));
 
   const clauses = ["status = 'published'", "content_type = 'short'"];
@@ -24,6 +25,10 @@ export async function onRequestGet(context) {
   if (excludeId) {
     clauses.push('youtube_video_id != ?');
     binds.push(excludeId);
+  }
+  if (/^[a-z0-9_-]{1,40}$/.test(category)) {
+    clauses.push('category = ?');
+    binds.push(category);
   }
   const where = `WHERE ${clauses.join(' AND ')}`;
 

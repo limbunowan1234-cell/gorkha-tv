@@ -95,7 +95,8 @@ INSERT OR IGNORE INTO categories (slug, label, sort_order) VALUES
   ('movies',        'Movies',        11),
   ('webseries',     'Web Series',    12),
   ('shortfilms',    'Short Films',   13),
-  ('comedy',        'Comedy',        14);
+  ('comedy',        'Comedy',        14),
+  ('magic',         'Magic',         15);
 
 -- ── Viewers (Google-authenticated, via Google Identity Services id_token verification) ──
 CREATE TABLE IF NOT EXISTS users (
