@@ -28,3 +28,8 @@ export function formatCount(n) {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
+
+// Fire-and-forget on-site view signal, same as the website's watch page.
+export function recordView(id) {
+  fetch(`${API_BASE}/videos/${encodeURIComponent(id)}/view`, { method: 'POST' }).catch(() => {});
+}

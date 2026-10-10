@@ -1,24 +1,19 @@
-// KHABAR's one brand-color constant, plus the shared style tokens every
-// screen/component in this app pulls from. The other Gorkha TV product apps
-// (CHIMAL/SWARA/UKAALI) are this exact same file with only
-// BRAND_COLOR/APP_NAME changed — see this project's own Phase S/T plans.
-export const BRAND_COLOR = '#3183F2'; // Signal Blue, Gorkha TV Brand Pack v1.0
+// KHABAR: "The facts, first." Press-room clean: Signal Blue on Night, headline
+// type, no decoration. Values are the Gorkha TV Brand Pack v1.0 palette.
 export const APP_NAME = 'KHABAR';
+export const TAGLINE = 'The facts, first.';
 
 export const colors = {
-  brand: BRAND_COLOR,
-  background: '#141414',
-  surface: '#1f1f1f',
-  surface2: '#2a2a2a',
-  text: '#f0f0f0',
-  muted: '#999999',
-  border: 'rgba(255,255,255,0.1)',
+  brand: '#3183F2',
+  brandTint: 'rgba(49,131,242,0.14)',
+  breaking: '#E63946',
+  night: '#101216',
+  slate: '#1B1F26',
+  ridge: '#2A3039',
+  snow: '#F4F1EA',
+  mist: '#A3AAB5',
 };
 
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-};
+export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
+
+export const TOWNS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
