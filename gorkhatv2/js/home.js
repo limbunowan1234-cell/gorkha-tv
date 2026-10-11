@@ -3,6 +3,7 @@ import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
 import { registerTeardown, navigate } from './router.js';
 import { loaderHTML } from './loader.js';
+import { fetchMagic, magicCardsHTML } from './productFeatures.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const CATEGORY_EMOJI = { movies: '🎞️', webseries: '📺', shortfilms: '🎬', comedy: '😂', vlogs: '🎥', travel: '🌍', food: '🍜', culture: '🎭', music: '🎵', interviews: '🎤', entertainment: '🍿', sports: '⚽', events: '🎉', magic: '🪄' };
@@ -87,6 +88,7 @@ async function loadHome() {
     renderRowCards('latest-row', data.latest);
     renderLocationRows(data.byLocation || {});
     renderCategoryRows(data.byCategory || {});
+    renderMagicRow();
     renderCreatorRow(data.featuredCreators || []);
 
     if (data.error) console.warn('[home] partial data:', data.error);
@@ -251,6 +253,22 @@ function renderLocationRows(byLocation) {
     // just decorative.
     document.getElementById(`loc-row-${i}`).innerHTML = row.items.map((v, idx) => numberedCardHTML(v, idx + 1)).join('');
   });
+}
+
+// Magic is almost all Shorts, which the homepage rows exclude by design — so
+// it gets its own strip here (Shorts open in the reels page).
+async function renderMagicRow() {
+  const section = document.getElementById('magic-section');
+  const row = document.getElementById('magic-row');
+  if (!section || !row) return;
+  try {
+    const items = await fetchMagic(16);
+    if (!items.length) return;
+    section.style.display = '';
+    row.innerHTML = magicCardsHTML(items);
+  } catch {
+    /* a bonus strip: stays hidden */
+  }
 }
 
 function renderCategoryRows(byCategory) {

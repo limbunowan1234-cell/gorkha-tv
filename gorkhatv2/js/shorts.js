@@ -13,6 +13,19 @@ let isMuted = true;      // starts muted (autoplay policy); once the viewer unmu
 let nextCursor = null;
 let loadingMore = false;
 let exhausted = false;
+let category = ''; // '' = everything; otherwise a category slug such as 'magic'
+
+// Category chips above the feed (same set as the UKAALI app, Magic included).
+const CHIPS = [
+  { label: 'All', value: '' },
+  { label: 'Magic', value: 'magic' },
+  { label: 'Comedy', value: 'comedy' },
+  { label: 'Vlogs', value: 'vlogs' },
+  { label: 'Travel', value: 'travel' },
+  { label: 'Music', value: 'music' },
+  { label: 'News', value: 'news' },
+  { label: 'Food', value: 'food' },
+];
 let favouriteIds = new Set(); // internal video ids the signed-in viewer already saved
 let observer = null;
 let activatedAt = null; // Date.now() when the current slide became active — dwell time is measured from here
@@ -23,6 +36,7 @@ async function init() {
   await initAuthNav();
   initCommentsDrawer();
   loadFavouriteState();
+  renderChips();
 
   const deepLinkId = getShortIdFromPath();
   try {
@@ -50,6 +64,53 @@ async function init() {
   feedEl.querySelector('.shorts-loading')?.remove();
   setupObserver();
   setActive(0);
+}
+
+function renderChips() {
+  const bar = document.getElementById('shorts-chips');
+  if (!bar) return;
+  bar.innerHTML = CHIPS.map((c) => `<button class="shorts-chip${c.value === category ? ' on' : ''}" data-cat="${c.value}">${c.label}</button>`).join('');
+  bar.onclick = (e) => {
+    const btn = e.target.closest('.shorts-chip');
+    if (btn && btn.dataset.cat !== category) loadCategory(btn.dataset.cat);
+  };
+}
+
+// Switching chips resets the feed: tear down every player, clear the slides,
+// and load page one of the chosen category.
+async function loadCategory(cat) {
+  recordDwellEvent(currentIndex);
+  category = cat;
+  renderChips();
+  for (const player of players.values()) {
+    try {
+      player.destroy();
+    } catch {
+      /* already torn down */
+    }
+  }
+  players.clear();
+  items.length = 0;
+  slideEls.length = 0;
+  currentIndex = -1;
+  nextCursor = null;
+  exhausted = false;
+  loadingMore = false;
+  feedEl.innerHTML = '<div class="shorts-loading">Loading…</div>';
+  try {
+    const { shorts, nextCursor: nc } = await apiFetch(`/shorts?limit=10${cat ? `&category=${encodeURIComponent(cat)}` : ''}`);
+    nextCursor = nc;
+    if (!shorts.length) {
+      feedEl.innerHTML = `<div class="shorts-empty"><div style="font-size:32px;">🎬</div><div>No ${cat || ''} reels yet. Check back soon.</div></div>`;
+      return;
+    }
+    feedEl.innerHTML = '';
+    feedEl.scrollTop = 0;
+    appendItems(shorts);
+    setActive(0);
+  } catch {
+    renderEmpty();
+  }
 }
 
 function getShortIdFromPath() {
@@ -388,7 +449,7 @@ async function fetchMore() {
   }
   loadingMore = true;
   try {
-    const { shorts, nextCursor: nc } = await apiFetch(`/shorts?cursor=${encodeURIComponent(nextCursor)}&limit=10`);
+    const { shorts, nextCursor: nc } = await apiFetch(`/shorts?cursor=${encodeURIComponent(nextCursor)}&limit=10${category ? `&category=${encodeURIComponent(category)}` : ''}`);
     if (!shorts.length) {
       exhausted = true;
       appendEndMarker();

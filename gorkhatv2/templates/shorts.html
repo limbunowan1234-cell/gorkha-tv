@@ -15,8 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@600;700;800&family=Anek+Devanagari:wght@600;700;800&family=Mukta:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="/css/tokens.css?v=mv2qh6qk">
-  <link rel="stylesheet" href="/css/style.css?v=mv2qh6qk">
+  <link rel="stylesheet" href="/css/tokens.css?v=mv429y33">
+  <link rel="stylesheet" href="/css/style.css?v=mv429y33">
 
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5223539471824662" crossorigin="anonymous"></script>
   <script type="text/javascript"> var infolinks_pid = 3447537; var infolinks_wsid = 0; </script>
@@ -132,6 +132,20 @@
        top-right — the template's own real vector art (01-symbols), colors
        inlined directly since this page isn't a single-category data-brand
        context the way watch.js's pages are. */
+
+    /* UKAALI category chips, same set as the app (Magic included). Floats over
+       the top of the feed; only the chips themselves take clicks. */
+    .shorts-chips {
+      position: fixed; top: 72px; left: 0; right: 0; z-index: 50; display: flex; gap: 8px;
+      padding: 0 14px; overflow-x: auto; scrollbar-width: none; pointer-events: none; justify-content: safe center;
+    }
+    .shorts-chips::-webkit-scrollbar { display: none; }
+    .shorts-chip {
+      pointer-events: auto; flex-shrink: 0; height: 32px; padding: 0 14px; border-radius: 16px;
+      border: 1.5px solid rgba(43,209,155,0.45); background: rgba(16,18,22,0.65); color: #2BD19B;
+      font: 800 12px/1 'Anek Latin', 'Anek Devanagari', sans-serif; letter-spacing: 0.4px; text-transform: uppercase; cursor: pointer;
+    }
+    .shorts-chip.on { background: #2BD19B; border-color: #2BD19B; color: #101216; }
     .shorts-info-card {
       display: inline-block; max-width: 100%;
       background: rgba(16,18,22,0.72); border-radius: 18px; padding: 10px 16px 12px;
@@ -249,6 +263,8 @@
   <div class="nav-right" id="nav-right"></div>
 </nav>
 
+<div class="shorts-chips" id="shorts-chips"></div>
+
 <div class="shorts-feed" id="shorts-feed">
   <div class="shorts-loading"><div class="gtv-loader loader" data-brand="gorkhatv"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><g transform="translate(-0.00 0.00)"><path class="s ring" pathLength="1" d="M86.0 50.0 A36 36 0 1 1 70.6 20.5"/><path class="s" pathLength="1" d="M86 52 L70 52 L61 39 L52 52"/></g></svg></div></div>
 </div>
@@ -264,7 +280,7 @@
 
 <div id="mobile-nav-root"></div>
 
-<script type="module" src="/js/shorts.js?v=mv2qh6qk"></script>
-<script type="module" src="/js/mobileNav.js?v=mv2qh6qk"></script>
+<script type="module" src="/js/shorts.js?v=mv429y33"></script>
+<script type="module" src="/js/mobileNav.js?v=mv429y33"></script>
 </body>
 </html>

@@ -3,6 +3,7 @@ import { initAuthNav } from './auth.js';
 import { GENRES } from './genres.js';
 import { setQueue } from './queue.js';
 import { navigate } from './router.js';
+import { renderWaveHero, renderCinemaHero, renderNewsFeature, newsListHTML, loadMagicRow, playList } from './productFeatures.js';
 
 const LOCATION_EMOJI = { Darjeeling: '🏔️', Kalimpong: '🌄', Kurseong: '🌿', Mirik: '🌸', Siliguri: '🏙️', Sikkim: '🏞️' };
 const LOCATIONS = ['Darjeeling', 'Kalimpong', 'Kurseong', 'Mirik', 'Siliguri', 'Sikkim'];
@@ -78,7 +79,10 @@ function renderSubnav(genre) {
     items.push({ label: '🌍 By Region', anchor: '#genre-location-rows' });
     if (genre.kind === 'multi_trending_latest') {
       for (const cat of genre.categories) {
-        items.push({ label: CATEGORY_LABEL[cat] || cat, href: `../category/${cat}` });
+        // Magic is mostly Shorts, which the /category browse route excludes,
+        // so its tab jumps to this page's Magic row instead.
+        if (cat === 'magic') items.push({ label: '🪄 Magic', anchor: '#genre-magic-section' });
+        else items.push({ label: CATEGORY_LABEL[cat] || cat, href: `../category/${cat}` });
       }
     }
   }
@@ -176,7 +180,22 @@ async function loadTrendingLatest(genre) {
       primarySection.style.display = 'none';
     }
 
-    if (latest && latest.length) {
+    if (genre.slug === 'news' && latest && latest.length) {
+      // KHABAR: lead story + bulletin up top, headline-first list below
+      // instead of the card row.
+      renderNewsFeature(latest);
+      secondaryRow.classList.remove('cards-scroll');
+      secondaryRow.classList.add('news-list');
+      secondaryRow.innerHTML = newsListHTML(latest.slice(1));
+      // Headline rows are plain links; a click also seeds the bulletin queue
+      // so "up next" keeps walking the headlines.
+      secondaryRow.addEventListener('click', (e) => {
+        const item = e.target.closest('.news-item');
+        if (!item) return;
+        e.preventDefault();
+        playList(latest, Number(item.dataset.i) + 1);
+      });
+    } else if (latest && latest.length) {
       secondaryRow.innerHTML = latest.map(videoCardHTML).join('');
     } else {
       secondaryRow.innerHTML = `<div class="genre-empty">No videos here yet — check back soon.</div>`;
@@ -211,6 +230,15 @@ async function loadMultiTrendingLatest(genre) {
 
     const trending = results.flatMap((r) => r.trending || []).sort((a, b) => (b.trend_score || 0) - (a.trend_score || 0)).slice(0, 20);
     const latest = results.flatMap((r) => r.latest || []).sort((a, b) => new Date(b.published_at) - new Date(a.published_at)).slice(0, 20);
+
+    // CHIMAL: a hero rotating through the most-watched titles, and a Magic row.
+    const seenHero = new Set();
+    renderCinemaHero(
+      [...trending, ...latest]
+        .filter((v) => !seenHero.has(v.youtube_video_id) && seenHero.add(v.youtube_video_id))
+        .sort((a, b) => (b.view_count || 0) - (a.view_count || 0))
+    );
+    loadMagicRow();
 
     if (trending.length) {
       primarySection.style.display = '';
@@ -257,6 +285,7 @@ async function loadTop10Top100(genre) {
     if (!chart.length) {
       primaryRow.innerHTML = `<div class="genre-empty">No chart data yet — check back once more music has synced.</div>`;
     } else {
+      renderWaveHero(chart);
       primaryRow.innerHTML = chart.slice(0, 10).map((v, i) => numberedCardHTML(v, i + 1)).join('');
       // Queue-seed from the FULL Top 100, not just the 10 rendered cards —
       // a listener starting here still gets the whole chart behind them,
