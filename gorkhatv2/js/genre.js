@@ -51,7 +51,8 @@ function applyTheme(genre) {
   }
   // Keep the server-injected search title (functions/genre/[slug].js) —
   // overwriting it here would replace it in Google's rendered snapshot too.
-  document.title = injected.seoTitle || `${genre.label} | GorkhaTV`;
+  // Read from window.__GENRE directly: init()'s `injected` isn't in scope here.
+  document.title = window.__GENRE?.seoTitle || `${genre.label} | GorkhaTV`;
 }
 
 // CHIMAL's 5 underlying categories, for its subnav's per-category links —
