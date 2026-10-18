@@ -49,7 +49,9 @@ function applyTheme(genre) {
   } else {
     subEl.textContent = genre.tagline || '';
   }
-  document.title = `${genre.label} | GorkhaTV`;
+  // Keep the server-injected search title (functions/genre/[slug].js) —
+  // overwriting it here would replace it in Google's rendered snapshot too.
+  document.title = injected.seoTitle || `${genre.label} | GorkhaTV`;
 }
 
 // CHIMAL's 5 underlying categories, for its subnav's per-category links —
