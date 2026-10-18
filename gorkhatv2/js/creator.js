@@ -67,7 +67,7 @@ function renderCreator(c, videos) {
   document.getElementById('creator-hero').innerHTML = `
     ${c.thumbnail_url ? `<img src="${escapeHtml(c.thumbnail_url)}" alt="${escapeHtml(c.channel_name)}">` : `<div style="width:96px;height:96px;border-radius:50%;background:var(--surface2);"></div>`}
     <div>
-      <div class="creator-name">${escapeHtml(c.channel_name)}${c.verified ? ' <span class="verified" title="Verified"></span>' : ''}${tierBadgeHTML(c.tier)}</div>
+      <h1 class="creator-name">${escapeHtml(c.channel_name)}${c.verified ? ' <span class="verified" title="Verified"></span>' : ''}${tierBadgeHTML(c.tier)}</h1>
       <div class="creator-meta">${meta.join(' · ')}</div>
       <div class="creator-stats"><span id="follower-count" data-count="${c.followerCount}">${formatCount(c.followerCount)}</span> follower${c.followerCount === 1 ? '' : 's'}</div>
       ${c.description ? `<p class="creator-desc">${escapeHtml(c.description)}</p>` : ''}
@@ -193,7 +193,7 @@ function renderClaimBox(c) {
 }
 
 function renderNotFound() {
-  document.getElementById('creator-hero').innerHTML = `<div><div class="creator-name">Creator not found</div><p class="creator-desc">This creator may not be approved yet, or the link is incorrect.</p></div>`;
+  document.getElementById('creator-hero').innerHTML = `<div><h1 class="creator-name">Creator not found</h1><p class="creator-desc">This creator may not be approved yet, or the link is incorrect.</p></div>`;
 }
 
 init();
