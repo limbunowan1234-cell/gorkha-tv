@@ -42,7 +42,7 @@ export function stripDefaultSeoTags(html) {
 // improves click-through on deep pages (watch/genre/category/location/
 // creator) that are usually the actual entry point from search, not the
 // homepage. `items` is [{name, url}], root-first (Home always first).
-// Escaping matches functions/watch/[id].js's existing safeJsonLd: JSON.stringify
+// Escaping (same as videoJsonLd below and the pages' own safeJsonLd): JSON.stringify
 // can legally emit a literal "</script>" inside a string value (e.g. a
 // video title containing that text), which would terminate the embedding
 // <script> tag early — <-escaping "<" prevents that.
@@ -76,6 +76,43 @@ export function breadcrumbHTML(items) {
 
 function escapeHtmlForBreadcrumb(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Meta-description text from a free-form (usually YouTube) description:
+// whitespace/newlines collapsed, cut at a word boundary to <=160 chars so
+// Google doesn't truncate mid-word. Falls back when the source is empty.
+export function metaDescription(text, fallback) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return fallback;
+  if (clean.length <= 160) return clean;
+  const cut = clean.slice(0, 159);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 100 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:!?—-]+$/, '')}…`;
+}
+
+// schema.org VideoObject for a row from the videos table — shared by
+// functions/watch/[id].js and shared/render-shorts-page.js so watch pages and
+// Shorts emit the same shape. Escaped the same way as breadcrumbJsonLd.
+export function videoJsonLd(video, { pageUrl, description, thumbnail }) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: video.title,
+    description,
+    thumbnailUrl: [thumbnail],
+    uploadDate: video.published_at,
+    url: pageUrl,
+    ...(video.duration_seconds ? { duration: `PT${video.duration_seconds}S` } : {}),
+    embedUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,
+    // Devanagari in the title is a reliable "this is Nepali" signal;
+    // Roman-script titles can be either language, so they're left unset.
+    ...(/[\u0900-\u097F]/.test(video.title || '') ? { inLanguage: 'ne' } : {}),
+    ...(video.view_count
+      ? { interactionStatistic: { '@type': 'InteractionCounter', interactionType: { '@type': 'WatchAction' }, userInteractionCount: video.view_count } }
+      : {}),
+    ...(video.channel_name ? { author: { '@type': 'Person', name: video.channel_name } } : {}),
+    publisher: { '@type': 'Organization', name: 'GorkhaTV', url: new URL(pageUrl).origin, logo: { '@type': 'ImageObject', url: `${new URL(pageUrl).origin}/logo-circle.png` } },
+  }).replace(/</g, '\\u003c');
 }
 
 export async function readJsonBody(request) {
