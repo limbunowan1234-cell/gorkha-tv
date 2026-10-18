@@ -27,7 +27,7 @@ export async function onRequest(context) {
   let creator;
   try {
     creator = await env.DB.prepare(
-      `SELECT channel_name, description, thumbnail_url, youtube_channel_id, slug, category, tier FROM channels WHERE slug = ? AND status = 'approved'`
+      `SELECT channel_name, channel_handle, description, thumbnail_url, youtube_channel_id, slug, category, location, tier FROM channels WHERE slug = ? AND status = 'approved'`
     )
       .bind(slug)
       .first();
@@ -86,6 +86,35 @@ export async function onRequest(context) {
   html = html.replace(/<head>/i, `<head>${metaTags}`);
   html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML([{ name: 'Home', url: url.origin }, { name: creator.channel_name, url: pageUrl }]));
 
+  // Body content: the hero (avatar, <h1> name, meta line, description) and
+  // the video grid, server-rendered so the raw HTML has the channel's name
+  // as its heading and links to its videos. Same query and markup as
+  // functions/api/creators/[id].js + js/creator.js's renderCreator(), which
+  // re-renders both (adding follower count and buttons) once it loads.
+  let videos = [];
+  try {
+    ({ results: videos } = await env.DB.prepare(
+      `SELECT youtube_video_id, title, thumbnail_url, category, location, view_count FROM videos
+       WHERE youtube_channel_id = ? AND status = 'published' AND (content_type IS NULL OR content_type != 'short')
+       ORDER BY published_at DESC LIMIT 48`
+    )
+      .bind(creator.youtube_channel_id)
+      .all());
+  } catch (err) {
+    // Best-effort: js/creator.js still loads the grid client-side.
+  }
+  const meta = [creator.category, creator.location, creator.channel_handle].filter(Boolean).map(escapeHtml).join(' · ');
+  const hero = `
+    ${creator.thumbnail_url ? `<img src="${escapeHtml(creator.thumbnail_url)}" alt="${escapeHtml(creator.channel_name)}">` : ''}
+    <div>
+      <h1 class="creator-name">${escapeHtml(creator.channel_name)}</h1>
+      <div class="creator-meta">${meta}</div>
+      ${creator.description ? `<p class="creator-desc">${escapeHtml(creator.description)}</p>` : ''}
+    </div>`;
+  html = html.replace(/(<div class="creator-hero" id="creator-hero">)[\s\S]*?(<\/div>\s*<div class="creator-grid" id="creator-videos"><\/div>)/, (m, open, close) =>
+    `${open}${hero}\n  ${close.replace('<div class="creator-grid" id="creator-videos"></div>', `<div class="creator-grid" id="creator-videos">${videos.map(videoCardHTML).join('')}</div>`)}`
+  );
+
   return new Response(html, {
     headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },
   });
@@ -103,6 +132,32 @@ const ORGANIZATION_NAME = /\b(news|khabar|samachar|tv|media|films?|productions?|
 function isOrganization(creator) {
   if (creator.category === 'news' || creator.tier === 'verified_reporter' || creator.tier === 'chimal_original') return true;
   return ORGANIZATION_NAME.test(creator.channel_name || '');
+}
+
+// Mirrors js/api.js's videoCardHTML() for this endpoint's columns (no
+// channel_name — every card is this channel's own video).
+function videoCardHTML(v) {
+  const thumb = v.thumbnail_url || `https://img.youtube.com/vi/${v.youtube_video_id}/hqdefault.jpg`;
+  return `
+    <a class="card" href="/watch/${escapeHtml(v.youtube_video_id)}">
+      <div class="card-thumb">
+        <img src="${escapeHtml(thumb)}" alt="${escapeHtml(v.title || '')}" loading="lazy">
+        ${v.category ? `<span class="card-cat-badge">${escapeHtml(v.category)}</span>` : ''}
+        ${v.view_count ? `<span class="card-like-count">${escapeHtml(formatViews(v.view_count))}</span>` : ''}
+      </div>
+      <div class="card-body">
+        <div class="card-title">${escapeHtml(v.title || '')}</div>
+        <div class="card-sub">${v.location ? escapeHtml(v.location) : ''}</div>
+      </div>
+    </a>`;
+}
+
+// Same output as js/api.js's formatViews().
+function formatViews(n) {
+  if (!n) return '';
+  if (n >= 1e6) return `${(n / 1e6).toFixed(1).replace(/\.0$/, '')}M views`;
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}K views`;
+  return `${n} view${n === 1 ? '' : 's'}`;
 }
 
 function escapeHtml(str) {
