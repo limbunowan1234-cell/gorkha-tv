@@ -5,6 +5,7 @@
 // fixed URLs and would otherwise still reference now-deleted pages.
 
 import { LOCATIONS } from '../shared/constants.js';
+import { COLLECTIONS, MIN_ITEMS, collectionSizes, locationCategoryCombos, comboUrl } from '../shared/collections.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -33,6 +34,7 @@ export async function onRequestGet(context) {
     { loc: `${origin}/pages/about`, changefreq: 'monthly', priority: '0.3' },
     { loc: `${origin}/pages/contact`, changefreq: 'monthly', priority: '0.3' },
     ...GENRE_SLUGS.map((slug) => ({ loc: `${origin}/genre/${slug}`, changefreq: 'daily', priority: '0.8' })),
+    { loc: `${origin}/best`, changefreq: 'weekly', priority: '0.7' },
   ];
 
   try {
@@ -57,6 +59,12 @@ export async function onRequestGet(context) {
     for (const c of creators) urls.push({ loc: `${origin}/${c.slug}`, lastmod: c.updated_at, changefreq: 'weekly', priority: '0.6' });
     for (const c of categories) urls.push({ loc: `${origin}/category/${c.slug}`, changefreq: 'daily', priority: '0.6' });
     for (const loc of LOCATIONS) urls.push({ loc: `${origin}/location/${encodeURIComponent(loc)}`, changefreq: 'daily', priority: '0.6' });
+
+    // Collections and location × category pages — only the ones with enough
+    // videos to render (thinner ones 404, see shared/collections.js).
+    const [sizes, combos] = await Promise.all([collectionSizes(env.DB), locationCategoryCombos(env.DB)]);
+    for (const c of COLLECTIONS) if (sizes.get(c.slug) >= MIN_ITEMS) urls.push({ loc: `${origin}/best/${c.slug}`, changefreq: 'weekly', priority: '0.7' });
+    for (const c of combos) urls.push({ loc: comboUrl(origin, c.location, c.category), changefreq: 'daily', priority: '0.6' });
   } catch (err) {
     // A D1 hiccup should still return the static portion of the sitemap
     // rather than a 500 — crawlers get a smaller-but-valid sitemap.

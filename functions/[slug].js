@@ -27,7 +27,7 @@ export async function onRequest(context) {
   let creator;
   try {
     creator = await env.DB.prepare(
-      `SELECT channel_name, description, thumbnail_url, youtube_channel_id, slug FROM channels WHERE slug = ? AND status = 'approved'`
+      `SELECT channel_name, description, thumbnail_url, youtube_channel_id, slug, category, tier FROM channels WHERE slug = ? AND status = 'approved'`
     )
       .bind(slug)
       .first();
@@ -47,14 +47,22 @@ export async function onRequest(context) {
     : `${creator.channel_name} on GorkhaTV — Darjeeling-region YouTube creator.`;
   const pageUrl = `${url.origin}/${creator.slug}`;
 
+  // ProfilePage is Google's structured-data type for a creator profile; its
+  // mainEntity is the channel itself — a Person for individual creators, an
+  // Organization for news outlets, studios, bands and media channels
+  // (e.g. Khabar Darjeeling), which were all previously marked as Person.
   const structuredData = safeJsonLd({
     '@context': 'https://schema.org',
-    '@type': 'Person',
-    name: creator.channel_name,
-    description,
+    '@type': 'ProfilePage',
     url: pageUrl,
-    ...(creator.thumbnail_url ? { image: creator.thumbnail_url } : {}),
-    sameAs: [`https://www.youtube.com/channel/${creator.youtube_channel_id}`],
+    mainEntity: {
+      '@type': isOrganization(creator) ? 'Organization' : 'Person',
+      name: creator.channel_name,
+      description,
+      url: pageUrl,
+      ...(creator.thumbnail_url ? { image: creator.thumbnail_url } : {}),
+      sameAs: [`https://www.youtube.com/channel/${creator.youtube_channel_id}`],
+    },
   });
 
   const metaTags = `
@@ -81,6 +89,20 @@ export async function onRequest(context) {
   return new Response(html, {
     headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },
   });
+}
+
+// No explicit person/organization flag exists on channels, so this infers
+// one: news channels, verified reporters and CHIMAL Originals are outlets,
+// and names with unambiguous outlet/studio words ("Khabar Darjeeling",
+// "XYZ Films", "ABC Records", "Darjeeling Times") are organizations.
+// Deliberately conservative — "Official"/"Music" are left out because solo
+// artists use them as often as groups do — so everything else, the large
+// majority of individual vloggers and artists, stays a Person.
+const ORGANIZATION_NAME = /\b(news|khabar|samachar|tv|media|films?|productions?|studios?|records|entertainment|band|network|pictures|times|express)\b/i;
+
+function isOrganization(creator) {
+  if (creator.category === 'news' || creator.tier === 'verified_reporter' || creator.tier === 'chimal_original') return true;
+  return ORGANIZATION_NAME.test(creator.channel_name || '');
 }
 
 function escapeHtml(str) {
