@@ -17,7 +17,9 @@ export async function onRequest(context) {
 
   try {
     const category = await env.DB.prepare('SELECT slug, label FROM categories WHERE slug = ? AND active = 1').bind(cat).first();
-    const label = category?.label || capitalize(cat);
+    // Unknown/inactive category: real 404 rather than an indexable empty grid.
+    if (!category) return new Response(html, { status: 404, headers: res.headers });
+    const label = category.label;
     // News gets real branding here (and in gorkhatv2/js/browse.js's on-page
     // title/subtitle) since it's promoted to its own destination rather than
     // a homepage row — see functions/api/home.js for the homepage side of
@@ -55,10 +57,6 @@ export async function onRequest(context) {
   } catch (err) {
     return new Response(html, { headers: res.headers });
   }
-}
-
-function capitalize(s) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function escapeHtml(str) {

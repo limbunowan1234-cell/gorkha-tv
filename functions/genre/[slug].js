@@ -7,9 +7,18 @@
 import { stripDefaultSeoTags, breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
 const GENRE_CONFIG = {
-  chimal: { categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs', 'magic'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', tagline: 'The home of Gorkha entertainment.' },
-  music: { category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', tagline: 'The home for all songs of Gorkha.' },
-  news: { category: 'news', label: 'KHABAR', color: '#3183F2', kind: 'trending_latest', tagline: 'Breaking news and updates from the Darjeeling hills, powered by Khabar Darjeeling.' },
+  chimal: { categories: ['movies', 'shortfilms', 'comedy', 'entertainment', 'vlogs', 'magic'], label: 'CHIMAL', color: '#E8A62A', kind: 'multi_trending_latest', tagline: 'The home of Gorkha entertainment.',
+    seoTitle: 'CHIMAL — Gorkha Movies, Short Films & Comedy | GorkhaTV',
+    seoDescription: 'Watch Gorkha and Nepali movies, short films, web series, comedy and vlogs from Darjeeling, Kalimpong, Kurseong and Sikkim — all in one place on GorkhaTV.',
+    image: '/images/menu-banners/chimal.jpg' },
+  music: { category: 'music', label: 'SWARA', color: '#E6479D', kind: 'top10_top100', tagline: 'The home for all songs of Gorkha.',
+    seoTitle: 'SWARA — Nepali & Gorkha Songs from Darjeeling | GorkhaTV',
+    seoDescription: 'Listen to the latest Nepali and Gorkha songs from Darjeeling, Kalimpong and Sikkim — trending tracks and the Top 100 Hills Hits chart, ranked by engagement.',
+    image: '/images/menu-banners/swara.jpg' },
+  news: { category: 'news', label: 'KHABAR', color: '#3183F2', kind: 'trending_latest', tagline: 'Breaking news and updates from the Darjeeling hills, powered by Khabar Darjeeling.',
+    seoTitle: 'KHABAR — Darjeeling News Today & Hills Updates | GorkhaTV',
+    seoDescription: 'Latest Darjeeling news and video updates from Kalimpong, Kurseong, Mirik, Siliguri and the hills — bulletins powered by Khabar Darjeeling, on GorkhaTV.',
+    image: '/images/menu-banners/khabar.jpg' },
 };
 
 export async function onRequest(context) {
@@ -24,8 +33,11 @@ export async function onRequest(context) {
 
   if (!genre) return new Response(html, { status: 404, headers: res.headers });
 
-  const title = `${genre.label} | GorkhaTV`;
-  const description = genre.tagline;
+  // seoTitle/seoDescription are search-facing (keyword-bearing, ~60/~155
+  // chars); the short brand tagline stays the on-page copy via window.__GENRE.
+  const title = genre.seoTitle;
+  const description = genre.seoDescription;
+  const image = `${url.origin}${genre.image}`;
   const pageUrl = `${url.origin}/genre/${slug}`;
 
   const injected = `
@@ -36,9 +48,13 @@ export async function onRequest(context) {
   <meta property="og:description" content="${escapeHtml(description)}">
   <meta property="og:url" content="${pageUrl}">
   <meta property="og:type" content="website">
-  <meta name="twitter:card" content="summary">
+  <meta property="og:image" content="${image}">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1080">
+  <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(title)}">
   <meta name="twitter:description" content="${escapeHtml(description)}">
+  <meta name="twitter:image" content="${image}">
   <meta name="theme-color" content="${genre.color}">
   <script>window.__GENRE = ${JSON.stringify({ slug, ...genre })};</script>
   <script type="application/ld+json">${breadcrumbJsonLd([{ name: 'Home', url: url.origin }, { name: genre.label, url: pageUrl }])}</script>

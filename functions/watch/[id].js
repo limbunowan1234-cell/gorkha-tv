@@ -7,11 +7,13 @@
 
 import { breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
 
-// Categories with their own branded /genre/:slug page (see functions/genre/
-// [slug].js) — the breadcrumb links there instead of the generic
-// /category/:slug grid for these, same destination the homepage's genre
-// pills use. Every other category still links to /category/:slug.
-const GENRE_SLUGS = new Set(['movies', 'music', 'vlogs', 'news', 'comedy']);
+// Categories whose slug is also a branded /genre/:slug page (see
+// functions/genre/[slug].js's GENRE_CONFIG) — the breadcrumb links there
+// instead of the generic /category/:slug grid. Only music and news qualify:
+// movies/vlogs/comedy are rolled up under /genre/chimal, so /genre/movies
+// etc. are 404s — those (and every other category) link to /category/:slug,
+// which exists for every active category.
+const GENRE_SLUGS = new Set(['music', 'news']);
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -35,7 +37,10 @@ export async function onRequest(context) {
       .first();
 
     if (!video) {
-      return new Response(html, { headers: res.headers });
+      // Real 404 status (not a 200 "Loading…" shell) so unknown/removed
+      // video ids aren't indexed as soft-404s. js/watch.js still renders its
+      // own "Video not found" state on the page.
+      return new Response(html, { status: 404, headers: res.headers });
     }
 
     let categoryLabel = null;

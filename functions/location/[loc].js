@@ -13,7 +13,9 @@ export async function onRequest(context) {
   const res = await env.ASSETS.fetch(assetUrl.toString());
   let html = await res.text();
 
-  if (!loc || !LOCATIONS.includes(loc)) return new Response(html, { headers: res.headers });
+  if (!loc) return new Response(html, { headers: res.headers });
+  // Unknown location: real 404 rather than an indexable empty grid.
+  if (!LOCATIONS.includes(loc)) return new Response(html, { status: 404, headers: res.headers });
 
   const title = `${loc} Videos | GorkhaTV`;
   const description = `Discover YouTube videos from ${loc} — news, vlogs, travel, food, culture and more — curated on GorkhaTV.`;

@@ -10,24 +10,28 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   const origin = new URL(request.url).origin;
 
-  // GorkhaTV Talkies/Beats/Diaries/Bulletin/Laughs — the branded genre
-  // pages (functions/genre/[slug].js), the newest and most-invested-in
-  // discovery surface on the site. Music/GorkhaTV Beats' "See all" already
-  // points at chart.html, which needs its own sitemap entry too.
-  const GENRE_SLUGS = ['movies', 'music', 'vlogs', 'news', 'comedy'];
+  // CHIMAL/SWARA/KHABAR — the branded genre pages. Must match the keys of
+  // functions/genre/[slug].js's GENRE_CONFIG exactly: any other slug is a
+  // 404 there, and listing a 404 here wastes crawl budget and shows up as a
+  // sitemap error in Search Console. SWARA's "See all" points at chart.html,
+  // which needs its own sitemap entry too.
+  const GENRE_SLUGS = ['chimal', 'music', 'news'];
 
   const urls = [
     { loc: `${origin}/`, changefreq: 'hourly', priority: '1.0' },
-    { loc: `${origin}/pages/browse.html`, changefreq: 'daily', priority: '0.8' },
+    // Extensionless: Cloudflare Pages 308-redirects /pages/x.html -> /pages/x,
+    // so listing the .html form would point crawlers at a redirect.
+    // chart.html is the exception — it's a Function route
+    // (functions/pages/chart.html.js) and serves 200 at that exact path.
+    // search/terms/privacy are left out: they're noindex, and a sitemap
+    // should only list pages meant to be indexed.
+    { loc: `${origin}/pages/browse`, changefreq: 'daily', priority: '0.8' },
     { loc: `${origin}/shorts`, changefreq: 'hourly', priority: '0.9' },
-    { loc: `${origin}/pages/feed.html`, changefreq: 'hourly', priority: '0.8' },
+    { loc: `${origin}/pages/feed`, changefreq: 'hourly', priority: '0.8' },
     { loc: `${origin}/pages/chart.html`, changefreq: 'daily', priority: '0.7' },
-    { loc: `${origin}/pages/search.html`, changefreq: 'weekly', priority: '0.4' },
-    { loc: `${origin}/pages/submit-channel.html`, changefreq: 'monthly', priority: '0.5' },
-    { loc: `${origin}/pages/about.html`, changefreq: 'monthly', priority: '0.3' },
-    { loc: `${origin}/pages/contact.html`, changefreq: 'monthly', priority: '0.3' },
-    { loc: `${origin}/pages/terms.html`, changefreq: 'monthly', priority: '0.2' },
-    { loc: `${origin}/pages/privacy.html`, changefreq: 'monthly', priority: '0.2' },
+    { loc: `${origin}/pages/submit-channel`, changefreq: 'monthly', priority: '0.5' },
+    { loc: `${origin}/pages/about`, changefreq: 'monthly', priority: '0.3' },
+    { loc: `${origin}/pages/contact`, changefreq: 'monthly', priority: '0.3' },
     ...GENRE_SLUGS.map((slug) => ({ loc: `${origin}/genre/${slug}`, changefreq: 'daily', priority: '0.8' })),
   ];
 
