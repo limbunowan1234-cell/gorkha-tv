@@ -67,7 +67,17 @@ function renderGenrePills() {
   const bar = document.getElementById('genre-pills');
   if (!bar) return;
   bar.innerHTML = GENRES.map(
-    (g) => `<a class="genre-banner" href="${g.href}"><img src="/images/menu-banners/${BANNER_IMAGE[g.slug]}.jpg" alt="${escapeHtml(g.label)}" loading="lazy"></a>`
+    (g) => {
+      // Resized variants (640/1280 WebP + a 1280 JPEG fallback) — the
+      // 1920px originals are 300-490 KB each and only stay for genre pages'
+      // og:image. Banners show 2-up on desktop (~650px) and full-width on
+      // phones.
+      const base = `/images/menu-banners/${BANNER_IMAGE[g.slug]}`;
+      return `<a class="genre-banner" href="${g.href}"><picture>
+        <source type="image/webp" srcset="${base}-640.webp 640w, ${base}-1280.webp 1280w" sizes="(max-width: 700px) 100vw, (min-width: 1400px) 660px, 50vw">
+        <img src="${base}-1280.jpg" width="1280" height="720" alt="${escapeHtml(g.label)}" loading="lazy" decoding="async">
+      </picture></a>`;
+    }
   ).join('');
 }
 
