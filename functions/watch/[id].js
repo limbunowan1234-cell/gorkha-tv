@@ -1,11 +1,14 @@
 // Cloudflare Pages Function — serves templates/watch.html for /watch/:id and
 // injects SEO/OG/Twitter meta tags server-side (reads D1 directly, no HTTP
 // round-trip through /api/*) so social crawlers see correct previews before
-// any client-side JS runs. Corrects a routing bug in the old
+// any client-side JS runs. Also fills the page body's <h1>, meta line and
+// description server-side, so the HTML crawlers download has the video's
+// real content instead of a "Loading…" shell — js/watch.js re-renders the
+// same elements with the same data once it loads. Corrects a routing bug in the old
 // functions/pages/video.js, which matched literal filename "video.js" ->
 // route "/pages/video" and never actually intercepted "/pages/video.html".
 
-import { breadcrumbJsonLd, breadcrumbHTML } from '../../shared/http.js';
+import { breadcrumbJsonLd, breadcrumbHTML, metaDescription, videoJsonLd } from '../../shared/http.js';
 
 // Categories whose slug is also a branded /genre/:slug page (see
 // functions/genre/[slug].js's GENRE_CONFIG) — the breadcrumb links there
@@ -30,7 +33,7 @@ export async function onRequest(context) {
 
   try {
     const video = await env.DB.prepare(
-      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds, category
+      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds, category, location, view_count
        FROM videos WHERE youtube_video_id = ? AND status = 'published'`
     )
       .bind(id)
@@ -50,21 +53,11 @@ export async function onRequest(context) {
     }
 
     const title = `${video.title} | GorkhaTV`;
-    const description = video.description ? video.description.slice(0, 160) : `Watch ${video.title} on GorkhaTV — Darjeeling-region YouTube content.`;
+    const description = metaDescription(video.description, `Watch ${video.title} on GorkhaTV — Darjeeling-region YouTube content.`);
     const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_video_id}/hqdefault.jpg`;
     const pageUrl = `${url.origin}/watch/${video.youtube_video_id}`;
 
-    const structuredData = safeJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'VideoObject',
-      name: video.title,
-      description,
-      thumbnailUrl: [thumbnail],
-      uploadDate: video.published_at,
-      ...(video.duration_seconds ? { duration: `PT${video.duration_seconds}S` } : {}),
-      embedUrl: `https://www.youtube.com/embed/${video.youtube_video_id}`,
-      ...(video.channel_name ? { author: { '@type': 'Person', name: video.channel_name } } : {}),
-    });
+    const structuredData = videoJsonLd(video, { pageUrl, description, thumbnail });
 
     const breadcrumbTrail = [{ name: 'Home', url: url.origin }];
     if (categoryLabel) {
@@ -97,6 +90,18 @@ export async function onRequest(context) {
     html = html.replace(/<head>/i, `<head>${metaTags}`);
     html = html.replace('<!-- BREADCRUMB-PLACEHOLDER -->', breadcrumbHTML(breadcrumbTrail));
 
+    // Body content — same elements and order js/watch.js's renderVideo()
+    // fills (date · category · location · views), so there's no visible
+    // jump when it re-renders them.
+    const metaParts = [];
+    if (video.published_at) metaParts.push(`<span>${escapeHtml(String(video.published_at).slice(0, 10))}</span>`);
+    if (categoryLabel) metaParts.push(`<div class="dot"></div><span>${escapeHtml(categoryLabel)}</span>`);
+    if (video.location) metaParts.push(`<div class="dot"></div><span>${escapeHtml(video.location)}</span>`);
+    if (video.view_count) metaParts.push(`<div class="dot"></div><span>${escapeHtml(Number(video.view_count).toLocaleString('en-IN'))} views</span>`);
+    html = html.replace('<h1 class="watch-title" id="watch-title">Loading…</h1>', `<h1 class="watch-title" id="watch-title">${escapeHtml(video.title)}</h1>`);
+    html = html.replace('<div class="watch-meta" id="watch-meta"></div>', `<div class="watch-meta" id="watch-meta">${metaParts.join('')}</div>`);
+    html = html.replace('<p class="watch-desc clamped" id="watch-desc"></p>', `<p class="watch-desc clamped" id="watch-desc">${escapeHtml(video.description || '')}</p>`);
+
     return new Response(html, {
       headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },
     });
@@ -107,9 +112,4 @@ export async function onRequest(context) {
 
 function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// See functions/creator/[id].js for why '<' must be escaped in embedded JSON-LD.
-function safeJsonLd(obj) {
-  return JSON.stringify(obj).replace(/</g, '\\u003c');
 }

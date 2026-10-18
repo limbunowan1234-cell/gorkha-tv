@@ -1,8 +1,10 @@
 // Shared by functions/shorts.js (bare /shorts) and functions/shorts/[id].js
 // (/shorts/:id deep links) — serves templates/shorts.html, injecting
 // per-video OG/Twitter tags server-side when a specific id is in the path,
-// same pattern as functions/watch/[id].js.
-import { stripDefaultSeoTags } from './http.js';
+// same pattern as functions/watch/[id].js — including VideoObject and
+// BreadcrumbList structured data, and a visually-hidden <h1> with the
+// video's title (the swipe UI has no visible heading of its own).
+import { stripDefaultSeoTags, breadcrumbJsonLd, metaDescription, videoJsonLd } from './http.js';
 
 export async function renderShortsPage(env, url, id) {
   const assetUrl = new URL('/templates/shorts.html', url.origin);
@@ -15,7 +17,7 @@ export async function renderShortsPage(env, url, id) {
 
   try {
     const video = await env.DB.prepare(
-      `SELECT title, thumbnail_url, youtube_video_id, channel_name FROM videos WHERE youtube_video_id = ? AND status = 'published' AND content_type = 'short'`
+      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds, view_count FROM videos WHERE youtube_video_id = ? AND status = 'published' AND content_type = 'short'`
     )
       .bind(id)
       .first();
@@ -27,7 +29,10 @@ export async function renderShortsPage(env, url, id) {
     }
 
     const title = `${video.title} | GorkhaTV Shorts`;
-    const description = `Watch ${video.channel_name ? `${video.channel_name}'s` : 'this'} Short on GorkhaTV — Darjeeling-region YouTube content.`;
+    const description = metaDescription(
+      video.description,
+      `Watch ${video.channel_name ? `${video.channel_name}'s` : 'this'} Short on GorkhaTV — Darjeeling-region YouTube content.`
+    );
     const thumbnail = video.thumbnail_url || `https://img.youtube.com/vi/${video.youtube_video_id}/hqdefault.jpg`;
     const pageUrl = `${url.origin}/shorts/${video.youtube_video_id}`;
 
@@ -42,7 +47,14 @@ export async function renderShortsPage(env, url, id) {
     <meta property="og:type" content="video.other">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${escapeHtml(title)}">
+    <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${thumbnail}">
+    <script type="application/ld+json">${videoJsonLd(video, { pageUrl, description, thumbnail })}</script>
+    <script type="application/ld+json">${breadcrumbJsonLd([
+      { name: 'Home', url: url.origin },
+      { name: 'Shorts', url: `${url.origin}/shorts` },
+      { name: video.title, url: pageUrl },
+    ])}</script>
     `;
 
     // templates/shorts.html now carries its own static canonical/OG/Twitter
@@ -52,6 +64,12 @@ export async function renderShortsPage(env, url, id) {
     // tags and duplicate og:title/og:image.
     html = stripDefaultSeoTags(html);
     html = html.replace(/<head>/i, `<head>${metaTags}`);
+    // Inline clip styles rather than a shared class: this is the only
+    // visually-hidden element on the site.
+    html = html.replace(
+      '<div class="shorts-feed" id="shorts-feed">',
+      `<h1 style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;">${escapeHtml(video.title)}</h1>\n<div class="shorts-feed" id="shorts-feed">`
+    );
 
     return new Response(html, {
       headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },
