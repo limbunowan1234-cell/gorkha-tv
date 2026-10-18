@@ -344,7 +344,7 @@ function initSearch() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const q = input.value.trim();
-      window.location.href = q ? `/pages/search.html?q=${encodeURIComponent(q)}` : '/pages/search.html';
+      window.location.href = q ? `/pages/search?q=${encodeURIComponent(q)}` : '/pages/search';
     }
   });
 }

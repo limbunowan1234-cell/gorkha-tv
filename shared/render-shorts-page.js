@@ -21,7 +21,9 @@ export async function renderShortsPage(env, url, id) {
       .first();
 
     if (!video) {
-      return new Response(html, { headers: res.headers });
+      // Real 404 status so unknown/removed short ids aren't soft-404s — see
+      // functions/watch/[id].js.
+      return new Response(html, { status: 404, headers: res.headers });
     }
 
     const title = `${video.title} | GorkhaTV Shorts`;

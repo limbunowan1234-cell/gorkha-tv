@@ -61,7 +61,7 @@ async function loadChannels() {
   try {
     const { channels } = await apiFetch('/my/channels');
     if (!channels.length) {
-      list.innerHTML = `<p class="text-muted">You haven't submitted a channel yet. <a href="submit-channel.html" style="color:var(--red);">Submit one →</a></p>`;
+      list.innerHTML = `<p class="text-muted">You haven't submitted a channel yet. <a href="submit-channel" style="color:var(--red);">Submit one →</a></p>`;
       return;
     }
     list.innerHTML = channels.map(channelItemHTML).join('');

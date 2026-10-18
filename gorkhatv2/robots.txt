@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
-Allow: /pages/browse.html
-Allow: /pages/search.html
-Allow: /pages/feed.html
+Allow: /pages/browse
+Allow: /pages/search
+Allow: /pages/feed
 Allow: /pages/chart.html
 Allow: /watch/
 Allow: /shorts
@@ -16,7 +16,12 @@ Allow: /location/
 # let admin-analytics.html/admin-comments.html/admin-featured.html slip
 # through unblocked after this file was last updated.
 Disallow: /pages/admin
-Disallow: /pages/my-favourites.html
-Disallow: /pages/edit-profile.html
+Disallow: /pages/my-favourites
+Disallow: /pages/edit-profile
+
+# Raw SSR templates (functions/* fill these in) — reachable directly as
+# /templates/home, /templates/watch etc., which would otherwise be indexable
+# empty "Loading…" duplicates of the real pages.
+Disallow: /templates/
 
 Sitemap: https://gorkhatv.site/sitemap.xml

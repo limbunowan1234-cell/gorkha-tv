@@ -107,8 +107,8 @@ function renderUserNav() {
           <div class="name">${escapeHtml(currentUser.name || '')}</div>
           <div class="email">${escapeHtml(currentUser.email || '')}</div>
         </div>
-        <a href="/pages/my-favourites.html" class="dropdown-item">🔖 My Favourites</a>
-        <a href="/pages/edit-profile.html" class="dropdown-item">✏️ Edit Profile</a>
+        <a href="/pages/my-favourites" class="dropdown-item">🔖 My Favourites</a>
+        <a href="/pages/edit-profile" class="dropdown-item">✏️ Edit Profile</a>
         <hr class="dropdown-divider">
         <button onclick="window.__gtvLogout()" class="dropdown-item danger">Sign out</button>
       </div>

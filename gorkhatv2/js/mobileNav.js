@@ -10,24 +10,24 @@ const TABS = [
     icon: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/>',
   },
   {
-    // "Shorts" opens the scrollable Feed (pages/feed.html), not the
+    // "Shorts" opens the scrollable Feed (pages/feed), not the
     // full-screen swipe page directly — tapping a specific card in the Feed
     // is what opens the immersive /shorts/:id swipe view. Still highlighted
     // active while actually inside that immersive view (path starts with
     // /shorts), since it's still "in Shorts" conceptually, just one tap deeper.
-    href: '/pages/feed.html',
+    href: '/pages/feed',
     label: 'Shorts',
     match: (path) => path.startsWith('/shorts') || path.includes('/feed'),
     icon: '<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/>',
   },
   {
-    href: '/pages/search.html',
+    href: '/pages/search',
     label: 'Search',
     match: (path) => path.includes('/search'),
     icon: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
   },
   {
-    href: '/pages/edit-profile.html',
+    href: '/pages/edit-profile',
     label: 'Profile',
     match: (path) => path.includes('/edit-profile'),
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>',

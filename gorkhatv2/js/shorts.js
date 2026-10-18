@@ -469,7 +469,7 @@ function appendEndMarker() {
   if (feedEl.querySelector('.shorts-end')) return;
   const el = document.createElement('div');
   el.className = 'shorts-end';
-  el.innerHTML = `<div style="font-size:28px;">🏔️</div><div>You're all caught up</div><a href="/pages/browse.html" style="color:var(--red);font-weight:600;">Browse more videos →</a>`;
+  el.innerHTML = `<div style="font-size:28px;">🏔️</div><div>You're all caught up</div><a href="/pages/browse" style="color:var(--red);font-weight:600;">Browse more videos →</a>`;
   feedEl.appendChild(el);
 }
 

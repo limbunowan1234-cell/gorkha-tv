@@ -140,7 +140,7 @@ function renderLocationRows(genre, byLocation) {
   const rows = LOCATIONS.filter((loc) => (byLocation[loc] || []).length).map((loc) => ({
     loc,
     title: `${LOCATION_EMOJI[loc] || ''} Top 10 ${loc}`,
-    link: `../pages/browse.html?${seeAllQuery}${encodeURIComponent(loc)}`,
+    link: `../pages/browse?${seeAllQuery}${encodeURIComponent(loc)}`,
     items: byLocation[loc],
   }));
   wrap.innerHTML = rows
