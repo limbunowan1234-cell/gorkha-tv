@@ -4,11 +4,15 @@
 // any client-side JS runs. Also fills the page body's <h1>, meta line and
 // description server-side, so the HTML crawlers download has the video's
 // real content instead of a "Loading…" shell — js/watch.js re-renders the
-// same elements with the same data once it loads. Corrects a routing bug in the old
+// same elements with the same data once it loads. The "More like this"
+// sidebar is server-rendered too (same list as /api/videos/:id/related), so
+// every watch page links to up to 12 others in its raw HTML. Corrects a
+// routing bug in the old
 // functions/pages/video.js, which matched literal filename "video.js" ->
 // route "/pages/video" and never actually intercepted "/pages/video.html".
 
 import { breadcrumbJsonLd, breadcrumbHTML, metaDescription, videoJsonLd } from '../../shared/http.js';
+import { findRelatedVideos } from '../../shared/related-videos.js';
 
 // Categories whose slug is also a branded /genre/:slug page (see
 // functions/genre/[slug].js's GENRE_CONFIG) — the breadcrumb links there
@@ -33,7 +37,7 @@ export async function onRequest(context) {
 
   try {
     const video = await env.DB.prepare(
-      `SELECT title, description, thumbnail_url, youtube_video_id, channel_name, published_at, duration_seconds, category, location, view_count
+      `SELECT title, description, thumbnail_url, youtube_video_id, youtube_channel_id, channel_name, published_at, duration_seconds, category, location, view_count
        FROM videos WHERE youtube_video_id = ? AND status = 'published'`
     )
       .bind(id)
@@ -46,11 +50,13 @@ export async function onRequest(context) {
       return new Response(html, { status: 404, headers: res.headers });
     }
 
-    let categoryLabel = null;
-    if (video.category) {
-      const cat = await env.DB.prepare(`SELECT label FROM categories WHERE slug = ? AND active = 1`).bind(video.category).first();
-      categoryLabel = cat?.label || video.category.charAt(0).toUpperCase() + video.category.slice(1);
-    }
+    // Related list is best-effort: a failure there renders the page without
+    // it (js/watch.js still fetches it client-side), never fails the page.
+    const [cat, related] = await Promise.all([
+      video.category ? env.DB.prepare(`SELECT label FROM categories WHERE slug = ? AND active = 1`).bind(video.category).first() : null,
+      findRelatedVideos(env.DB, video.youtube_video_id, video).catch(() => []),
+    ]);
+    const categoryLabel = video.category ? cat?.label || video.category.charAt(0).toUpperCase() + video.category.slice(1) : null;
 
     const title = `${video.title} | GorkhaTV`;
     const description = metaDescription(video.description, `Watch ${video.title} on GorkhaTV — Darjeeling-region YouTube content.`);
@@ -101,6 +107,11 @@ export async function onRequest(context) {
     html = html.replace('<h1 class="watch-title" id="watch-title">Loading…</h1>', `<h1 class="watch-title" id="watch-title">${escapeHtml(video.title)}</h1>`);
     html = html.replace('<div class="watch-meta" id="watch-meta"></div>', `<div class="watch-meta" id="watch-meta">${metaParts.join('')}</div>`);
     html = html.replace('<p class="watch-desc clamped" id="watch-desc"></p>', `<p class="watch-desc clamped" id="watch-desc">${escapeHtml(video.description || '')}</p>`);
+    if (related.length) {
+      // Replaces the loading spinner (rest of that template line) with the
+      // same markup js/watch.js's relatedItemHTML() produces.
+      html = html.replace(/<div class="related-list" id="related-list">.*/, `<div class="related-list" id="related-list">${related.map(relatedItemHTML).join('')}</div>`);
+    }
 
     return new Response(html, {
       headers: { ...Object.fromEntries(res.headers), 'content-type': 'text/html;charset=UTF-8', 'cache-control': 'public, max-age=60, s-maxage=300' },
@@ -108,6 +119,18 @@ export async function onRequest(context) {
   } catch (err) {
     return new Response(html, { headers: res.headers });
   }
+}
+
+function relatedItemHTML(r) {
+  const thumb = r.thumbnail_url || `https://img.youtube.com/vi/${r.youtube_video_id}/hqdefault.jpg`;
+  return `
+    <a class="related-item" href="/watch/${escapeHtml(r.youtube_video_id)}">
+      <div class="related-thumb"><img src="${escapeHtml(thumb)}" loading="lazy" alt="" onerror="this.src='https://img.youtube.com/vi/${escapeHtml(r.youtube_video_id)}/default.jpg'"></div>
+      <div>
+        <div class="related-title">${escapeHtml(r.title)}</div>
+        <div class="related-sub">${escapeHtml(r.channel_name || '')}</div>
+      </div>
+    </a>`;
 }
 
 function escapeHtml(str) {
