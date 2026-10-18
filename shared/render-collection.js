@@ -15,6 +15,9 @@ export async function renderCollectionPage(env, url, page) {
   const res = await env.ASSETS.fetch(new URL('/templates/collection.html', url.origin).toString());
   let html = await res.text();
 
+  // Pages without their own image share the sitewide GorkhaTV card
+  // (gorkhatv2/images/social/, cropped from the brand-pack YouTube banner).
+  page = { image: `${url.origin}/images/social/gorkhatv-share-1200x630.jpg`, ...page };
   const listUrls = page.items?.length ? page.items.map((i) => `${url.origin}${i.href}`) : (page.cards || []).map((c) => `${url.origin}${c.href}`);
   const itemList = JSON.stringify({
     '@context': 'https://schema.org',

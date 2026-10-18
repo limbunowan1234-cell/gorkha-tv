@@ -15,12 +15,25 @@
 # deliberate weakening (script-src is already 'unsafe-inline', so this is
 # incremental, not a first departure) — worth knowing if this site ever
 # drops Infolinks, since it could be removed again at that point.
+#
+# static.cloudflareinsights.com (script) + cloudflareinsights.com (connect)
+# are Cloudflare Web Analytics' beacon, which Cloudflare injects into every
+# page — without them the CSP blocks it and no visits are recorded.
+# accounts.google.com/gsi/style is the stylesheet Google's Sign-In button
+# loads; Google's own CSP guidance lists it under style-src.
+# The *.googlesyndication.com / *.doubleclick.net / *.adtrafficquality.google
+# / *.google.com / *.gstatic.com entries are what AdSense needs: it renders
+# every ad in an iframe from googlesyndication/doubleclick (frame-src) and
+# loads helper scripts and verification beacons (e.g. the "sodar" request)
+# from those hosts — previously frame-src allowed only YouTube and Google
+# sign-in, so ad iframes were blocked. *.infolinks.com covers Infolinks' own
+# follow-up script/iframe/beacon hosts beyond resources.infolinks.com.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=(), interest-cohort=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://pagead2.googlesyndication.com https://www.youtube.com https://s.ytimg.com https://resources.infolinks.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; frame-src https://www.youtube.com https://accounts.google.com; connect-src 'self' https://accounts.google.com https://www.youtube.com; base-uri 'self'; object-src 'none'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://pagead2.googlesyndication.com https://www.youtube.com https://s.ytimg.com https://resources.infolinks.com https://static.cloudflareinsights.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://*.infolinks.com https://*.google.com https://*.gstatic.com https://fundingchoicesmessages.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; frame-src https://www.youtube.com https://accounts.google.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://*.infolinks.com https://www.google.com; connect-src 'self' https://accounts.google.com https://www.youtube.com https://cloudflareinsights.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://*.infolinks.com https://*.google.com; base-uri 'self'; object-src 'none'; frame-ancestors 'self'
 
 # router.js and playerBar.js can't be cache-busted via a "?v=" query string
 # on their <script src> tags the way every other local JS/CSS file now is
