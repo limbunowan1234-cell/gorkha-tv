@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import * as Haptics from 'expo-haptics';
-import { apiFetch, recordView, timeAgo, isFresh, formatCount } from '../api';
+import { apiFetch, recordView, timeAgo, isFresh, formatCount, PLAYER_ORIGIN } from '../api';
 import { colors } from '../theme';
 import { toggleSaved, useSaved } from '../storage';
 import StoryRow from '../components/StoryRow';
@@ -17,6 +17,7 @@ export default function StoryScreen({ route, navigation }) {
   const [story, setStory] = useState(initial);
   const [related, setRelated] = useState([]);
   const [playing, setPlaying] = useState(true);
+  const [playerError, setPlayerError] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const advanced = useRef(false);
@@ -68,6 +69,9 @@ export default function StoryScreen({ route, navigation }) {
             height={220}
             videoId={id}
             play={playing}
+            useLocalHTML
+            baseUrlOverride={PLAYER_ORIGIN}
+            onError={(e) => setPlayerError(e || 'error')}
             onChangeState={(s) => {
               if (s === 'ended') {
                 setPlaying(false);
@@ -77,6 +81,11 @@ export default function StoryScreen({ route, navigation }) {
             webViewProps={{ allowsInlineMediaPlayback: true, mediaPlaybackRequiresUserAction: false }}
           />
         </View>
+        {playerError ? (
+          <Pressable style={styles.playerFail} onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${id}`)}>
+            <Text style={styles.playerFailText}>Can’t play here ({String(playerError)}). Tap to open on YouTube</Text>
+          </Pressable>
+        ) : null}
         {bulletin && nextInQueue ? <Text style={styles.bulletinNote}>Bulletin on: the next headline plays when this one ends.</Text> : null}
 
         <View style={styles.actions}>
@@ -137,6 +146,8 @@ function Pill({ label, onPress, on }) {
 }
 
 const styles = StyleSheet.create({
+  playerFail: { padding: 12, backgroundColor: '#1B1F26' },
+  playerFailText: { color: '#F4F1EA', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   root: { flex: 1, backgroundColor: colors.night },
   head: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 12 },
   tag: { alignSelf: 'flex-start', backgroundColor: colors.breaking, borderRadius: 4, paddingHorizontal: 7, paddingVertical: 3, marginBottom: 8 },

@@ -88,6 +88,7 @@ export default function ReelFeed({ items, initialIndex = 0, onNeedMore, loading,
         saved={savedIds.has(item.youtube_video_id)}
         onToggleSave={toggleSaved}
         onToggleMute={() => setMuted((m) => !m)}
+        onForceMute={() => setMuted(true)}
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps

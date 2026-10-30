@@ -3,6 +3,9 @@
 // real video playback only; see Phase S's own plan for what's deferred).
 // Response shapes here were read directly from the actual functions/api/*
 // source, not assumed — see that same plan section for the full catalog.
+// The embedded player page gets a real https origin (and so a real Referer)
+// instead of the library's third-party default page.
+export const PLAYER_ORIGIN = 'https://gorkhatv.site';
 const API_BASE = 'https://gorkhatv.site/api';
 
 export async function apiFetch(path) {

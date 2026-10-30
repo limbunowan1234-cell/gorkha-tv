@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, Linking, Pressable, ScrollView, Share, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import * as Haptics from 'expo-haptics';
-import { apiFetch, formatCount, formatDuration, recordView } from '../api';
+import { apiFetch, formatCount, formatDuration, recordView, PLAYER_ORIGIN } from '../api';
 import { colors } from '../theme';
 import { myList, progress } from '../storage';
 import Poster from '../components/Poster';
@@ -18,6 +18,7 @@ export default function TitleScreen({ route, navigation }) {
   const [video, setVideo] = useState(initial);
   const [related, setRelated] = useState([]);
   const [playing, setPlaying] = useState(true);
+  const [playerError, setPlayerError] = useState(null);
   const [expanded, setExpanded] = useState(false);
   const playerRef = useRef(null);
   const list = myList.use();
@@ -83,11 +84,19 @@ export default function TitleScreen({ route, navigation }) {
             videoId={id}
             play={playing}
             initialPlayerParams={{ start: startAt, modestbranding: true, rel: false }}
+            useLocalHTML
+            baseUrlOverride={PLAYER_ORIGIN}
+            onError={(e) => setPlayerError(e || 'error')}
             onChangeState={(s) => s === 'ended' && setPlaying(false)}
             webViewProps={{ allowsInlineMediaPlayback: true, mediaPlaybackRequiresUserAction: false }}
           />
           )}
         </View>
+        {playerError ? (
+          <Pressable style={styles.playerFail} onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${id}`)}>
+            <Text style={styles.playerFailText}>Can’t play here ({String(playerError)}). Tap to open on YouTube</Text>
+          </Pressable>
+        ) : null}
 
         <View style={styles.info}>
           <Text style={styles.eyebrow}>CHIMAL  ·  {String(video.category || '').toUpperCase()}</Text>
@@ -148,6 +157,8 @@ export default function TitleScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  playerFail: { padding: 12, backgroundColor: '#1B1F26' },
+  playerFailText: { color: '#F4F1EA', fontSize: 13, fontWeight: '700', textAlign: 'center' },
   root: { flex: 1, backgroundColor: colors.night },
   info: { padding: 18 },
   eyebrow: { color: colors.brand, fontSize: 11, fontWeight: '900', letterSpacing: 1.4 },

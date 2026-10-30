@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import YoutubeIframe from 'react-native-youtube-iframe';
 import { colors } from './theme';
-import { ytThumb, formatCount } from './api';
+import { ytThumb, formatCount, PLAYER_ORIGIN } from './api';
 
 const TAP_DELAY_MS = 250; // a second tap inside this window is a double-tap (save)
 
@@ -16,7 +16,7 @@ const TAP_DELAY_MS = 250; // a second tap inside this window is a double-tap (sa
 //     `active` and playback starts from a warm WebView,
 //  3. the thumbnail only fades away once the player reports it is truly
 //     playing, so there is never a black flash between reels.
-function Reel({ item, width, height, active, near, muted, saved, onToggleSave, onToggleMute }) {
+function Reel({ item, width, height, active, near, muted, saved, onToggleSave, onToggleMute, onForceMute }) {
   const playerRef = useRef(null);
   const thumbOpacity = useRef(new Animated.Value(1)).current;
   const progress = useRef(new Animated.Value(0)).current;
@@ -24,6 +24,8 @@ function Reel({ item, width, height, active, near, muted, saved, onToggleSave, o
   const tapRef = useRef({ count: 0, timer: null });
   const [userPaused, setUserPaused] = useState(false);
   const [showPauseIcon, setShowPauseIcon] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(null); // player error name, or 'timeout'
 
   // Player unmounted (swiped far away) → bring the thumbnail back so a later
   // return to this slide starts from the same instant-visible state.
@@ -37,6 +39,28 @@ function Reel({ item, width, height, active, near, muted, saved, onToggleSave, o
   useEffect(() => {
     if (!active) setUserPaused(false);
   }, [active]);
+
+  useEffect(() => {
+    if (!near) {
+      setPlaying(false);
+      setFailed(null);
+    }
+  }, [near]);
+
+  // Watchdog. WebViews can refuse to start sound-on playback without a tap
+  // inside the player; muted playback is always allowed. So if the active reel
+  // has not started within a few seconds, fall back to muted (the Sound button
+  // brings the sound back); if it still has not started, say so instead of
+  // leaving a frozen picture.
+  useEffect(() => {
+    if (!active || !near || playing || failed || userPaused) return undefined;
+    const t1 = !muted ? setTimeout(() => onForceMute?.(), 3500) : null;
+    const t2 = setTimeout(() => setFailed((f) => f || 'timeout'), muted ? 8000 : 12000);
+    return () => {
+      if (t1) clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [active, near, playing, failed, userPaused, muted, onForceMute]);
 
   // Progress: a mint line rising along the left edge as the reel plays.
   useEffect(() => {
@@ -96,9 +120,16 @@ function Reel({ item, width, height, active, near, muted, saved, onToggleSave, o
             mute={muted}
             initialPlayerParams={{ controls: false, modestbranding: true, rel: false, preventFullScreen: true }}
             webViewStyle={{ opacity: 0.99, backgroundColor: '#000' }}
+            useLocalHTML
+            baseUrlOverride={PLAYER_ORIGIN}
             webViewProps={{ allowsInlineMediaPlayback: true, mediaPlaybackRequiresUserAction: false }}
+            onError={(e) => setFailed(e || 'error')}
             onChangeState={(state) => {
-              if (state === 'playing') Animated.timing(thumbOpacity, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+              if (state === 'playing') {
+                setPlaying(true);
+                setFailed(null);
+                Animated.timing(thumbOpacity, { toValue: 0, duration: 160, useNativeDriver: true }).start();
+              }
               if (state === 'ended') playerRef.current?.seekTo(0, true);
             }}
           />
@@ -108,6 +139,15 @@ function Reel({ item, width, height, active, near, muted, saved, onToggleSave, o
       <Animated.Image source={{ uri: ytThumb(item) }} style={[StyleSheet.absoluteFill, { opacity: thumbOpacity }]} resizeMode="cover" pointerEvents="none" />
 
       <Pressable style={StyleSheet.absoluteFill} onPress={handleTap} />
+
+      {failed && active && (
+        <Pressable
+          style={styles.failPill}
+          onPress={() => Linking.openURL(`https://www.youtube.com/watch?v=${item.youtube_video_id}`)}
+        >
+          <Text style={styles.failText}>Can’t play this reel here ({String(failed)}). Tap to watch on YouTube</Text>
+        </Pressable>
+      )}
 
       <LinearGradient colors={['transparent', 'rgba(16,18,22,0.92)']} style={styles.scrim} pointerEvents="none" />
 
@@ -176,6 +216,8 @@ function ActionButton({ icon, label, onPress, highlighted }) {
 const styles = StyleSheet.create({
   scrim: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '42%' },
   heartBurst: { position: 'absolute', alignSelf: 'center', top: '40%', fontSize: 96 },
+  failPill: { position: 'absolute', alignSelf: 'center', top: '45%', maxWidth: '78%', backgroundColor: 'rgba(16,18,22,0.88)', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1.5, borderColor: colors.brand },
+  failText: { color: colors.snow, fontSize: 13, fontWeight: '700', textAlign: 'center', lineHeight: 18 },
   pauseFlash: {
     position: 'absolute', alignSelf: 'center', top: '44%', width: 68, height: 68, borderRadius: 34,
     backgroundColor: 'rgba(16,18,22,0.6)', alignItems: 'center', justifyContent: 'center',

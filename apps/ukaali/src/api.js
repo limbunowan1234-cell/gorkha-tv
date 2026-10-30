@@ -1,3 +1,6 @@
+// The embedded player page is given a real https origin (and so a real Referer)
+// instead of the library's third-party default page.
+export const PLAYER_ORIGIN = 'https://gorkhatv.site';
 const API_BASE = 'https://gorkhatv.site/api';
 
 export async function apiFetch(path) {
