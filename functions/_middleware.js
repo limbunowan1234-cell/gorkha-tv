@@ -19,6 +19,15 @@ const MAX_EDGE_TTL = 300;
 
 export async function onRequest(context) {
   const { request, next, waitUntil } = context;
+
+  // One host only. www.gorkhatv.site used to answer 200 with the same pages,
+  // so Google indexed both hosts (Search Console listed www/watch/... URLs)
+  // and split signals between them. 301 everything on www to the apex.
+  const wwwUrl = new URL(request.url);
+  if (wwwUrl.hostname.startsWith('www.')) {
+    wwwUrl.hostname = wwwUrl.hostname.slice(4);
+    return Response.redirect(wwwUrl.toString(), 301);
+  }
   if (request.method !== 'GET') return next();
 
   const cache = caches.default;
