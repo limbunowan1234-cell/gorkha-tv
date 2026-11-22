@@ -76,6 +76,12 @@
       cursor: pointer; padding: 8px 0 0; font-family: 'Mukta', 'Anek Devanagari', sans-serif;
     }
     .watch-desc-toggle:hover { text-decoration: underline; }
+    .watch-about { margin-top: 24px; font-size: 14px; line-height: 1.75; color: rgba(240,240,240,0.75); }
+    .watch-about:empty { display: none; }
+    .watch-about-title { font-size: 15px; font-weight: 700; color: var(--text); margin: 18px 0 6px; }
+    .watch-about a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+    .watch-about-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .watch-about-list span { color: var(--muted); font-size: 12px; }
     .watch-side-title { font-family: 'Anek Latin', 'Anek Devanagari', sans-serif; font-size: 20px; font-weight: 600; margin-bottom: 14px; }
     .related-list { display: flex; flex-direction: column; gap: 10px; }
     .related-item { display: flex; gap: 10px; cursor: pointer; padding: 6px; border-radius: 6px; transition: background 0.15s; }
@@ -175,6 +181,8 @@
 
       <p class="watch-desc clamped" id="watch-desc"></p>
       <button class="watch-desc-toggle" id="watch-desc-toggle" style="display:none;">Show more</button>
+
+      <section class="watch-about" id="watch-about"></section>
 
       <section id="watch-comments">
         <div class="watch-side-title" id="comments-count-title">Comments</div>

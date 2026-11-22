@@ -13,6 +13,7 @@
 
 import { breadcrumbJsonLd, breadcrumbHTML, metaDescription, videoJsonLd } from '../../shared/http.js';
 import { findRelatedVideos } from '../../shared/related-videos.js';
+import { aboutVideoHTML } from '../../shared/watch-about.js';
 
 // Categories whose slug is also a branded /genre/:slug page (see
 // functions/genre/[slug].js's GENRE_CONFIG) — the breadcrumb links there
@@ -52,9 +53,23 @@ export async function onRequest(context) {
 
     // Related list is best-effort: a failure there renders the page without
     // it (js/watch.js still fetches it client-side), never fails the page.
-    const [cat, related] = await Promise.all([
+    const [cat, related, channel, channelCount, moreFromChannel] = await Promise.all([
       video.category ? env.DB.prepare(`SELECT label FROM categories WHERE slug = ? AND active = 1`).bind(video.category).first() : null,
       findRelatedVideos(env.DB, video.youtube_video_id, video).catch(() => []),
+      // The "About" block is a bonus too: any failure just leaves it out.
+      video.youtube_channel_id
+        ? env.DB.prepare(`SELECT channel_name, slug, description FROM channels WHERE youtube_channel_id = ? AND status = 'approved'`).bind(video.youtube_channel_id).first().catch(() => null)
+        : null,
+      video.youtube_channel_id
+        ? env.DB.prepare(`SELECT COUNT(*) AS n FROM videos WHERE youtube_channel_id = ? AND status = 'published'`).bind(video.youtube_channel_id).first().catch(() => null)
+        : null,
+      video.youtube_channel_id
+        ? env.DB.prepare(`SELECT youtube_video_id, title, published_at FROM videos WHERE youtube_channel_id = ? AND status = 'published' AND youtube_video_id != ? AND (content_type IS NULL OR content_type != 'short') ORDER BY published_at DESC LIMIT 5`)
+            .bind(video.youtube_channel_id, video.youtube_video_id)
+            .all()
+            .then((r) => r.results || [])
+            .catch(() => [])
+        : [],
     ]);
     const categoryLabel = video.category ? cat?.label || video.category.charAt(0).toUpperCase() + video.category.slice(1) : null;
 
@@ -107,6 +122,16 @@ export async function onRequest(context) {
     html = html.replace('<h1 class="watch-title" id="watch-title">Loading…</h1>', `<h1 class="watch-title" id="watch-title">${escapeHtml(video.title)}</h1>`);
     html = html.replace('<div class="watch-meta" id="watch-meta"></div>', `<div class="watch-meta" id="watch-meta">${metaParts.join('')}</div>`);
     html = html.replace('<p class="watch-desc clamped" id="watch-desc"></p>', `<p class="watch-desc clamped" id="watch-desc">${escapeHtml(video.description || '')}</p>`);
+    html = html.replace(
+      '<section class="watch-about" id="watch-about"></section>',
+      `<section class="watch-about" id="watch-about">${aboutVideoHTML({
+        video,
+        channel: channel ? { ...channel, videoCount: channelCount?.n || 0 } : null,
+        categoryLabel,
+        categoryHref: video.category ? (GENRE_SLUGS.has(video.category) ? `/genre/${video.category}` : `/category/${encodeURIComponent(video.category)}`) : null,
+        moreFromChannel,
+      })}</section>`
+    );
     if (related.length) {
       // Replaces the loading spinner (rest of that template line) with the
       // same markup js/watch.js's relatedItemHTML() produces.
